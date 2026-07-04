@@ -1,0 +1,423 @@
+{
+  "description": "Schéma de données Firebase Realtime Database pour le SaaS Universitaire Multi-Tenant",
+  "version": "1.0.0",
+  "lastUpdated": "2026-07-03",
+
+  "schema": {
+    "universities": {
+      "type": "object",
+      "description": "Collection de toutes les universités (tenants isolés)",
+      "children": {
+        "$universityId": {
+          "type": "object",
+          "example": "univ-sorbonne-2026",
+          "description": "Identifiant unique de l'université (slug ou UUID)",
+          "children": {
+            "info": {
+              "type": "object",
+              "description": "Informations générales de l'université",
+              "properties": {
+                "name": "string (ex: 'Université Sorbonne')",
+                "slug": "string (ex: 'sorbonne')",
+                "logo": "string (URL)",
+                "address": "object { street, city, postalCode, country }",
+                "phone": "string",
+                "email": "string",
+                "website": "string (URL)",
+                "subscriptionPlan": "enum ['standard', 'premium', 'enterprise']",
+                "subscriptionStatus": "enum ['trial', 'active', 'suspended', 'cancelled']",
+                "maxStudents": "number (limite selon le plan)",
+                "currentStudents": "number (compteur actuel)",
+                "createdAt": "timestamp",
+                "academicYearStart": "timestamp",
+                "academicYearEnd": "timestamp"
+              }
+            },
+
+            "students": {
+              "type": "object",
+              "description": "Liste des étudiants de l'université",
+              "children": {
+                "$studentId": {
+                  "type": "object",
+                  "properties": {
+                    "matricule": "string (auto-généré, ex: '2026-SB-0001')",
+                    "firstName": "string",
+                    "lastName": "string",
+                    "email": "string",
+                    "phone": "string",
+                    "dateOfBirth": "timestamp",
+                    "gender": "enum ['male', 'female', 'other']",
+                    "nationality": "string",
+                    "address": "object { street, city, postalCode, country }",
+                    "photoURL": "string (URL Firebase Storage)",
+                    "status": "enum ['active', 'suspended', 'graduated', 'dropped_out']",
+                    "fieldOfStudy": "string (ID de la filière)",
+                    "level": "enum ['L1', 'L2', 'L3', 'M1', 'M2', 'D1', 'D2', 'D3']",
+                    "enrollmentDate": "timestamp",
+                    "graduationDate": "timestamp (nullable)",
+                    "parentId": "string (ID du parent, nullable)",
+                    "documents": "object { idCard, transcript, certificate } avec URLs",
+                    "createdAt": "timestamp",
+                    "updatedAt": "timestamp"
+                  }
+                }
+              }
+            },
+
+            "teachers": {
+              "type": "object",
+              "description": "Liste des enseignants",
+              "children": {
+                "$teacherId": {
+                  "type": "object",
+                  "properties": {
+                    "employeeId": "string (auto-généré)",
+                    "firstName": "string",
+                    "lastName": "string",
+                    "email": "string",
+                    "phone": "string",
+                    "photoURL": "string (URL)",
+                    "specializations": "array<string> (ex: ['mathematics', 'physics'])",
+                    "courses": "array<string> (IDs des cours assignés)",
+                    "weeklyHours": "number (charge horaire)",
+                    "hireDate": "timestamp",
+                    "status": "enum ['active', 'on_leave', 'terminated']",
+                    "bio": "string (biographie courte)",
+                    "createdAt": "timestamp",
+                    "updatedAt": "timestamp"
+                  }
+                }
+              }
+            },
+
+            "courses": {
+              "type": "object",
+              "description": "Catalogue des cours",
+              "children": {
+                "$courseId": {
+                  "type": "object",
+                  "properties": {
+                    "code": "string (ex: 'MATH101')",
+                    "name": "string (ex: 'Mathématiques Fondamentales')",
+                    "description": "string (description courte)",
+                    "syllabus": "string (programme détaillé, format Markdown)",
+                    "credits": "number (crédits ECTS)",
+                    "coefficient": "number",
+                    "teacherId": "string (ID du prof principal)",
+                    "level": "enum ['L1', 'L2', 'L3', 'M1', 'M2', 'D1', 'D2', 'D3']",
+                    "fieldOfStudy": "string (ID de la filière)",
+                    "semester": "enum ['S1', 'S2']",
+                    "weeklyHours": "number",
+                    "maxStudents": "number",
+                    "enrolledStudents": "array<string> (IDs des étudiants inscrits)",
+                    "schedule": "array<object> { day, startTime, endTime, room }",
+                    "status": "enum ['active', 'archived']",
+                    "createdAt": "timestamp",
+                    "updatedAt": "timestamp"
+                  }
+                }
+              }
+            },
+
+            "grades": {
+              "type": "object",
+              "description": "Notes et évaluations par étudiant",
+              "children": {
+                "$studentId": {
+                  "type": "object",
+                  "children": {
+                    "$courseId": {
+                      "type": "object",
+                      "properties": {
+                        "assignments": "array<object> { name, grade, maxGrade, coefficient, date, description }",
+                        "exams": "array<object> { name, grade, maxGrade, coefficient, date, type }",
+                        "projects": "array<object> { name, grade, maxGrade, coefficient, date, groupMembers }",
+                        "participation": "number (note de participation)",
+                        "average": "number (moyenne calculée automatiquement)",
+                        "letterGrade": "enum ['A', 'B', 'C', 'D', 'F'] (calculé auto)",
+                        "status": "enum ['draft', 'published']",
+                        "publishedAt": "timestamp",
+                        "comments": "string (remarques du prof)",
+                        "updatedAt": "timestamp"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+
+            "payments": {
+              "type": "object",
+              "description": "Gestion financière des étudiants",
+              "children": {
+                "$studentId": {
+                  "type": "object",
+                  "properties": {
+                    "academicYear": "string (ex: '2025-2026')",
+                    "tuitionFee": "number (frais totaux)",
+                    "paidAmount": "number (montant payé)",
+                    "remainingAmount": "number (reste à payer)",
+                    "currency": "string (ex: 'EUR')",
+                    "status": "enum ['paid', 'partial', 'pending', 'overdue']",
+                    "installments": "array<object> { amount, dueDate, status, paidAt, method, receiptId, transactionId }",
+                    "scholarships": "array<object> { name, amount, provider, startDate, endDate }",
+                    "createdAt": "timestamp",
+                    "updatedAt": "timestamp"
+                  }
+                }
+              }
+            },
+
+            "liveSessions": {
+              "type": "object",
+              "description": "Cours en direct (vidéo live streaming) - MODULE 9",
+              "children": {
+                "$sessionId": {
+                  "type": "object",
+                  "properties": {
+                    "courseId": "string (ID du cours)",
+                    "teacherId": "string (ID du professeur)",
+                    "title": "string (ex: 'Cours de Maths - Chapitre 3')",
+                    "description": "string (détails de la session)",
+                    "scheduledAt": "timestamp (heure prévue)",
+                    "startedAt": "timestamp (heure réelle de début)",
+                    "endedAt": "timestamp (heure de fin)",
+                    "duration": "number (durée en secondes)",
+                    "status": "enum ['scheduled', 'live', 'ended', 'cancelled']",
+                    "agoraChannelName": "string (nom du canal Agora.io)",
+                    "agoraAppId": "string",
+                    "maxParticipants": "number",
+                    "recordingEnabled": "boolean",
+                    "recordingUrl": "string (URL Firebase Storage, nullable)",
+                    "thumbnailUrl": "string (capture d'écran de la session)",
+                    "features": "object { chat, screenShare, recording, handRaise, reactions }",
+                    "invitations": "object<userId, { status: 'pending|accepted|declined', invitedAt, respondedAt }>",
+                    "participants": "object<userId, { joinedAt, leftAt, duration, micMuted, cameraOff }>",
+                    "chatMessages": "array<object> { userId, userName, message, timestamp, type }",
+                    "reactions": "object<userId, array<{ emoji, timestamp }>>",
+                    "createdAt": "timestamp",
+                    "updatedAt": "timestamp"
+                  }
+                }
+              }
+            },
+
+            "notifications": {
+              "type": "object",
+              "description": "Système de notifications",
+              "children": {
+                "$notifId": {
+                  "type": "object",
+                  "properties": {
+                    "type": "enum ['grade_published', 'payment_due', 'payment_received', 'announcement', 'course_update', 'live_session_starting', 'live_session_invitation']",
+                    "priority": "enum ['low', 'medium', 'high', 'urgent']",
+                    "targetRole": "enum ['student', 'teacher', 'parent', 'admin_universite', 'all']",
+                    "targetUserId": "string (ID spécifique, null = tous du rôle)",
+                    "title": "string",
+                    "message": "string",
+                    "actionUrl": "string (lien vers la ressource concernée)",
+                    "icon": "string (nom de l'icône Lucide)",
+                    "createdAt": "timestamp",
+                    "read": "boolean",
+                    "readAt": "timestamp (nullable)"
+                  }
+                }
+              }
+            },
+
+            "library": {
+              "type": "object",
+              "description": "Bibliothèque et ressources pédagogiques",
+              "children": {
+                "$resourceId": {
+                  "type": "object",
+                  "properties": {
+                    "type": "enum ['book', 'video', 'pdf', 'link', 'article']",
+                    "title": "string",
+                    "description": "string",
+                    "courseId": "string (ID du cours, nullable)",
+                    "uploadedBy": "string (ID du prof ou admin)",
+                    "fileUrl": "string (URL Firebase Storage)",
+                    "thumbnailUrl": "string",
+                    "fileSize": "number (en bytes)",
+                    "mimeType": "string",
+                    "tags": "array<string>",
+                    "accessLevel": "enum ['public', 'students_only', 'level_specific']",
+                    "allowedLevels": "array<string> (ex: ['L1', 'L2'])",
+                    "downloads": "number (compteur)",
+                    "views": "number (compteur)",
+                    "available": "boolean (pour les livres physiques)",
+                    "borrowedBy": "string (ID étudiant, nullable)",
+                    "borrowedAt": "timestamp (nullable)",
+                    "dueDate": "timestamp (nullable)",
+                    "createdAt": "timestamp",
+                    "updatedAt": "timestamp"
+                  }
+                }
+              }
+            },
+
+            "audit": {
+              "type": "object",
+              "description": "Logs d'audit pour traçabilité (RGPD compliant)",
+              "children": {
+                "$logId": {
+                  "type": "object",
+                  "properties": {
+                    "userId": "string (qui a fait l'action)",
+                    "userRole": "string",
+                    "action": "enum ['create', 'update', 'delete', 'read', 'export']",
+                    "resource": "enum ['student', 'teacher', 'grade', 'payment', 'course', 'notification']",
+                    "resourceId": "string (ID de la ressource modifiée)",
+                    "changes": "object (avant/après pour les updates)",
+                    "ipAddress": "string",
+                    "userAgent": "string",
+                    "timestamp": "timestamp",
+                    "description": "string (ex: 'Modification de la note de Jean Dupont en MATH101')"
+                  }
+                }
+              }
+            },
+
+            "fieldsOfStudy": {
+              "type": "object",
+              "description": "Filières et programmes d'études",
+              "children": {
+                "$fieldId": {
+                  "type": "object",
+                  "properties": {
+                    "name": "string (ex: 'Informatique')",
+                    "code": "string (ex: 'INFO')",
+                    "description": "string",
+                    "duration": "number (en années)",
+                    "tuitionFee": "number",
+                    "currency": "string",
+                    "levels": "array<string> (ex: ['L1', 'L2', 'L3'])",
+                    "requiredCourses": "object<level, array<courseId>>",
+                    "electiveCourses": "object<level, array<courseId>>",
+                    "totalCredits": "number (crédits ECTS requis pour diplôme)",
+                    "status": "enum ['active', 'archived']",
+                    "createdAt": "timestamp"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "users": {
+      "type": "object",
+      "description": "Profils utilisateurs (tous rôles confondus)",
+      "children": {
+        "$uid": {
+          "type": "object",
+          "example": "Firebase Auth UID",
+          "properties": {
+            "email": "string",
+            "universityId": "string (CRITIQUE pour multi-tenancy)",
+            "role": "enum ['super_admin_plateforme', 'admin_universite', 'teacher', 'student', 'parent']",
+            "profileId": "string (référence vers students/teachers selon le rôle)",
+            "displayName": "string",
+            "photoURL": "string",
+            "createdAt": "timestamp",
+            "lastLogin": "timestamp",
+            "preferences": "object { language, theme, notifications }",
+            "rgpdConsent": "boolean",
+            "rgpdConsentDate": "timestamp"
+          }
+        }
+      }
+    },
+
+    "platform": {
+      "type": "object",
+      "description": "Données globales du SaaS (réservé super_admin_plateforme)",
+      "children": {
+        "subscriptions": {
+          "type": "object",
+          "description": "Gestion des abonnements des universités",
+          "children": {
+            "$universityId": {
+              "type": "object",
+              "properties": {
+                "plan": "enum ['standard', 'premium', 'enterprise']",
+                "price": "number (montant mensuel)",
+                "currency": "string",
+                "status": "enum ['trial', 'active', 'past_due', 'cancelled']",
+                "trialEndsAt": "timestamp",
+                "currentPeriodStart": "timestamp",
+                "currentPeriodEnd": "timestamp",
+                "nextBillingDate": "timestamp",
+                "stripeCustomerId": "string",
+                "stripeSubscriptionId": "string",
+                "paymentMethod": "object { type, last4, brand }",
+                "invoices": "array<object> { invoiceId, amount, status, paidAt, invoiceUrl }",
+                "createdAt": "timestamp",
+                "updatedAt": "timestamp"
+              }
+            }
+          }
+        },
+
+        "analytics": {
+          "type": "object",
+          "description": "Analytics globales de la plateforme",
+          "properties": {
+            "totalUniversities": "number",
+            "activeUniversities": "number",
+            "totalStudents": "number",
+            "totalTeachers": "number",
+            "monthlyRevenue": "number",
+            "yearlyRevenue": "number",
+            "churnRate": "number (pourcentage)",
+            "averageSubscriptionValue": "number",
+            "lastUpdated": "timestamp"
+          }
+        },
+
+        "pricingPlans": {
+          "type": "object",
+          "description": "Configuration des plans tarifaires",
+          "children": {
+            "standard": {
+              "properties": {
+                "name": "Standard",
+                "price": "number",
+                "currency": "string",
+                "maxStudents": 500,
+                "maxTeachers": 50,
+                "features": "array<string>",
+                "liveSessionsMinutes": 5000
+              }
+            },
+            "premium": {
+              "properties": {
+                "name": "Premium",
+                "price": "number",
+                "currency": "string",
+                "maxStudents": 2000,
+                "maxTeachers": 200,
+                "features": "array<string>",
+                "liveSessionsMinutes": 20000
+              }
+            },
+            "enterprise": {
+              "properties": {
+                "name": "Enterprise",
+                "price": "number (sur devis)",
+                "currency": "string",
+                "maxStudents": "unlimited",
+                "maxTeachers": "unlimited",
+                "features": "array<string>",
+                "liveSessionsMinutes": "unlimited"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

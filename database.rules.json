@@ -1,0 +1,93 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "universities": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
+
+      "$universityId": {
+        ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).exists())",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+
+        "info": {
+          ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+        },
+
+        "students": {
+          "$studentId": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'student' && root.child('users').child(auth.uid).child('profileId').val() === $studentId))"
+          }
+        },
+
+        "teachers": {
+          "$teacherId": {
+            ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+          }
+        },
+
+        "courses": {
+          "$courseId": {
+            ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+          }
+        },
+
+        "grades": {
+          "$studentId": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('profileId').val() === $studentId || root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || (root.child('users').child(auth.uid).child('role').val() === 'student' && root.child('users').child(auth.uid).child('profileId').val() === $studentId))"
+          }
+        },
+
+        "payments": {
+          "$studentId": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('profileId').val() === $studentId || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || (root.child('users').child(auth.uid).child('role').val() === 'student' && root.child('users').child(auth.uid).child('profileId').val() === $studentId))"
+          }
+        },
+
+        "liveSessions": {
+          "$sessionId": {
+            ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+          }
+        },
+
+        "notifications": {
+          "$notifId": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).exists())",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher')"
+          }
+        },
+
+        "library": {
+          "$resourceId": {
+            ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+          }
+        },
+
+        "audit": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin_universite'",
+          ".write": "auth != null"
+        }
+      }
+    },
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+      }
+    },
+
+    "platform": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'"
+    }
+  }
+}
