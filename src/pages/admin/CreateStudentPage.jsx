@@ -11,6 +11,7 @@ import { database } from '../../config/firebase';
 import { ArrowLeft, GraduationCap, Mail, Phone, BookOpen, Calendar, CheckCircle, AlertCircle, Loader, Wand2, RefreshCw } from 'lucide-react';
 import { useRateLimit, RATE_LIMITS } from '../../utils/rateLimiter';
 import { isValidEmail, isValidName, isValidMatricule } from '../../utils/sanitize';
+import { getCurrentAcademicYear, getAcademicYears } from '../../utils/academicYearHelper';
 
 export default function CreateStudentPage() {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function CreateStudentPage() {
     matricule: '',
     password: '12345678',
     classId: '',
+    academicYear: getCurrentAcademicYear(), // Année en cours par défaut
   });
 
   const levels = ['L1', 'L2', 'L3', 'M1', 'M2', 'D1', 'D2', 'D3'];
@@ -226,7 +228,7 @@ export default function CreateStudentPage() {
         level: formData.level,
         fieldOfStudy: formData.fieldOfStudy,
         classId: formData.classId,
-        academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+        academicYear: formData.academicYear,
         status: 'active',
         enrollmentDate: Date.now(),
         absences: 0,
@@ -257,7 +259,7 @@ export default function CreateStudentPage() {
 
       // 4. Initialiser structure paiements (vide)
       await set(ref(database, `universities/${userProfile.universityId}/payments/${studentUid}`), {
-        academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+        academicYear: formData.academicYear,
         tuitionFee: 0,
         paidAmount: 0,
         remainingAmount: 0,
@@ -504,6 +506,28 @@ export default function CreateStudentPage() {
                   className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none font-mono"
                   required
                 />
+              </div>
+
+              {/* Année académique */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  📅 Année académique *
+                </label>
+                <select
+                  value={formData.academicYear}
+                  onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                  className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+                  required
+                >
+                  {getAcademicYears(2, 2).map((year) => (
+                    <option key={year} value={year}>
+                      {year} {year === getCurrentAcademicYear() && '(En cours)'}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  L'année académique de l'étudiant (importante pour les filtres et statistiques)
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
