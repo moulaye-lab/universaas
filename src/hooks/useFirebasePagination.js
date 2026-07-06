@@ -61,7 +61,7 @@ export default function useFirebasePagination({
       let dataQuery = collectionRef;
 
       // Construire query avec filtres Firebase
-      const activeFilters = Object.entries(filters).filter(([_, value]) => value && value !== 'all');
+      const activeFilters = Object.entries(filters).filter(([_, value]) => value && value !== 'all' && value !== '');
 
       if (activeFilters.length > 0) {
         // Firebase ne supporte qu'un seul orderBy/filter à la fois
@@ -73,11 +73,9 @@ export default function useFirebasePagination({
           equalTo(filterValue)
         );
       } else {
-        // Pas de filtre, juste tri
-        dataQuery = query(
-          collectionRef,
-          orderByChild(orderBy)
-        );
+        // Pas de filtre actif, charger toutes les données
+        // Le tri sera fait côté client
+        dataQuery = collectionRef;
       }
 
       const snapshot = await get(dataQuery);
