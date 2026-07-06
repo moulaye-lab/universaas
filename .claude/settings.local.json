@@ -19,7 +19,9 @@
       "Bash(git commit -m '✨ Feat: Script migration academicYear pour étudiants existants *)",
       "Bash(node *)",
       "Bash(git commit -m '✨ Feat: Interface web migration academicYear *)",
-      "Bash(git commit -m '🔒 Fix: Ajout .write au niveau collections pour admins *)"
+      "Bash(git commit -m '🔒 Fix: Ajout .write au niveau collections pour admins *)",
+      "Bash(python3 -m json.tool /Users/itopie/Desktop/RULES_FINAL_COMPLETE.json)",
+      "Bash(git commit -m '✅ Configuration finale filtres étudiants *)"
     ]
   }
 }
