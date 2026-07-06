@@ -103,6 +103,8 @@
         },
 
         "rooms": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
           ".indexOn": ["building", "floor", "capacity", "type", "status"],
           "$roomId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
@@ -272,6 +274,8 @@
         },
 
         "grades": {
+          ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')",
           ".indexOn": ["studentId", "courseId", "classId", "date"],
           "$gradeId": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'student' && data.child('studentId').val() === root.child('users').child(auth.uid).child('profileId').val()) || (root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child(data.child('studentId').val()).val() === true)",

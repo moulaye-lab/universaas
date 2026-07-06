@@ -23,7 +23,8 @@
       "Bash(python3 -m json.tool /Users/itopie/Desktop/RULES_FINAL_COMPLETE.json)",
       "Bash(git commit -m '✅ Configuration finale filtres étudiants *)",
       "Bash(git commit -m '✨ Feat: Champ année académique contrôlable par admin lors création étudiant *)",
-      "Bash(git commit -m '📝 Sauvegarde session: Système filtres + année académique *)"
+      "Bash(git commit -m '📝 Sauvegarde session: Système filtres + année académique *)",
+      "Bash(git commit -m '🔒 Audit sécurité 2026-07-06 + Corrections *)"
     ]
   }
 }
