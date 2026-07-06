@@ -219,7 +219,7 @@
               ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 500"
             },
             "occupiedSeats": {
-              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= parent().child('capacity').val()"
+              ".validate": "newData.isNumber() && newData.val() >= 0"
             },
             "classNumber": {
               ".validate": "newData.isString() || newData.isNumber()"

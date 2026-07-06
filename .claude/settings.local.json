@@ -10,7 +10,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(firebase deploy *)",
-      "Bash(git commit -m '🐛 Fix: Suppression ligne .indexOn dupliquée dans courses *)"
+      "Bash(git commit -m '🐛 Fix: Suppression ligne .indexOn dupliquée dans courses *)",
+      "Bash(python3 -m json.tool /Users/itopie/Desktop/RULES_TO_COPY.json)",
+      "Bash(git commit -m '🐛 Fix: Simplification validation occupiedSeats pour compatibilité Firebase Console *)"
     ]
   }
 }
