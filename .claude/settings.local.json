@@ -16,7 +16,9 @@
       "Bash(git commit -m '🐛 Fix: Suppression validation parent\\(\\).child\\(\\) dans grades *)",
       "Bash(git commit -m '🐛 Fix: Ajout champ academicYear lors création étudiant *``)",
       "Bash(chmod +x *)",
-      "Bash(git commit -m '✨ Feat: Script migration academicYear pour étudiants existants *)"
+      "Bash(git commit -m '✨ Feat: Script migration academicYear pour étudiants existants *)",
+      "Bash(node *)",
+      "Bash(git commit -m '✨ Feat: Interface web migration academicYear *)"
     ]
   }
 }

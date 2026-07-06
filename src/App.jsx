@@ -40,6 +40,7 @@ import ManageTeachersPage from './pages/admin/ManageTeachersPage';
 import ManageCoursesPage from './pages/admin/ManageCoursesPage';
 import GradesInputPage from './pages/teacher/GradesInputPage';
 import MyGradesPage from './pages/student/MyGradesPage';
+import MigrateAcademicYearPage from './pages/admin/MigrateAcademicYearPage';
 import './App.css';
 
 function App() {
@@ -287,6 +288,16 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['parent']}>
                 <ParentDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Migration Tool - Admin Only */}
+          <Route
+            path="/admin/migrate-academic-year"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <MigrateAcademicYearPage />
               </ProtectedRoute>
             }
           />
