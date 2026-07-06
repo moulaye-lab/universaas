@@ -18,6 +18,28 @@ import AdminUniversityDashboard from './pages/dashboards/AdminUniversityDashboar
 import TeacherDashboard from './pages/dashboards/TeacherDashboard';
 import StudentDashboard from './pages/dashboards/StudentDashboard';
 import ParentDashboard from './pages/dashboards/ParentDashboard';
+import CreateTeacherPage from './pages/admin/CreateTeacherPage';
+import TeachersListPage from './pages/admin/TeachersListPage';
+import TeacherDetailsPage from './pages/admin/TeacherDetailsPage';
+import CreateStudentPage from './pages/admin/CreateStudentPage';
+import EditStudentPage from './pages/admin/EditStudentPage';
+import StudentsListPage from './pages/admin/StudentsListPage';
+import CreateParentPage from './pages/admin/CreateParentPage';
+import ParentDetailsPage from './pages/admin/ParentDetailsPage';
+import ParentsListPage from './pages/admin/ParentsListPage';
+import CreateCoursePage from './pages/admin/CreateCoursePage';
+import CoursesListPage from './pages/admin/CoursesListPage';
+import CourseDetailsPage from './pages/admin/CourseDetailsPage';
+import CreateClassPage from './pages/admin/CreateClassPage';
+import ClassesListPage from './pages/admin/ClassesListPage';
+import ClassDetailsPage from './pages/admin/ClassDetailsPage';
+import RoomsManagementPage from './pages/admin/RoomsManagementPage';
+import ManageAcademicDataPage from './pages/admin/ManageAcademicDataPage';
+import ManageStudentsPage from './pages/admin/ManageStudentsPage';
+import ManageTeachersPage from './pages/admin/ManageTeachersPage';
+import ManageCoursesPage from './pages/admin/ManageCoursesPage';
+import GradesInputPage from './pages/teacher/GradesInputPage';
+import MyGradesPage from './pages/student/MyGradesPage';
 import './App.css';
 
 function App() {
@@ -53,6 +75,182 @@ function App() {
             }
           />
           <Route
+            path="/admin/manage-teachers"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ManageTeachersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/teachers/create"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateTeacherPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/teachers"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <TeachersListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/teachers/:teacherId"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <TeacherDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/manage-students"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ManageStudentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/students/create"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateStudentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/students"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <StudentsListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/students/:studentId/edit"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <EditStudentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/students/:studentId/create-parent"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateParentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/parents/create"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateParentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/parents/:parentId"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ParentDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/parents/:parentId/add-child"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateParentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/parents"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ParentsListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/manage-courses"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ManageCoursesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/courses/create"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateCoursePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/courses"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CoursesListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/courses/:courseId"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CourseDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/classes"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ClassesListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/classes/create"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateClassPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/classes/:classId"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ClassDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/rooms"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <RoomsManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/academic-data"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ManageAcademicDataPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/dashboard/teacher"
             element={
               <ProtectedRoute allowedRoles={['teacher']}>
@@ -61,10 +259,26 @@ function App() {
             }
           />
           <Route
+            path="/teacher/grades/input"
+            element={
+              <ProtectedRoute allowedRoles={['teacher']}>
+                <GradesInputPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/dashboard/student"
             element={
               <ProtectedRoute allowedRoles={['student']}>
                 <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/grades"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <MyGradesPage />
               </ProtectedRoute>
             }
           />

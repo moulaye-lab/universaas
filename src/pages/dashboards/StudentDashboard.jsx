@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { calculateOverallAverage, getMention, getAverageColor, exportToCSV } from '../../utils/gradesCalculator';
 import {
   TrendingUp,
   BookOpen,
@@ -31,6 +32,10 @@ const StudentDashboard = () => {
   const [grades, setGrades] = useState([]);
   const [videos, setVideos] = useState([]);
   const [library, setLibrary] = useState([]);
+  const [classSchedule, setClassSchedule] = useState([]);
+  const [className, setClassName] = useState('');
+  const [averageOverall, setAverageOverall] = useState(null);
+  const [courseAverages, setCourseAverages] = useState({});
 
   useEffect(() => {
     loadDashboardData();
@@ -47,7 +52,7 @@ const StudentDashboard = () => {
       const uniId = userProfile.universityId;
       const studentId = userProfile.profileId || userProfile.uid;
 
-      console.log('Loading dashboard for:', { uniId, studentId });
+      // Loading dashboard data
 
       // Load student profile
       const studentRef = ref(database, `universities/${uniId}/students/${studentId}`);
@@ -56,84 +61,29 @@ const StudentDashboard = () => {
       if (studentSnap.exists()) {
         const studentInfo = { id: studentId, ...studentSnap.val() };
         setStudentData(studentInfo);
-        console.log('Student data loaded:', studentInfo);
+        // Student data loaded
       } else {
         console.warn('Student profile not found');
       }
 
-      // Load grades
-      const gradesRef = ref(database, `universities/${uniId}/grades/${studentId}`);
+      // Load grades (nouvelle structure)
+      const gradesRef = ref(database, `universities/${uniId}/grades`);
       const gradesSnap = await get(gradesRef);
 
       let gradesData = [];
       if (gradesSnap.exists()) {
-        const data = gradesSnap.val();
-
-        // Charger les noms de cours depuis Firebase
-        const coursesRef = ref(database, `universities/${uniId}/courses`);
-        const coursesSnap = await get(coursesRef);
-        const coursesData = coursesSnap.exists() ? coursesSnap.val() : {};
-
-        // Structure: { 'course-id': { assignments: [], exams: [], projects: [], average: 15.2 }, ... }
-        // Convertir chaque note individuelle en ligne du tableau
-        Object.keys(data).forEach(courseId => {
-          const courseGrades = data[courseId];
-          const courseName = coursesData[courseId]?.name || courseId;
-          const courseCoefficient = courseGrades.courseCoefficient || coursesData[courseId]?.coefficient || 1;
-
-          // Ajouter chaque devoir
-          if (courseGrades.assignments) {
-            courseGrades.assignments.forEach(assignment => {
-              gradesData.push({
-                courseId,
-                courseName,
-                grade: assignment.grade,
-                coefficient: courseCoefficient,
-                type: 'Devoir',
-                date: assignment.date,
-                maxGrade: assignment.maxGrade || 20,
-              });
-            });
-          }
-
-          // Ajouter chaque examen
-          if (courseGrades.exams) {
-            courseGrades.exams.forEach(exam => {
-              gradesData.push({
-                courseId,
-                courseName,
-                grade: exam.grade,
-                coefficient: courseCoefficient,
-                type: 'Examen',
-                date: exam.date,
-                maxGrade: exam.maxGrade || 20,
-              });
-            });
-          }
-
-          // Ajouter chaque projet
-          if (courseGrades.projects) {
-            courseGrades.projects.forEach(project => {
-              gradesData.push({
-                courseId,
-                courseName,
-                grade: project.grade,
-                coefficient: courseCoefficient,
-                type: 'Projet',
-                date: project.date,
-                maxGrade: project.maxGrade || 20,
-              });
-            });
-          }
-        });
-
-        // Trier par date (plus récent en premier)
-        gradesData.sort((a, b) => (b.date || 0) - (a.date || 0));
+        // Filtrer les notes de cet étudiant
+        gradesData = Object.values(gradesSnap.val())
+          .filter(grade => grade.studentId === studentId)
+          .sort((a, b) => (b.date || 0) - (a.date || 0));
 
         setGrades(gradesData);
-        console.log('Grades loaded:', gradesData);
+        // Calculer les moyennes
+        const { overall, byCourse } = calculateOverallAverage(gradesData);
+        setAverageOverall(overall);
+        setCourseAverages(byCourse);
       } else {
-        console.log('No grades found');
+        // No grades found
       }
 
       // Calculate stats
@@ -150,9 +100,9 @@ const StudentDashboard = () => {
           .filter(session => session.isRecorded === true)
           .sort((a, b) => (b.recordedAt || 0) - (a.recordedAt || 0));
         setVideos(videosData);
-        console.log('Videos loaded:', videosData.length);
+        // Videos loaded
       } else {
-        console.log('No videos found');
+        // No videos found
       }
 
       // Load library resources
@@ -166,9 +116,23 @@ const StudentDashboard = () => {
           ...allLibrary[key]
         }));
         setLibrary(libraryData);
-        console.log('Library loaded:', libraryData.length);
+        // Library resources loaded
       } else {
-        console.log('No library resources found');
+        // No library resources found
+      }
+
+      // Load class schedule
+      if (studentData?.classId || (studentSnap.exists() && studentSnap.val().classId)) {
+        const classId = studentData?.classId || studentSnap.val().classId;
+        const classRef = ref(database, `universities/${uniId}/classes/${classId}`);
+        const classSnap = await get(classRef);
+
+        if (classSnap.exists()) {
+          const classData = classSnap.val();
+          setClassName(classData.name || '');
+          setClassSchedule(classData.schedule || []);
+          // Class schedule loaded
+        }
       }
 
       setLoading(false);
@@ -378,8 +342,163 @@ const StudentDashboard = () => {
           </div>
         </div>
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <button
+            onClick={() => navigate('/student/grades')}
+            className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Mes Notes</p>
+                <p className="text-sm text-gray-600">Consulter mes résultats</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/student/schedule')}
+            className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">Mon Emploi du Temps</p>
+                <p className="text-sm text-gray-600">Voir mes cours</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/student/assignments')}
+            className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 group-hover:text-green-600 transition-colors">Mes Devoirs</p>
+                <p className="text-sm text-gray-600">Travaux à rendre</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Class Schedule Section */}
+        {classSchedule.length > 0 && (
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-blue-100 shadow-lg mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+              <Clock className="w-6 h-6 mr-2 text-blue-600" />
+              Mon Emploi du Temps {className && `- ${className}`}
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(day => {
+                const dayCourses = classSchedule.filter(sch => sch.day === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+                if (dayCourses.length === 0) return null;
+
+                return (
+                  <div key={day} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
+                    <h3 className="font-bold text-gray-900 mb-3 text-lg">{day}</h3>
+                    <div className="space-y-2">
+                      {dayCourses.map((course, idx) => (
+                        <div key={idx} className="bg-white rounded-lg p-3 border border-blue-100">
+                          <p className="font-semibold text-gray-900 text-sm">{course.courseName}</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            🕐 {course.startTime} - {course.endTime}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            👨‍🏫 {course.teacherName}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            🏢 {course.room}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Averages Section */}
+        {grades.length > 0 && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200 shadow-lg mb-8 animate-slide-up" style={{ animationDelay: '0.45s' }}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                <TrendingUp className="w-6 h-6 mr-2 text-purple-600" />
+                📊 Mes Moyennes
+              </h2>
+              <button
+                onClick={() => exportToCSV(grades, `notes_${studentData?.lastName || 'etudiant'}`)}
+                className="px-4 py-2 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition flex items-center gap-2 border border-purple-200"
+              >
+                <Download className="w-4 h-4" />
+                Exporter CSV
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {/* Moyenne Générale */}
+              <div className="bg-white rounded-xl p-6 text-center shadow-md">
+                <p className="text-sm text-gray-600 mb-2">Moyenne Générale</p>
+                <p className={`text-5xl font-black mb-2 ${getAverageColor(averageOverall)}`}>
+                  {averageOverall ? averageOverall.toFixed(2) : 'N/A'}
+                </p>
+                {averageOverall && (
+                  <p className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full inline-block">
+                    {getMention(averageOverall)}
+                  </p>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="bg-white rounded-xl p-6 shadow-md">
+                <p className="text-sm text-gray-600 mb-2">Cours Suivis</p>
+                <p className="text-4xl font-bold text-gray-900 mb-2">
+                  {Object.keys(courseAverages).length}
+                </p>
+                <p className="text-xs text-gray-500">cours avec notes</p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 shadow-md">
+                <p className="text-sm text-gray-600 mb-2">Notes Enregistrées</p>
+                <p className="text-4xl font-bold text-gray-900 mb-2">{grades.length}</p>
+                <p className="text-xs text-gray-500">évaluations</p>
+              </div>
+            </div>
+
+            {/* Moyennes par Cours */}
+            <h3 className="font-bold text-gray-900 mb-3 text-lg">Moyennes par Cours</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {Object.entries(courseAverages).map(([courseId, data]) => (
+                <div key={courseId} className="bg-white rounded-lg p-4 flex justify-between items-center shadow-sm hover:shadow-md transition">
+                  <div>
+                    <p className="font-semibold text-gray-900">{data.courseName}</p>
+                    <p className="text-xs text-gray-500">{data.gradesCount} note{data.gradesCount > 1 ? 's' : ''}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-3xl font-bold ${getAverageColor(data.average)}`}>
+                      {data.average ? data.average.toFixed(2) : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Grades Section */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg mb-8 animate-slide-up" style={{ animationDelay: '0.5s' }}>
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <TrendingUp className="w-6 h-6 mr-2 text-purple-600" />
             Mes Notes

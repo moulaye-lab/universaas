@@ -13,7 +13,11 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  FileText
+  FileText,
+  List,
+  Building2,
+  Settings,
+  UsersIcon
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { database } from '../../config/firebase';
@@ -202,14 +206,26 @@ const AdminUniversityDashboard = () => {
 
   const handleQuickAction = (action) => {
     switch(action) {
-      case 'create-student':
-        navigate('/admin/students/create');
+      case 'manage-classes':
+        navigate('/admin/classes');
         break;
-      case 'create-teacher':
-        navigate('/admin/teachers/create');
+      case 'manage-students':
+        navigate('/admin/manage-students');
         break;
-      case 'create-course':
-        navigate('/admin/courses/create');
+      case 'manage-teachers':
+        navigate('/admin/manage-teachers');
+        break;
+      case 'manage-courses':
+        navigate('/admin/manage-courses');
+        break;
+      case 'parents-list':
+        navigate('/admin/parents');
+        break;
+      case 'rooms-management':
+        navigate('/admin/rooms');
+        break;
+      case 'academic-data':
+        navigate('/admin/academic-data');
         break;
       case 'close-year':
         if (confirm('Êtes-vous sûr de vouloir clôturer l\'année académique ?')) {
@@ -263,28 +279,53 @@ const AdminUniversityDashboard = () => {
 
   const quickActions = [
     {
-      title: 'Créer Étudiant',
-      icon: UserPlus,
-      action: 'create-student',
-      gradient: 'from-blue-500 to-blue-600'
+      title: 'Gestion Classes',
+      icon: Users,
+      action: 'manage-classes',
+      gradient: 'from-orange-500 to-orange-600',
+      description: 'Créer et gérer les classes'
     },
     {
-      title: 'Créer Enseignant',
+      title: 'Gestion Étudiants',
+      icon: Users,
+      action: 'manage-students',
+      gradient: 'from-blue-500 to-blue-600',
+      description: 'Créer et gérer les étudiants'
+    },
+    {
+      title: 'Gestion Enseignants',
       icon: UserCheck,
-      action: 'create-teacher',
-      gradient: 'from-green-500 to-green-600'
+      action: 'manage-teachers',
+      gradient: 'from-green-500 to-green-600',
+      description: 'Créer et gérer les enseignants'
     },
     {
-      title: 'Créer Cours',
-      icon: BookPlus,
-      action: 'create-course',
-      gradient: 'from-purple-500 to-purple-600'
+      title: 'Gestion Cours',
+      icon: BookOpen,
+      action: 'manage-courses',
+      gradient: 'from-purple-500 to-purple-600',
+      description: 'Créer et gérer les cours'
     },
     {
-      title: 'Clôture Année',
-      icon: Calendar,
-      action: 'close-year',
-      gradient: 'from-orange-500 to-orange-600'
+      title: 'Gestion Parents',
+      icon: UsersIcon,
+      action: 'parents-list',
+      gradient: 'from-pink-500 to-rose-600',
+      description: 'Gérer les comptes parents'
+    },
+    {
+      title: 'Gestion Salles',
+      icon: Building2,
+      action: 'rooms-management',
+      gradient: 'from-cyan-500 to-cyan-600',
+      description: 'Gérer les salles de cours'
+    },
+    {
+      title: 'Données Académiques',
+      icon: Settings,
+      action: 'academic-data',
+      gradient: 'from-indigo-500 to-indigo-600',
+      description: 'Gérer les niveaux et semestres'
     }
   ];
 
@@ -505,7 +546,7 @@ const AdminUniversityDashboard = () => {
         {/* Actions Rapides */}
         <div className="animate-fade-in">
           <h2 className="text-2xl font-bold text-white mb-6">Actions Rapides</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quickActions.map((action, index) => (
               <button
                 key={index}
@@ -516,7 +557,8 @@ const AdminUniversityDashboard = () => {
                 <div className={`p-4 rounded-2xl bg-gradient-to-br ${action.gradient} shadow-lg mb-4 inline-flex group-hover:scale-110 transition-transform duration-300`}>
                   <action.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">{action.title}</h3>
+                <h3 className="text-lg font-semibold text-white mb-1">{action.title}</h3>
+                <p className="text-sm text-indigo-200">{action.description}</p>
               </button>
             ))}
           </div>

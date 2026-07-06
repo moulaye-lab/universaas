@@ -441,6 +441,54 @@ export default function TeacherDashboard() {
           </div>
         </div>
 
+        {/* Actions Rapides */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <button
+            onClick={() => navigate('/teacher/grades/input')}
+            className="glass p-6 rounded-2xl hover-lift group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl">
+                <ClipboardCheck className="h-6 w-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900">Saisir des Notes</p>
+                <p className="text-sm text-gray-600">Enregistrer une évaluation</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/teacher/attendance')}
+            className="glass p-6 rounded-2xl hover-lift group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-xl">
+                <UserCheck className="h-6 w-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900">Prendre les Présences</p>
+                <p className="text-sm text-gray-600">Enregistrer les absences</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/teacher/schedule')}
+            className="glass p-6 rounded-2xl hover-lift group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 rounded-xl">
+                <Calendar className="h-6 w-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900">Mon Emploi du Temps</p>
+                <p className="text-sm text-gray-600">Voir mes séances</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
         {/* Mes Cours Section */}
         <div className="glass p-8 rounded-3xl mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -448,10 +496,6 @@ export default function TeacherDashboard() {
               <h3 className="text-2xl font-black text-gray-900 mb-1">Mes Cours</h3>
               <p className="text-gray-600">Gérez vos cours et étudiants</p>
             </div>
-            <button className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Nouveau cours
-            </button>
           </div>
 
           {courses.length === 0 ? (

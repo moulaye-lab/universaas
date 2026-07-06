@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ref, get, onValue } from 'firebase/database';
 import { database } from '../config/firebase';
+import CreateUniversityModal from '../components/CreateUniversityModal';
 import {
   GraduationCap,
   Users,
@@ -49,6 +50,10 @@ export default function SuperAdminDashboard() {
   const [universities, setUniversities] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     // Attendre que userProfile soit chargé
@@ -99,6 +104,10 @@ export default function SuperAdminDashboard() {
           id,
           ...universitiesData[id].info,
         }));
+
+        // Trier par date de création (plus récent en premier)
+        universitiesList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
         setUniversities(universitiesList);
       } else {
         console.log('No universities found');
@@ -117,6 +126,12 @@ export default function SuperAdminDashboard() {
   const handleLogout = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleUniversityCreated = (data) => {
+    setSuccessMessage(`Université "${data.universityName}" créée avec succès ! Email admin: ${data.adminEmail}`);
+    setTimeout(() => setSuccessMessage(''), 8000);
+    loadDashboardData(); // Recharger la liste
   };
 
   const getStatusBadge = (status) => {
@@ -155,6 +170,23 @@ export default function SuperAdminDashboard() {
     const matchesFilter = filterStatus === 'all' || uni.subscriptionStatus === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredUniversities.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUniversities = filteredUniversities.slice(startIndex, endIndex);
+
+  // Reset page quand on change le filtre/recherche
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (value) => {
+    setFilterStatus(value);
+    setCurrentPage(1);
+  };
 
   if (loading) {
     return (
@@ -204,6 +236,14 @@ export default function SuperAdminDashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start gap-3 animate-slide-up">
+            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-green-700 font-medium">{successMessage}</p>
+          </div>
+        )}
+
         {/* Welcome Section */}
         <div className="mb-8 animate-fade-in">
           <h2 className="text-4xl font-black text-gray-900 mb-2">
@@ -289,7 +329,10 @@ export default function SuperAdminDashboard() {
               <h3 className="text-2xl font-black text-gray-900 mb-1">Universités clientes</h3>
               <p className="text-gray-600">Gérez vos clients et abonnements</p>
             </div>
-            <button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg flex items-center gap-2">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg flex items-center gap-2"
+            >
               <Sparkles className="h-5 w-5" />
               Nouvelle université
             </button>
@@ -304,7 +347,7 @@ export default function SuperAdminDashboard() {
                 type="text"
                 placeholder="Rechercher une université..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none"
               />
             </div>
@@ -312,7 +355,7 @@ export default function SuperAdminDashboard() {
             {/* Filter */}
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => handleFilterChange(e.target.value)}
               className="px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none font-medium"
             >
               <option value="all">Tous les statuts</option>
@@ -337,7 +380,7 @@ export default function SuperAdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUniversities.length === 0 ? (
+                {paginatedUniversities.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="text-center py-12">
                       <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -345,7 +388,7 @@ export default function SuperAdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  filteredUniversities.map((uni) => (
+                  paginatedUniversities.map((uni) => (
                     <tr key={uni.id} className="border-b border-gray-100 hover:bg-white/50 transition-colors">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
@@ -392,24 +435,52 @@ export default function SuperAdminDashboard() {
             </table>
           </div>
 
-          {/* Pagination (à implémenter) */}
+          {/* Pagination */}
           {filteredUniversities.length > 0 && (
             <div className="flex items-center justify-between mt-6 pt-6 border-t-2 border-gray-200">
               <p className="text-sm text-gray-600">
-                Affichage de <span className="font-bold">{filteredUniversities.length}</span> universités
+                Affichage de <span className="font-bold">{startIndex + 1}-{Math.min(endIndex, filteredUniversities.length)}</span> sur <span className="font-bold">{filteredUniversities.length}</span> université(s)
               </p>
-              <div className="flex gap-2">
-                <button className="px-4 py-2 bg-white border-2 border-gray-200 rounded-lg font-medium text-gray-600 hover:border-indigo-300 transition-colors">
-                  Précédent
-                </button>
-                <button className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-bold hover:scale-105 transition-all">
-                  Suivant
-                </button>
-              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  {/* Bouton Précédent */}
+                  {currentPage > 1 && (
+                    <button
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      className="px-4 py-2 bg-white border-2 border-gray-200 rounded-lg font-medium text-gray-600 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                    >
+                      Précédent
+                    </button>
+                  )}
+
+                  {/* Indicateur de page */}
+                  <span className="px-4 py-2 text-sm text-gray-600">
+                    Page <span className="font-bold">{currentPage}</span> / {totalPages}
+                  </span>
+
+                  {/* Bouton Suivant */}
+                  {currentPage < totalPages && (
+                    <button
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-bold hover:scale-105 transition-all"
+                    >
+                      Suivant
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
       </main>
+
+      {/* Modal de création d'université */}
+      <CreateUniversityModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleUniversityCreated}
+      />
     </div>
   );
 }

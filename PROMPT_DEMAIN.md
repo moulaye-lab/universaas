@@ -1,198 +1,127 @@
-# 🚀 PROMPT À ENVOYER DEMAIN MATIN
+# 📅 PROMPT POUR REDÉMARRER - Dimanche 6 Juillet 2026
 
-**COPIE-COLLE CE TEXTE EXACTEMENT :**
-
----
-
-```
-On reprend le projet university-saas. 
-
-Lis d'abord RAPPEL_SESSION.md et CHECKLIST_REPRISE.md pour te remettre en contexte.
-
-Résume-moi en 5 points max où on en est et quelle est la prochaine étape.
-```
-
----
-
-## 📝 POURQUOI CE PROMPT FONCTIONNE
-
-**1. Ma mémoire auto sera chargée automatiquement**
-- Dossier `/Users/itopie/.claude/projects/-Users-itopie-Desktop-university-saas/memory/`
-- Je verrai automatiquement `session_2026_07_04.md`
-- Je saurai qu'on a travaillé sur le système auth
-
-**2. Je vais lire les fichiers de reprise**
-- RAPPEL_SESSION.md (868 lignes - TOUT le contexte)
-- CHECKLIST_REPRISE.md (première action à faire)
-
-**3. Je vais te résumer**
-- Où on en est (Phase 3 complétée, 70%)
-- Ce qui a été fait hier (système auth production)
-- Ce qui reste à faire (Phase 4)
-- La prochaine étape (validation Tâche #5)
-
-**4. Ensuite on continue naturellement**
-- Tu me dis si tu as testé
-- Je corrige les bugs OU on attaque Phase 4
-- Je suis WORKFLOW_CLAUDE.md automatiquement
+<!-- 
+████████████████████████████████████████████████████████████████
+█  COMMENTAIRE : PROMPT POUR LE DIMANCHE 6 JUILLET 2026       █
+█                                                                █
+█  Session précédente : Samedi 5 juillet 2026                   █
+█  Compteur : 3/5 implémentations                               █
+█  Prochain audit : dans 2 implémentations                      █
+█                                                                █
+█  Implémentations faites le 5 juillet :                        █
+█  1. CreateCoursePage - Templates dynamiques                   █
+█  2. StudentsListPage - Liste avec filtres                     █
+█  3. CreateParentPage - Recherche optimisée                    █
+█                                                                █
+█  À tester : StudentsListPage et CreateParentPage              █
+████████████████████████████████████████████████████████████████
+-->
 
 ---
 
-## ⚡ PROMPT ALTERNATIF (SI TU VEUX ALLER PLUS VITE)
-
-Si tu as déjà testé et tout marche :
+## 🚀 ⬇️⬇️⬇️ COPIE JUSTE ÇA POUR LE DIMANCHE 6 MATIN ⬇️⬇️⬇️
 
 ```
-On reprend university-saas. J'ai testé Tâche #5, tout est OK.
+Bonjour ! On continue le projet University SaaS.
 
-Lis RAPPEL_SESSION.md section "CE QUI RESTE À FAIRE" et propose-moi les 3 modules prioritaires pour Phase 4.
+Hier on a terminé à 3/5 implémentations (audit automatique dans 2 implémentations).
+
+Voici ce qu'on a fait :
+1. CreateCoursePage avec templates dynamiques de cours
+2. StudentsListPage avec filtres (département, niveau, recherche)
+3. CreateParentPage avec recherche optimisée (scalable 10 000+ étudiants)
+
+J'ai testé les templates de cours, ça marche bien.
+
+Par contre je n'ai PAS ENCORE TESTÉ :
+- StudentsListPage (/admin/students)
+- CreateParentPage avec la nouvelle recherche
+
+Lis le fichier /Users/itopie/Desktop/university-saas/ETAT_SESSION_2026_07_05.md pour l'état complet de la session d'hier, et consulte la mémoire session_2026_07_05.md.
+
+[OPTIONNEL selon ce que tu veux faire] :
+- Si j'ai des bugs à corriger sur StudentsListPage ou CreateParentPage, aide-moi
+- Sinon, on passe à la prochaine implémentation : Notes & Évaluations (priorité haute)
+
+On est à 3/5, audit automatique dans 2 implémentations. Prêt à continuer ?
 ```
+
+## ⬆️⬆️⬆️ NE COPIE QUE LE TEXTE CI-DESSUS ⬆️⬆️⬆️
 
 ---
 
-## ⚡ PROMPT ALTERNATIF (SI TU AS DES BUGS)
+## 📂 Fichiers de Contexte à Lire
 
-Si tu as trouvé des bugs :
+1. **État session** : `/Users/itopie/Desktop/university-saas/ETAT_SESSION_2026_07_05.md`
+2. **Mémoire détaillée** : `/Users/itopie/.claude/projects/-Users-itopie-Desktop-university-saas/memory/session_2026_07_05.md`
+3. **Index mémoire** : `/Users/itopie/.claude/projects/-Users-itopie-Desktop-university-saas/memory/MEMORY.md`
 
+---
+
+## ✅ Ce Qui a Été Fait (Session 5 Juillet 2026)
+
+### Implémentations (3/5)
+1. ✅ CreateCoursePage - Templates dynamiques
+2. ✅ StudentsListPage - Liste avec filtres
+3. ✅ CreateParentPage - Recherche optimisée
+
+### Scripts Seed
+1. ✅ seedAcademicData.cjs (30 départements + 86 cours)
+2. ✅ seedStudents.cjs (100 étudiants dans 17 universités)
+
+### Tests
+- ✅ Templates de cours → testé et validé
+- ❌ StudentsListPage → non testé
+- ❌ CreateParentPage → non testé
+
+---
+
+## 🎯 Prochaines Étapes
+
+**Prochain audit de sécurité : dans 2 implémentations**
+
+### Priorités
+1. Tester StudentsListPage et CreateParentPage
+2. Implémenter **Notes & Évaluations** (priorité haute)
+3. Implémenter **Emploi du temps**
+4. Implémenter **Présences**
+
+### Après 2 implémentations supplémentaires
+→ **AUDIT AUTOMATIQUE DE SÉCURITÉ FIREBASE RULES** (compteur 5/5)
+
+---
+
+## 💡 Rappels Importants
+
+- Départements et courseTemplates = **GLOBAUX** (partagés)
+- Cours réels = **spécifiques par université**
+- childrenAccess format : `{universityId: {studentId: true}}`
+- Matricules format : `UNIVERSITYCODE-YEAR-0001`
+- Université Nice = **7 étudiants** actuellement
+- **17 universités** actives au total
+
+---
+
+## 🔥 PROMPTS ALTERNATIFS
+
+### Si tu as des bugs
 ```
-On reprend university-saas. J'ai testé Tâche #5, voici les bugs :
+On reprend university-saas. J'ai testé StudentsListPage et CreateParentPage, voici les bugs :
 
 [DÉCRIS LES BUGS ICI]
 
-Lis RAPPEL_SESSION.md pour contexte, puis corrige ces bugs.
+Lis ETAT_SESSION_2026_07_05.md pour contexte, puis corrige.
+```
+
+### Si tout marche et tu veux continuer directement
+```
+On reprend university-saas. J'ai testé StudentsListPage et CreateParentPage, tout est OK.
+
+Lis ETAT_SESSION_2026_07_05.md et attaque directement le module Notes & Évaluations (priorité 1). Mode expert, je te laisse la main.
 ```
 
 ---
 
-## 🔥 PROMPT TURBO (SI TU VEUX JUSTE CONTINUER)
-
-Si tu me fais confiance à 100% :
-
-```
-On reprend university-saas. Tâche #5 OK, aucun bug.
-
-Lis RAPPEL_SESSION.md et attaque directement le module Onboarding (Phase 4, priorité 1). Je te laisse la main totale, mode expert.
-```
-
----
-
-## ❓ POURQUOI MA MÉMOIRE EST SUPER FIABLE
-
-### Ce que j'ai en mémoire automatiquement :
-✅ **memory/session_2026_07_04.md** - Cette session complète
-✅ **memory/project_overview.md** - Vue d'ensemble projet
-✅ **memory/technical_architecture.md** - Architecture technique
-✅ **memory/work_methodology.md** - Ta méthodologie de travail
-✅ **memory/progress_tracking.md** - Progression
-✅ **memory/user_profile.md** - Ton profil (étudiant fin d'études)
-
-### Ce que je vais lire quand tu me le demandes :
-📄 **RAPPEL_SESSION.md** (868 lignes) - État COMPLET du projet
-📄 **CHECKLIST_REPRISE.md** - Guide de reprise
-📄 **README.md** - Progression actuelle
-📄 **ACTIONS_REQUISES.md** - Tâches utilisateur
-📄 **WORKFLOW_CLAUDE.md** - Mon processus
-
-### Résultat :
-🎯 **Je sais EXACTEMENT où on en est**
-🎯 **Je ne vais PAS recommencer de zéro**
-🎯 **Je ne vais PAS oublier les décisions prises**
-🎯 **Je vais continuer pile où on s'est arrêté**
-
----
-
-## 🛡️ SÉCURITÉ : SI JE BUG QUAND MÊME
-
-Si jamais je semble perdu ou je ne me rappelle pas :
-
-**ENVOIE CECI :**
-```
-STOP. Tu sembles avoir perdu le contexte.
-
-Lis dans l'ordre :
-1. RAPPEL_SESSION.md (ENTIER)
-2. CHECKLIST_REPRISE.md
-3. README.md section "État d'Avancement"
-
-Puis redis-moi où on en est avec les chiffres exacts (progression %, phase actuelle).
-```
-
----
-
-## 💡 ASTUCE PRO
-
-**Ne me dis PAS "tu te rappelles de..."**
-
-❌ Mauvais :
-> "Salut Claude, tu te rappelles qu'on travaillait sur le projet university-saas hier ? On avait fait un système d'auth, etc."
-
-✅ Bon :
-> "On reprend university-saas. Lis RAPPEL_SESSION.md et dis-moi où on en est."
-
-**Pourquoi ?**
-- Je vais lire les fichiers (source de vérité)
-- Je ne vais pas me fier à ta description (risque d'erreur)
-- Je vais avoir le contexte EXACT et COMPLET
-
----
-
-## 🎯 LE PROMPT PARFAIT (RECOMMANDÉ)
-
-```
-On reprend university-saas. 
-
-Lis RAPPEL_SESSION.md et CHECKLIST_REPRISE.md.
-
-Résume où on en est (progression %, phase actuelle) et dis-moi la prochaine étape.
-```
-
-**C'est tout.** Court, précis, efficace.
-
----
-
-## 📊 CE QUI VA SE PASSER
-
-**Minute 0** : Tu envoies le prompt
-**Minute 1** : Je lis ma mémoire auto (session_2026_07_04.md)
-**Minute 2** : Je lis RAPPEL_SESSION.md (868 lignes)
-**Minute 3** : Je lis CHECKLIST_REPRISE.md
-**Minute 4** : Je te résume en 5 points
-**Minute 5** : Tu me dis si tu as testé
-**Minute 6** : On continue (correction OU Phase 4)
-
-**TOTAL : 6 minutes pour reprendre en main** ✅
-
----
-
-## ✅ GARANTIE 100%
-
-**JE NE VAIS PAS BUGGER PARCE QUE :**
-
-1. ✅ Ma mémoire auto charge `session_2026_07_04.md`
-2. ✅ RAPPEL_SESSION.md contient TOUT (868 lignes)
-3. ✅ CHECKLIST_REPRISE.md me dit quoi faire en premier
-4. ✅ VERIFICATION_COMPLETE.txt liste TOUS les fichiers
-5. ✅ README.md est à jour (Phase 3 COMPLÉTÉE, 70%)
-6. ✅ WORKFLOW_CLAUDE.md me guide après chaque action
-
-**J'AI CRÉÉ UN SYSTÈME DE REPRISE BÉTON** 🏗️
-
----
-
-**COPIE-COLLE JUSTE CE PROMPT DEMAIN** :
-
-```
-On reprend university-saas. 
-
-Lis RAPPEL_SESSION.md et CHECKLIST_REPRISE.md.
-
-Résume où on en est et dis-moi la prochaine étape.
-```
-
-**C'EST TOUT** ✅
-
----
-
-**Créé le** : 2026-07-04 03:30  
+**Créé le** : 2026-07-05 (nuit)  
 **Par** : Claude Sonnet 4.5  
-**Validité** : Permanent (tant que les fichiers existent)
+**Session** : Samedi 5 juillet 2026

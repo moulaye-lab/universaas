@@ -8,86 +8,403 @@
 
       "$universityId": {
         ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).exists())",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+        ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
 
         "info": {
           ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
-          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+          ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
         },
 
         "students": {
+          ".indexOn": ["level", "classId", "status", "enrollmentDate"],
           "$studentId": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'student' && root.child('users').child(auth.uid).child('profileId').val() === $studentId))"
+            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+            ".validate": "newData.hasChildren(['firstName', 'lastName', 'email', 'matricule', 'level', 'fieldOfStudy', 'status'])",
+
+            "firstName": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+            },
+            "lastName": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+            },
+            "email": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/)"
+            },
+            "matricule": {
+              ".validate": "newData.isString() && newData.val().matches(/^[A-Z]{3}-\\d{4}-\\d{6}$/)"
+            },
+            "level": {
+              ".validate": "newData.isString() && newData.val().matches(/^(L1|L2|L3|M1|M2|D1|D2|D3)$/)"
+            },
+            "fieldOfStudy": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "classId": {
+              ".validate": "newData.isString() || !newData.exists()"
+            },
+            "status": {
+              ".validate": "newData.isString() && newData.val().matches(/^(active|inactive|suspended)$/)"
+            },
+            "$other": {
+              ".validate": "newData.isString() || newData.isNumber() || newData.isBoolean() || !newData.exists()"
+            }
           }
         },
 
         "teachers": {
+          ".indexOn": ["department", "specialization", "status"],
           "$teacherId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+            ".validate": "newData.hasChildren(['uid', 'firstName', 'lastName', 'email', 'department'])",
+
+            "uid": {
+              ".validate": "newData.isString() && newData.val() === $teacherId"
+            },
+            "firstName": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+            },
+            "lastName": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+            },
+            "email": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/)"
+            },
+            "department": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+            },
+            "specialization": {
+              ".validate": "newData.isString() && newData.val().length <= 100 || !newData.exists()"
+            },
+            "phoneNumber": {
+              ".validate": "newData.isString() || !newData.exists()"
+            },
+            "assignedCourses": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
+            "status": {
+              ".validate": "newData.isString() && newData.val().matches(/^(active|inactive|suspended)$/) || !newData.exists()"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() || !newData.exists()"
+            },
+            "createdBy": {
+              ".validate": "newData.isString() || !newData.exists()"
+            },
+            "$other": {
+              ".validate": "newData.isString() || newData.isNumber() || newData.isBoolean() || !newData.exists()"
+            }
+          }
+        },
+
+        "rooms": {
+          ".indexOn": ["building", "floor", "capacity", "type", "status"],
+          "$roomId": {
+            ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+            ".validate": "newData.hasChildren(['id', 'name', 'capacity'])",
+
+            "id": {
+              ".validate": "newData.isString() && newData.val() === $roomId"
+            },
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+            },
+            "capacity": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1000"
+            },
+            "building": {
+              ".validate": "newData.isString() && newData.val().length <= 50 || !newData.exists()"
+            },
+            "floor": {
+              ".validate": "(newData.isString() || newData.isNumber()) || !newData.exists()"
+            },
+            "type": {
+              ".validate": "newData.isString() && newData.val().matches(/^(amphitheater|classroom|laboratory|conference_room|office)$/) || !newData.exists()"
+            },
+            "equipment": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
+            "status": {
+              ".validate": "newData.isString() && newData.val().matches(/^(available|occupied|maintenance|reserved)$/) || !newData.exists()"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() || !newData.exists()"
+            },
+            "updatedAt": {
+              ".validate": "newData.isNumber() || !newData.exists()"
+            },
+            "$other": {
+              ".validate": "newData.isString() || newData.isNumber() || newData.isBoolean() || !newData.exists()"
+            }
           }
         },
 
         "courses": {
+          ".indexOn": ["teacherId", "department", "level", "semester"],
           "$courseId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+            ".validate": "newData.hasChildren(['id', 'name', 'code', 'credits'])",
+
+            "id": {
+              ".validate": "newData.isString() && newData.val() === $courseId"
+            },
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+            },
+            "code": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+            },
+            "credits": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 30"
+            },
+            "teacherId": {
+              ".validate": "newData.isString() || !newData.exists()"
+            },
+            "teacherName": {
+              ".validate": "newData.isString() || !newData.exists()"
+            },
+            "department": {
+              ".validate": "newData.isString() && newData.val().length <= 100 || !newData.exists()"
+            },
+            "level": {
+              ".validate": "newData.isString() && newData.val().matches(/^(L1|L2|L3|M1|M2|D1|D2|D3)$/) || !newData.exists()"
+            },
+            "semester": {
+              ".validate": "newData.isNumber() && (newData.val() === 1 || newData.val() === 2) || !newData.exists()"
+            },
+            "description": {
+              ".validate": "newData.isString() && newData.val().length <= 1000 || !newData.exists()"
+            },
+            "prerequisites": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
+            "status": {
+              ".validate": "newData.isString() && newData.val().matches(/^(active|inactive|archived)$/) || !newData.exists()"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() || !newData.exists()"
+            },
+            "updatedAt": {
+              ".validate": "newData.isNumber() || !newData.exists()"
+            },
+            "$other": {
+              ".validate": "newData.isString() || newData.isNumber() || newData.isBoolean() || !newData.exists()"
+            }
+          }
+        },
+
+        "classes": {
+          ".indexOn": ["level", "domain", "status", "createdAt"],
+          "$classId": {
+            ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+            ".validate": "newData.hasChildren(['id', 'name', 'level', 'domain', 'capacity', 'occupiedSeats', 'status'])",
+
+            "id": {
+              ".validate": "newData.isString() && newData.val() === $classId"
+            },
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+            },
+            "level": {
+              ".validate": "newData.isString() && newData.val().matches(/^(L1|L2|L3|M1|M2|D1|D2|D3)$/)"
+            },
+            "domain": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+            },
+            "capacity": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 500"
+            },
+            "occupiedSeats": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= parent().child('capacity').val()"
+            },
+            "classNumber": {
+              ".validate": "newData.isString() || newData.isNumber()"
+            },
+            "students": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
+            "schedule": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
+            "period": {
+              ".validate": "newData.hasChildren(['start', 'end'])",
+              "start": {
+                ".validate": "newData.isString()"
+              },
+              "end": {
+                ".validate": "newData.isString()"
+              }
+            },
+            "status": {
+              ".validate": "newData.isString() && newData.val().matches(/^(active|inactive)$/)"
+            },
+            "academicYear": {
+              ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{4}$/)"
+            },
+            "description": {
+              ".validate": "newData.isString() && newData.val().length <= 500"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "updatedAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "createdBy": {
+              ".validate": "newData.isString()"
+            },
+            "$other": {
+              ".validate": false
+            }
           }
         },
 
         "grades": {
-          "$studentId": {
-            ".read": "auth != null && (root.child('users').child(auth.uid).child('profileId').val() === $studentId || root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || (root.child('users').child(auth.uid).child('role').val() === 'student' && root.child('users').child(auth.uid).child('profileId').val() === $studentId))"
+          ".indexOn": ["studentId", "courseId", "classId", "date"],
+          "$gradeId": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'student' && data.child('studentId').val() === root.child('users').child(auth.uid).child('profileId').val()) || (root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child(data.child('studentId').val()).val() === true)",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')",
+            ".validate": "newData.hasChildren(['studentId', 'courseId', 'courseName', 'classId', 'className', 'title', 'gradeType', 'grade', 'maxGrade', 'coefficient', 'date'])",
+
+            "studentId": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "courseId": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "courseName": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+            },
+            "classId": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "className": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+            },
+            "title": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+            },
+            "gradeType": {
+              ".validate": "newData.isString() && newData.val().matches(/^(exam|homework|continuous_assessment|project|oral|practical)$/)"
+            },
+            "grade": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= parent().child('maxGrade').val()"
+            },
+            "maxGrade": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100"
+            },
+            "coefficient": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 10"
+            },
+            "date": {
+              ".validate": "newData.isNumber() && newData.val() <= now"
+            },
+            "teacherId": {
+              ".validate": "newData.isString() || !newData.exists()"
+            },
+            "teacherName": {
+              ".validate": "newData.isString() || !newData.exists()"
+            },
+            "semester": {
+              ".validate": "newData.isNumber() && (newData.val() === 1 || newData.val() === 2) || !newData.exists()"
+            },
+            "comments": {
+              ".validate": "newData.isString() && newData.val().length <= 500 || !newData.exists()"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() || !newData.exists()"
+            },
+            "createdBy": {
+              ".validate": "newData.isString() || !newData.exists()"
+            },
+            "$other": {
+              ".validate": false
+            }
           }
         },
 
         "payments": {
           "$studentId": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('profileId').val() === $studentId || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || (root.child('users').child(auth.uid).child('role').val() === 'student' && root.child('users').child(auth.uid).child('profileId').val() === $studentId))"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && root.child('users').child(auth.uid).child('role').val() === 'admin_universite'"
           }
         },
 
         "liveSessions": {
           "$sessionId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
           }
         },
 
         "notifications": {
           "$notifId": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).exists())",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher')"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher')"
           }
         },
 
         "library": {
           "$resourceId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
           }
         },
 
         "audit": {
-          ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin_universite'",
-          ".write": "auth != null"
+          ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+          ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
         }
       }
     },
 
     "users": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child($uid).child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val()))",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child($uid).child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val()))",
+
+        "displayName": {
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "photoURL": {
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "phone": {
+          ".write": "auth != null && auth.uid === $uid"
+        },
+
+        "role": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'"
+        },
+        "universityId": {
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+        },
+        "profileId": {
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+        },
+        "childrenAccess": {
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')"
+        }
       }
     },
 
     "platform": {
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'"
+    },
+
+    "departments": {
+      ".read": "auth != null",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+    },
+
+    "courseTemplates": {
+      ".read": "auth != null",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
     }
   }
 }
