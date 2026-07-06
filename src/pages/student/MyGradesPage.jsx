@@ -112,8 +112,10 @@ export default function MyGradesPage() {
     const types = {
       exam: { label: 'Examen', color: 'bg-purple-100 text-purple-700' },
       homework: { label: 'Devoir', color: 'bg-blue-100 text-blue-700' },
-      quiz: { label: 'CC', color: 'bg-green-100 text-green-700' },
-      project: { label: 'Projet', color: 'bg-orange-100 text-orange-700' }
+      continuous_assessment: { label: 'CC', color: 'bg-green-100 text-green-700' },
+      project: { label: 'Projet', color: 'bg-orange-100 text-orange-700' },
+      oral: { label: 'Oral', color: 'bg-pink-100 text-pink-700' },
+      practical: { label: 'TP', color: 'bg-teal-100 text-teal-700' }
     };
     return types[type] || types.exam;
   };

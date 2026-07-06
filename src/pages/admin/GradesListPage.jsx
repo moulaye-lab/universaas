@@ -117,7 +117,7 @@ export default function GradesListPage() {
         const types = {
           exam: { label: 'Examen', color: 'bg-purple-100 text-purple-700' },
           homework: { label: 'Devoir', color: 'bg-blue-100 text-blue-700' },
-          quiz: { label: 'CC', color: 'bg-green-100 text-green-700' },
+          continuous_assessment: { label: 'CC', color: 'bg-green-100 text-green-700' },
           project: { label: 'Projet', color: 'bg-orange-100 text-orange-700' },
           oral: { label: 'Oral', color: 'bg-pink-100 text-pink-700' },
           practical: { label: 'TP', color: 'bg-teal-100 text-teal-700' }
@@ -233,7 +233,7 @@ export default function GradesListPage() {
     gradeTypes: [
       { value: 'exam', label: 'Examen' },
       { value: 'homework', label: 'Devoir' },
-      { value: 'quiz', label: 'Contrôle continu' },
+      { value: 'continuous_assessment', label: 'Contrôle continu' },
       { value: 'project', label: 'Projet' },
       { value: 'oral', label: 'Oral' },
       { value: 'practical', label: 'TP' }

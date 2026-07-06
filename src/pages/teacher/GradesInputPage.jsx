@@ -336,8 +336,10 @@ export default function GradesInputPage() {
                     >
                       <option value="exam">Examen</option>
                       <option value="homework">Devoir</option>
-                      <option value="quiz">Contrôle continu</option>
+                      <option value="continuous_assessment">Contrôle continu</option>
                       <option value="project">Projet</option>
+                      <option value="oral">Oral</option>
+                      <option value="practical">TP</option>
                     </select>
                   </div>
 
