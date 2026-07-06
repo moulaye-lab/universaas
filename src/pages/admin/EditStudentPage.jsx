@@ -16,7 +16,7 @@ import AdminLayout from '../../components/AdminLayout';
 export default function EditStudentPage() {
   const navigate = useNavigate();
   const { studentId } = useParams();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
 
   const [student, setStudent] = useState(null);
   const [availableClasses, setAvailableClasses] = useState([]);
