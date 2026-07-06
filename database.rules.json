@@ -16,6 +16,7 @@
         },
 
         "students": {
+          ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
           ".indexOn": ["level", "classId", "status", "enrollmentDate", "academicYear", "fieldOfStudy", "department", "lastName"],
           "$studentId": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
@@ -53,6 +54,7 @@
         },
 
         "teachers": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
           ".indexOn": ["department", "specialization", "status", "academicYear", "lastName"],
           "$teacherId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
@@ -142,6 +144,7 @@
         },
 
         "courses": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
           ".indexOn": ["teacherId", "level", "semester", "status", "academicYear", "department", "fieldOfStudy", "name"],
           "$courseId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
@@ -197,6 +200,7 @@
         },
 
         "classes": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
           ".indexOn": ["level", "domain", "status", "createdAt"],
           "$classId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
