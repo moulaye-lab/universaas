@@ -20,6 +20,7 @@ const ParentDashboard = () => {
   const navigate = useNavigate();
   const { userProfile, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [children, setChildren] = useState([]);
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [selectedChild, setSelectedChild] = useState(null);
   const [studentData, setStudentData] = useState(null);
@@ -32,13 +33,53 @@ const ParentDashboard = () => {
     overduePayments: 0
   });
 
+  // Charger les enfants depuis childrenAccess
   useEffect(() => {
-    if (userProfile?.children && userProfile.children.length > 0) {
-      setSelectedChildId(userProfile.children[0].childId);
-      setSelectedChild(userProfile.children[0]);
-    } else {
-      setLoading(false);
-    }
+    const loadChildren = async () => {
+      if (!userProfile?.childrenAccess) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const childrenList = [];
+
+        // Parcourir toutes les universités
+        for (const [universityId, studentsObj] of Object.entries(userProfile.childrenAccess)) {
+          // Parcourir tous les étudiants de cette université
+          for (const studentId of Object.keys(studentsObj)) {
+            // Charger les infos de l'étudiant
+            const studentRef = ref(database, `universities/${universityId}/students/${studentId}`);
+            const studentSnap = await get(studentRef);
+
+            if (studentSnap.exists()) {
+              const studentData = studentSnap.val();
+              childrenList.push({
+                childId: studentId,
+                childName: `${studentData.firstName} ${studentData.lastName}`,
+                universityId: universityId,
+                relationship: 'parent', // Valeur par défaut
+                studentData: studentData
+              });
+            }
+          }
+        }
+
+        setChildren(childrenList);
+
+        // Sélectionner le premier enfant par défaut
+        if (childrenList.length > 0) {
+          setSelectedChildId(childrenList[0].childId);
+          setSelectedChild(childrenList[0]);
+        }
+      } catch (error) {
+        console.error('Error loading children:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChildren();
   }, [userProfile]);
 
   useEffect(() => {
@@ -183,7 +224,7 @@ const ParentDashboard = () => {
   const handleChildChange = (e) => {
     const childId = e.target.value;
     setSelectedChildId(childId);
-    const child = userProfile.children.find(c => c.childId === childId);
+    const child = children.find(c => c.childId === childId);
     setSelectedChild(child);
   };
 
@@ -204,7 +245,7 @@ const ParentDashboard = () => {
     );
   }
 
-  if (!userProfile?.children || userProfile.children.length === 0) {
+  if (!children || children.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl p-8 max-w-md text-center shadow-2xl">
@@ -266,7 +307,7 @@ const ParentDashboard = () => {
               onChange={handleChildChange}
               className="w-full md:w-1/2 px-4 py-4 bg-gray-50 border-2 border-gray-300 rounded-xl text-gray-900 font-semibold text-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all outline-none cursor-pointer"
             >
-              {userProfile.children.map(child => (
+              {children.map(child => (
                 <option key={child.childId} value={child.childId}>
                   {child.childName} - {child.universityId.replace('univ-', '').replace('-', ' ')}
                 </option>

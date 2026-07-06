@@ -44,3 +44,37 @@ ui-debug.log
 # Misc
 *.pem
 .cache
+
+# ⚠️ FICHIERS SENSIBLES - NE JAMAIS COMMITER
+# Firebase service account (credentials)
+scripts/service-account.json
+**/service-account.json
+
+# Secrets et clés
+SECURITY_SECRETS.md
+**/secrets.md
+*.key
+*.secret
+
+# Claude Code
+.claude/
+
+# Fichiers temporaires de développement
+check_student.js
+scripts/testPhoneValidation.js
+scripts/checkStudent.cjs
+scripts/deleteParent1.cjs
+scripts/deleteSpecificParent.cjs
+scripts/cleanDuplicateParents.cjs
+
+# Documentation technique interne (optionnel - à garder si public)
+# AUDIT_*.md
+# VERIFICATION_*.md
+# PLAN_*.md
+# PROCESS_*.md
+# ETAT_*.md
+# PROGRESS_*.md
+# ROADMAP_*.md
+
+# Fichiers de test/debug
+test-firebase-rules.mjs
