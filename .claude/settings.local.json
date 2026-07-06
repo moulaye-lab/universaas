@@ -18,7 +18,8 @@
       "Bash(chmod +x *)",
       "Bash(git commit -m '✨ Feat: Script migration academicYear pour étudiants existants *)",
       "Bash(node *)",
-      "Bash(git commit -m '✨ Feat: Interface web migration academicYear *)"
+      "Bash(git commit -m '✨ Feat: Interface web migration academicYear *)",
+      "Bash(git commit -m '🔒 Fix: Ajout .write au niveau collections pour admins *)"
     ]
   }
 }
