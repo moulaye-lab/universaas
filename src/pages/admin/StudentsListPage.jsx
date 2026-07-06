@@ -148,8 +148,9 @@ export default function StudentsListPage() {
       filters={['academicYear', 'department', 'fieldOfStudy', 'level', 'status']}
       availableOptions={availableOptions}
       defaultFilters={{
-        status: 'active',
-        academicYear: getCurrentAcademicYear() // Année en cours automatique
+        // Temporairement désactivé pour debug - voir TOUS les étudiants
+        // status: 'active',
+        // academicYear: getCurrentAcademicYear()
       }}
 
       searchFields={['firstName', 'lastName', 'matricule', 'email']}
