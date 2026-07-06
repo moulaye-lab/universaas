@@ -15,11 +15,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, UserPlus, Trash2 } from 'lucide-react';
+import { Eye, UserPlus, Trash2, Search } from 'lucide-react';
 import { ref, get, update, remove } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import AdvancedListView from '../../components/listing/AdvancedListView';
+import { getAcademicYears, getCurrentAcademicYear } from '../../utils/academicYearHelper';
+import useDynamicFilterOptions from '../../hooks/useDynamicFilterOptions';
 
 export default function ParentsListPage() {
   const navigate = useNavigate();
@@ -27,6 +28,15 @@ export default function ParentsListPage() {
 
   const [parents, setParents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    academicYear: getCurrentAcademicYear(),
+    level: '',
+    fieldOfStudy: ''
+  });
+
+  // Charger les options de filtres dynamiquement
+  const { fieldOfStudies } = useDynamicFilterOptions(userProfile?.universityId);
 
   // Charger les parents depuis les étudiants
   useEffect(() => {
@@ -59,7 +69,8 @@ export default function ParentsListPage() {
                       id: studentId,
                       name: `${studentData.firstName} ${studentData.lastName}`,
                       level: studentData.level,
-                      fieldOfStudy: studentData.fieldOfStudy
+                      fieldOfStudy: studentData.fieldOfStudy,
+                      academicYear: studentData.academicYear
                     }],
                     status: 'active', // Par défaut
                     createdAt: parent.createdAt || Date.now()
@@ -71,7 +82,8 @@ export default function ParentsListPage() {
                     id: studentId,
                     name: `${studentData.firstName} ${studentData.lastName}`,
                     level: studentData.level,
-                    fieldOfStudy: studentData.fieldOfStudy
+                    fieldOfStudy: studentData.fieldOfStudy,
+                    academicYear: studentData.academicYear
                   });
                 }
               });
@@ -90,6 +102,42 @@ export default function ParentsListPage() {
 
     loadParents();
   }, [userProfile]);
+
+  // Filtrage et recherche des parents
+  const filteredParents = useMemo(() => {
+    let result = parents;
+
+    // Recherche
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(parent =>
+        parent.displayName.toLowerCase().includes(query) ||
+        parent.phone.includes(query) ||
+        parent.email.toLowerCase().includes(query)
+      );
+    }
+
+    // Filtres hiérarchiques (basés sur les enfants)
+    if (filters.academicYear) {
+      result = result.filter(parent =>
+        parent.children.some(child => child.academicYear === filters.academicYear)
+      );
+    }
+
+    if (filters.level) {
+      result = result.filter(parent =>
+        parent.children.some(child => child.level === filters.level)
+      );
+    }
+
+    if (filters.fieldOfStudy) {
+      result = result.filter(parent =>
+        parent.children.some(child => child.fieldOfStudy === filters.fieldOfStudy)
+      );
+    }
+
+    return result;
+  }, [parents, searchQuery, filters]);
 
   // Configuration des colonnes
   const columns = [
@@ -251,7 +299,7 @@ export default function ParentsListPage() {
                 <div>
                   <h1 className="text-3xl font-black text-gray-900">👨‍👩‍👧 Gestion des Parents</h1>
                   <p className="text-gray-600 mt-1">
-                    {parents.length} parent{parents.length > 1 ? 's' : ''} trouvé{parents.length > 1 ? 's' : ''}
+                    {filteredParents.length} parent{filteredParents.length > 1 ? 's' : ''} trouvé{filteredParents.length > 1 ? 's' : ''} sur {parents.length}
                   </p>
                 </div>
                 <button
@@ -261,6 +309,57 @@ export default function ParentsListPage() {
                   <UserPlus className="w-5 h-5" />
                   Créer Parent
                 </button>
+              </div>
+
+              {/* Filtres et recherche */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Recherche */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher par nom, téléphone..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                  />
+                </div>
+
+                {/* Filtre Année */}
+                <select
+                  value={filters.academicYear}
+                  onChange={(e) => setFilters({ ...filters, academicYear: e.target.value })}
+                  className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                >
+                  <option value="">Toutes les années</option>
+                  {getAcademicYears(5, 2).map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+
+                {/* Filtre Filière */}
+                <select
+                  value={filters.fieldOfStudy}
+                  onChange={(e) => setFilters({ ...filters, fieldOfStudy: e.target.value })}
+                  className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                >
+                  <option value="">Toutes les filières</option>
+                  {fieldOfStudies.map(field => (
+                    <option key={field.value} value={field.value}>{field.label}</option>
+                  ))}
+                </select>
+
+                {/* Filtre Niveau */}
+                <select
+                  value={filters.level}
+                  onChange={(e) => setFilters({ ...filters, level: e.target.value })}
+                  className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                >
+                  <option value="">Tous les niveaux</option>
+                  {['L1', 'L2', 'L3', 'M1', 'M2', 'D1', 'D2', 'D3'].map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -280,7 +379,7 @@ export default function ParentsListPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {parents.map(parent => (
+                  {filteredParents.map(parent => (
                     <tr key={parent.id} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
                       {columns.map(col => (
                         <td key={col.key} className="px-4 py-4">

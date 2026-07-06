@@ -16,10 +16,15 @@ import { ref, remove } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdvancedListView from '../../components/listing/AdvancedListView';
+import useDynamicFilterOptions from '../../hooks/useDynamicFilterOptions';
+import { getAcademicYears, getCurrentAcademicYear } from '../../utils/academicYearHelper';
 
 export default function CoursesListPage() {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
+
+  // Charger les options de filtres dynamiquement depuis Firebase
+  const { departments, fieldOfStudies } = useDynamicFilterOptions(userProfile?.universityId);
 
   // Configuration des colonnes
   const columns = [
@@ -125,7 +130,14 @@ export default function CoursesListPage() {
 
   // Options de filtres
   const availableOptions = {
+    academicYears: getAcademicYears(5, 2),
+    departments: departments,
+    fieldOfStudies: fieldOfStudies,
     levels: ['L1', 'L2', 'L3', 'M1', 'M2', 'D1', 'D2', 'D3'],
+    semesters: [
+      { value: '1', label: 'Semestre 1' },
+      { value: '2', label: 'Semestre 2' }
+    ],
     statuses: [
       { value: 'active', label: 'Actif' },
       { value: 'inactive', label: 'Inactif' },
@@ -141,9 +153,12 @@ export default function CoursesListPage() {
 
       columns={columns}
 
-      filters={['level', 'status']}
+      filters={['academicYear', 'department', 'fieldOfStudy', 'level', 'semester', 'status']}
       availableOptions={availableOptions}
-      defaultFilters={{ status: 'active' }}
+      defaultFilters={{
+        status: 'active',
+        academicYear: getCurrentAcademicYear()
+      }}
 
       searchFields={['name', 'code', 'teacherName', 'department']}
       searchPlaceholder="Rechercher par nom, code, enseignant..."

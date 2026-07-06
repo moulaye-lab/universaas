@@ -16,11 +16,15 @@ import { ref, remove } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdvancedListView from '../../components/listing/AdvancedListView';
-import { getCurrentAcademicYear } from '../../utils/academicYearHelper';
+import { getAcademicYears, getCurrentAcademicYear } from '../../utils/academicYearHelper';
+import useDynamicFilterOptions from '../../hooks/useDynamicFilterOptions';
 
 export default function TeachersListPage() {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
+
+  // Charger les options de filtres dynamiquement depuis Firebase
+  const { departments } = useDynamicFilterOptions(userProfile?.universityId);
 
   // Configuration des colonnes
   const columns = [
@@ -128,6 +132,8 @@ export default function TeachersListPage() {
 
   // Options de filtres
   const availableOptions = {
+    academicYears: getAcademicYears(5, 2),
+    departments: departments,
     statuses: [
       { value: 'active', label: 'Actif' },
       { value: 'inactive', label: 'Inactif' },
@@ -143,9 +149,12 @@ export default function TeachersListPage() {
 
       columns={columns}
 
-      filters={['status']}
+      filters={['academicYear', 'department', 'status']}
       availableOptions={availableOptions}
-      defaultFilters={{ status: 'active' }}
+      defaultFilters={{
+        status: 'active',
+        academicYear: getCurrentAcademicYear()
+      }}
 
       searchFields={['firstName', 'lastName', 'email', 'specialization', 'department']}
       searchPlaceholder="Rechercher par nom, email, spécialisation..."

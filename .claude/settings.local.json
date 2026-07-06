@@ -6,7 +6,9 @@
       "Bash(git push *)",
       "Bash(git rebase *)",
       "Bash(git pull *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
