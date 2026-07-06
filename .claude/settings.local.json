@@ -30,7 +30,8 @@
       "Bash(cat)",
       "Read(//tmp/**)",
       "Bash(git commit -m 'Debug: Ajouter logs pour diagnostiquer PERMISSION_DENIED *)",
-      "Bash(git commit -m 'Fix: Ajouter currentUser manquant dans EditStudentPage *)"
+      "Bash(git commit -m 'Fix: Ajouter currentUser manquant dans EditStudentPage *)",
+      "Bash(git commit -m 'Setup: Firebase CLI auto-deploy + fichier Rules sur Desktop *)"
     ]
   }
 }

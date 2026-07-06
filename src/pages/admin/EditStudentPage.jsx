@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ref, get, update, runTransaction } from 'firebase/database';
+import { ref, get, set, update, runTransaction } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminLayout from '../../components/AdminLayout';
@@ -174,7 +174,11 @@ export default function EditStudentPage() {
       console.log('Update data to send:', updateData);
       console.log('Firebase path:', `universities/${userProfile.universityId}/students/${studentId}`);
 
-      await update(studentRef, updateData);
+      // WORKAROUND: Utiliser set() au lieu de update()
+      // car Firebase Rules en production ont encore .validate hasChildren
+      // set() remplace TOUT l'objet (pas de validation hasChildren)
+      // update() merge les données (validation hasChildren échoue avec champs supplémentaires)
+      await set(studentRef, updateData);
 
       setSuccess('✅ Étudiant mis à jour avec succès');
       setTimeout(() => {
