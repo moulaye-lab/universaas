@@ -226,6 +226,7 @@ export default function CreateStudentPage() {
         level: formData.level,
         fieldOfStudy: formData.fieldOfStudy,
         classId: formData.classId,
+        academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
         status: 'active',
         enrollmentDate: Date.now(),
         absences: 0,
