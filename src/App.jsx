@@ -40,6 +40,7 @@ import ManageTeachersPage from './pages/admin/ManageTeachersPage';
 import ManageCoursesPage from './pages/admin/ManageCoursesPage';
 import GradesInputPage from './pages/teacher/GradesInputPage';
 import MyGradesPage from './pages/student/MyGradesPage';
+import GradesListPage from './pages/admin/GradesListPage';
 import MigrateAcademicYearPage from './pages/admin/MigrateAcademicYearPage';
 import './App.css';
 
@@ -248,6 +249,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin_universite']}>
                 <ManageAcademicDataPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/grades"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <GradesListPage />
               </ProtectedRoute>
             }
           />
