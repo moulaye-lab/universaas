@@ -42,6 +42,7 @@ import GradesInputPage from './pages/teacher/GradesInputPage';
 import MyGradesPage from './pages/student/MyGradesPage';
 import GradesListPage from './pages/admin/GradesListPage';
 import EditGradePage from './pages/admin/EditGradePage';
+import ParentGradesPage from './pages/parent/ParentGradesPage';
 import MigrateAcademicYearPage from './pages/admin/MigrateAcademicYearPage';
 import './App.css';
 
@@ -306,6 +307,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['parent']}>
                 <ParentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/parent/grades"
+            element={
+              <ProtectedRoute allowedRoles={['parent']}>
+                <ParentGradesPage />
               </ProtectedRoute>
             }
           />
