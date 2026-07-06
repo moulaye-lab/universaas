@@ -65,8 +65,13 @@ export default function useFirebasePagination({
 
       if (activeFilters.length > 0) {
         // Firebase ne supporte qu'un seul orderBy/filter à la fois
-        // On prend le premier filtre et on fait le reste côté client
-        const [filterKey, filterValue] = activeFilters[0];
+        // IMPORTANT: Choisir intelligemment le filtre à utiliser dans Firebase
+        // Priorité aux champs présents sur 100% des entités pour éviter exclusions
+        const filterPriority = ['status', 'level', 'fieldOfStudy', 'department', 'academicYear'];
+
+        const bestFilter = activeFilters.find(([key]) => filterPriority.includes(key));
+        const [filterKey, filterValue] = bestFilter || activeFilters[0];
+
         dataQuery = query(
           collectionRef,
           orderByChild(filterKey),
