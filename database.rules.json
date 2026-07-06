@@ -22,7 +22,6 @@
           "$studentId": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
             ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
-            ".validate": "newData.hasChildren(['firstName', 'lastName', 'email', 'matricule', 'level', 'fieldOfStudy', 'status'])",
 
             "firstName": {
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
