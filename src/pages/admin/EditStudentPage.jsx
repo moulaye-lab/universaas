@@ -144,8 +144,10 @@ export default function EditStudentPage() {
       }
 
       // Mettre à jour les informations de l'étudiant
+      // IMPORTANT: Utiliser set() avec toutes les données car Firebase Rules validate ALL children
       const studentRef = ref(database, `universities/${userProfile.universityId}/students/${studentId}`);
       await update(studentRef, {
+        ...student, // Conserver toutes les données existantes
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
