@@ -13,6 +13,8 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { Download } from 'lucide-react';
+import { generateReportCard, getMention, getSuccessRate } from '../../utils/pdfExporter';
 
 export default function MyGradesPage() {
   const navigate = useNavigate();
@@ -133,6 +135,47 @@ export default function MyGradesPage() {
 
   const generalAverage = calculateGeneralAverage();
 
+  // Export PDF bulletin
+  const handleExportPDF = () => {
+    if (grades.length === 0) {
+      alert('Aucune note à exporter');
+      return;
+    }
+
+    const averagesData = {
+      overall: generalAverage,
+      successRate: getSuccessRate(grades),
+      mention: getMention(generalAverage)
+    };
+
+    const universityData = {
+      name: userProfile.universityName || 'Université',
+      academicYear: getCurrentAcademicYear()
+    };
+
+    const studentData = {
+      firstName: userProfile.firstName,
+      lastName: userProfile.lastName,
+      matricule: userProfile.matricule || 'N/A',
+      level: userProfile.level || 'N/A',
+      fieldOfStudy: userProfile.fieldOfStudy || 'N/A',
+      className: userProfile.className || 'Non assigné'
+    };
+
+    generateReportCard(studentData, grades, universityData, averagesData);
+  };
+
+  const getCurrentAcademicYear = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    if (currentMonth >= 8) {
+      return `${currentYear}-${currentYear + 1}`;
+    } else {
+      return `${currentYear - 1}-${currentYear}`;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -146,12 +189,23 @@ export default function MyGradesPage() {
               {filteredGrades.length} note{filteredGrades.length > 1 ? 's' : ''} enregistrée{filteredGrades.length > 1 ? 's' : ''}
             </p>
           </div>
-          <button
-            onClick={() => navigate('/dashboard/student')}
-            className="px-6 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold shadow"
-          >
-            ← Retour
-          </button>
+          <div className="flex gap-3">
+            {grades.length > 0 && (
+              <button
+                onClick={handleExportPDF}
+                className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-semibold shadow"
+              >
+                <Download className="w-5 h-5" />
+                Télécharger bulletin PDF
+              </button>
+            )}
+            <button
+              onClick={() => navigate('/dashboard/student')}
+              className="px-6 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold shadow"
+            >
+              ← Retour
+            </button>
+          </div>
         </div>
 
         {error && (

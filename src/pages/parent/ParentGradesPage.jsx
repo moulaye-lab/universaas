@@ -16,8 +16,9 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { exportToCSV } from '../../utils/gradesCalculator';
+import { generateReportCard, getMention, getSuccessRate } from '../../utils/pdfExporter';
 
 export default function ParentGradesPage() {
   const navigate = useNavigate();
@@ -206,7 +207,7 @@ export default function ParentGradesPage() {
   };
 
   // Export CSV
-  const handleExport = () => {
+  const handleExportCSV = () => {
     if (filteredGrades.length === 0) {
       alert('Aucune note à exporter');
       return;
@@ -214,6 +215,47 @@ export default function ParentGradesPage() {
 
     const filename = `notes_${selectedChild?.name.replace(/\s/g, '_')}_${Date.now()}`;
     exportToCSV(filteredGrades, filename);
+  };
+
+  // Export PDF bulletin
+  const handleExportPDF = () => {
+    if (grades.length === 0) {
+      alert('Aucune note à exporter');
+      return;
+    }
+
+    const averagesData = {
+      overall: calculateGeneralAverage(),
+      successRate: calculateStats()?.successRate || 0,
+      mention: getMention(calculateGeneralAverage())
+    };
+
+    const universityData = {
+      name: 'Université', // TODO: Charger depuis Firebase
+      academicYear: getCurrentAcademicYear()
+    };
+
+    const studentData = {
+      firstName: selectedChild.firstName,
+      lastName: selectedChild.lastName,
+      matricule: selectedChild.matricule || 'N/A',
+      level: selectedChild.level || 'N/A',
+      fieldOfStudy: selectedChild.fieldOfStudy || 'N/A',
+      className: selectedChild.className || 'Non assigné'
+    };
+
+    generateReportCard(studentData, grades, universityData, averagesData);
+  };
+
+  const getCurrentAcademicYear = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    if (currentMonth >= 8) {
+      return `${currentYear}-${currentYear + 1}`;
+    } else {
+      return `${currentYear - 1}-${currentYear}`;
+    }
   };
 
   if (loading && children.length === 0) {
@@ -378,11 +420,18 @@ export default function ParentGradesPage() {
             </div>
           )}
 
-          {/* Bouton export */}
+          {/* Boutons export */}
           {grades.length > 0 && (
-            <div className="glass rounded-2xl p-4">
+            <div className="glass rounded-2xl p-4 flex gap-3">
               <button
-                onClick={handleExport}
+                onClick={handleExportPDF}
+                className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition font-semibold"
+              >
+                <FileText className="w-5 h-5" />
+                Bulletin PDF
+              </button>
+              <button
+                onClick={handleExportCSV}
                 className="flex items-center gap-2 px-6 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-semibold"
               >
                 <Download className="w-5 h-5" />
