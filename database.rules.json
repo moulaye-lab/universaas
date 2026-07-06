@@ -143,7 +143,6 @@
 
         "courses": {
           ".indexOn": ["teacherId", "level", "semester", "status", "academicYear", "department", "fieldOfStudy", "name"],
-          ".indexOn": ["teacherId", "department", "level", "semester"],
           "$courseId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
             ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
