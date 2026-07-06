@@ -26,7 +26,10 @@
       "Bash(git commit -m '📝 Sauvegarde session: Système filtres + année académique *)",
       "Bash(git commit -m '🔒 Audit sécurité 2026-07-06 + Corrections *)",
       "Bash(npm list *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(git commit -m 'Debug: Ajouter logs pour diagnostiquer PERMISSION_DENIED *)"
     ]
   }
 }

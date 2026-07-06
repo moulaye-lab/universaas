@@ -96,6 +96,17 @@ export default function EditStudentPage() {
     setError('');
     setSaving(true);
 
+    // DEBUG: Afficher infos utilisateur
+    console.log('=== DEBUG UPDATE STUDENT ===');
+    console.log('User Profile:', {
+      role: userProfile?.role,
+      universityId: userProfile?.universityId,
+      uid: currentUser?.uid
+    });
+    console.log('Student ID:', studentId);
+    console.log('Student data before update:', student);
+    console.log('Form data:', formData);
+
     try {
       // Validation
       if (!formData.firstName || !formData.lastName) {
@@ -146,7 +157,8 @@ export default function EditStudentPage() {
       // Mettre à jour les informations de l'étudiant
       // IMPORTANT: Utiliser set() avec toutes les données car Firebase Rules validate ALL children
       const studentRef = ref(database, `universities/${userProfile.universityId}/students/${studentId}`);
-      await update(studentRef, {
+
+      const updateData = {
         ...student, // Conserver toutes les données existantes
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -157,7 +169,12 @@ export default function EditStudentPage() {
         classId: formData.classId || null,
         status: formData.status,
         updatedAt: Date.now()
-      });
+      };
+
+      console.log('Update data to send:', updateData);
+      console.log('Firebase path:', `universities/${userProfile.universityId}/students/${studentId}`);
+
+      await update(studentRef, updateData);
 
       setSuccess('✅ Étudiant mis à jour avec succès');
       setTimeout(() => {
