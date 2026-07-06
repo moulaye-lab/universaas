@@ -16,6 +16,7 @@ import { ref, remove } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdvancedListView from '../../components/listing/AdvancedListView';
+import { getCurrentAcademicYear } from '../../utils/academicYearHelper';
 
 export default function TeachersListPage() {
   const navigate = useNavigate();

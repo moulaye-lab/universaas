@@ -16,6 +16,7 @@ import { ref, remove } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdvancedListView from '../../components/listing/AdvancedListView';
+import { getAcademicYears, getCurrentAcademicYear } from '../../utils/academicYearHelper';
 
 export default function StudentsListPage() {
   const navigate = useNavigate();
@@ -35,9 +36,10 @@ export default function StudentsListPage() {
       render: (student) => `${student.firstName} ${student.lastName}`
     },
     {
-      key: 'email',
-      label: 'Email',
-      sortable: false
+      key: 'academicYear',
+      label: 'Année',
+      sortable: true,
+      render: (student) => student.academicYear || 'N/A'
     },
     {
       key: 'level',
@@ -118,9 +120,9 @@ export default function StudentsListPage() {
     }
   ];
 
-  // Options de filtres disponibles
+  // Options de filtres disponibles (années dynamiques)
   const availableOptions = {
-    academicYears: ['2024-2025', '2025-2026', '2026-2027'],
+    academicYears: getAcademicYears(5, 2), // 5 ans passés, 2 ans futurs
     levels: ['L1', 'L2', 'L3', 'M1', 'M2', 'D1', 'D2', 'D3'],
     statuses: [
       { value: 'active', label: 'Actif' },
@@ -137,9 +139,12 @@ export default function StudentsListPage() {
 
       columns={columns}
 
-      filters={['level', 'status']}
+      filters={['academicYear', 'level', 'status']}
       availableOptions={availableOptions}
-      defaultFilters={{ status: 'active' }}
+      defaultFilters={{
+        status: 'active',
+        academicYear: getCurrentAcademicYear() // Année en cours automatique
+      }}
 
       searchFields={['firstName', 'lastName', 'matricule', 'email']}
       searchPlaceholder="Rechercher par nom, matricule, email..."
