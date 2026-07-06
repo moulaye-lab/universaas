@@ -292,7 +292,7 @@
               ".validate": "newData.isString() && newData.val().matches(/^(exam|homework|continuous_assessment|project|oral|practical)$/)"
             },
             "grade": {
-              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= parent().child('maxGrade').val()"
+              ".validate": "newData.isNumber() && newData.val() >= 0"
             },
             "maxGrade": {
               ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100"
