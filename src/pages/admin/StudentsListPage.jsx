@@ -17,10 +17,14 @@ import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdvancedListView from '../../components/listing/AdvancedListView';
 import { getAcademicYears, getCurrentAcademicYear } from '../../utils/academicYearHelper';
+import useDynamicFilterOptions from '../../hooks/useDynamicFilterOptions';
 
 export default function StudentsListPage() {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
+
+  // Charger les options de filtres dynamiquement depuis Firebase
+  const { departments, fieldOfStudies, loading: optionsLoading } = useDynamicFilterOptions(userProfile?.universityId);
 
   // Configuration des colonnes
   const columns = [
@@ -120,9 +124,11 @@ export default function StudentsListPage() {
     }
   ];
 
-  // Options de filtres disponibles (années dynamiques)
+  // Options de filtres disponibles
   const availableOptions = {
     academicYears: getAcademicYears(5, 2), // 5 ans passés, 2 ans futurs
+    departments: departments, // Depuis Firebase
+    fieldOfStudies: fieldOfStudies, // Depuis Firebase (domaines uniques des classes)
     levels: ['L1', 'L2', 'L3', 'M1', 'M2', 'D1', 'D2', 'D3'],
     statuses: [
       { value: 'active', label: 'Actif' },
@@ -139,7 +145,7 @@ export default function StudentsListPage() {
 
       columns={columns}
 
-      filters={['academicYear', 'level', 'status']}
+      filters={['academicYear', 'department', 'fieldOfStudy', 'level', 'status']}
       availableOptions={availableOptions}
       defaultFilters={{
         status: 'active',
