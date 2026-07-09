@@ -44,7 +44,7 @@ export default function LoginPage() {
         // Convertir en email virtuel
         email = `${cleanPhone}@noemail.university-saas.com`;
 
-        console.log(`🔐 Connexion par téléphone : ${identifier} → ${email}`);
+        // console.log(`🔐 Connexion par téléphone : ${identifier} → ${email}`);
       }
 
       // Connexion Firebase Auth
@@ -69,6 +69,9 @@ export default function LoginPage() {
           break;
         case 'admin_universite':
           navigate('/dashboard/admin', { replace: true });
+          break;
+        case 'comptable':
+          navigate('/dashboard/comptable', { replace: true });
           break;
         case 'teacher':
           navigate('/dashboard/teacher', { replace: true });

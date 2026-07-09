@@ -33,14 +33,19 @@ export default function GradesInputPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [searchCourse, setSearchCourse] = useState('');
 
   // Charger les cours de l'enseignant
   useEffect(() => {
     const loadCourses = async () => {
-      if (!userProfile?.universityId || !currentUser?.uid) return;
+      if (!userProfile?.universityId || !currentUser?.uid) {
+        // console.log('❌ Missing data:', { universityId: userProfile?.universityId, userId: currentUser?.uid });
+        return;
+      }
 
       try {
         setLoading(true);
+        // console.log('🔄 Loading courses for teacher:', currentUser.uid);
 
         const coursesRef = ref(database, `universities/${userProfile.universityId}/courses`);
         const coursesSnap = await get(coursesRef);
@@ -50,11 +55,15 @@ export default function GradesInputPage() {
             .map(([id, data]) => ({ id, ...data }))
             .filter(course => course.teacherId === currentUser.uid);
 
+          // console.log('✅ Courses loaded:', allCourses.length, allCourses);
           setCourses(allCourses);
+        } else {
+          // console.log('⚠️ No courses found in database');
+          setCourses([]);
         }
       } catch (err) {
-        console.error('Error loading courses:', err);
-        setError('Erreur lors du chargement des cours');
+        console.error('❌ Error loading courses:', err);
+        setError('Erreur lors du chargement des cours: ' + err.message);
       } finally {
         setLoading(false);
       }
@@ -63,52 +72,62 @@ export default function GradesInputPage() {
     loadCourses();
   }, [userProfile, currentUser]);
 
-  // Charger les étudiants du cours sélectionné (architecture class-based)
+  // Charger les étudiants du cours sélectionné
   useEffect(() => {
     const loadStudents = async () => {
       if (!selectedCourse || !userProfile?.universityId) return;
 
       try {
         const univId = userProfile.universityId;
+        // console.log('🔄 Loading students for course:', selectedCourse);
 
-        // 1. Trouver toutes les classes qui ont ce cours dans leur planning
-        const classesRef = ref(database, `universities/${univId}/classes`);
-        const classesSnap = await get(classesRef);
+        // 1. Récupérer le cours pour avoir la liste des étudiants inscrits
+        const courseRef = ref(database, `universities/${univId}/courses/${selectedCourse}`);
+        const courseSnap = await get(courseRef);
 
-        const classesWithCourse = [];
-        if (classesSnap.exists()) {
-          Object.entries(classesSnap.val()).forEach(([classId, classData]) => {
-            const hasCourse = (classData.schedule || []).some(
-              sch => sch.courseId === selectedCourse
-            );
-            if (hasCourse) {
-              classesWithCourse.push({ id: classId, name: classData.name });
-            }
-          });
+        if (!courseSnap.exists()) {
+          // console.log('⚠️ Course not found');
+          setStudents([]);
+          return;
         }
 
-        // 2. Charger tous les étudiants de ces classes
+        const courseData = courseSnap.val();
+        const enrolledStudentIds = courseData.enrolledStudents || [];
+        // console.log('📝 Enrolled student IDs:', enrolledStudentIds.length, enrolledStudentIds);
+
+        if (enrolledStudentIds.length === 0) {
+          // console.log('⚠️ No students enrolled in this course');
+          setStudents([]);
+          return;
+        }
+
+        // 2. Charger les détails des étudiants inscrits
         const studentsRef = ref(database, `universities/${univId}/students`);
         const studentsSnap = await get(studentsRef);
 
         const enrolledStudents = [];
         if (studentsSnap.exists()) {
-          Object.entries(studentsSnap.val()).forEach(([id, data]) => {
-            // Vérifier si l'étudiant appartient à une classe ayant ce cours
-            const studentClass = classesWithCourse.find(c => c.id === data.classId);
-            if (studentClass) {
+          const allStudents = studentsSnap.val();
+
+          enrolledStudentIds.forEach(studentId => {
+            if (allStudents[studentId]) {
+              const studentData = allStudents[studentId];
               enrolledStudents.push({
-                id,
-                ...data,
-                className: studentClass.name // Ajouter le nom de la classe
+                id: studentId,
+                ...studentData
               });
             }
           });
         }
 
-        // 3. Trier par nom
-        enrolledStudents.sort((a, b) => a.lastName.localeCompare(b.lastName));
+        // 3. Trier par nom (avec vérification si lastName existe)
+        enrolledStudents.sort((a, b) => {
+          const lastNameA = a.lastName || '';
+          const lastNameB = b.lastName || '';
+          return lastNameA.localeCompare(lastNameB);
+        });
 
+        // console.log('✅ Students loaded:', enrolledStudents.length, enrolledStudents);
         setStudents(enrolledStudents);
 
         // Initialiser les notes à vide
@@ -118,8 +137,8 @@ export default function GradesInputPage() {
         });
         setGrades(initialGrades);
       } catch (err) {
-        console.error('Error loading students:', err);
-        setError('Erreur lors du chargement des étudiants');
+        console.error('❌ Error loading students:', err);
+        setError('Erreur lors du chargement des étudiants: ' + err.message);
       }
     };
 
@@ -178,7 +197,7 @@ export default function GradesInputPage() {
               studentId,
               studentName: student ? `${student.firstName} ${student.lastName}` : 'Étudiant',
               courseId: selectedCourse,
-              courseName: course.name,
+              courseName: course.courseName,
               teacherId: currentUser.uid,
               teacherName: userProfile.displayName,
               grade: grade,
@@ -274,9 +293,17 @@ export default function GradesInputPage() {
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               Aucun cours disponible
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-4">
               Vous n'êtes assigné à aucun cours pour le moment
             </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left text-sm text-blue-800">
+              <p className="font-semibold mb-2">💡 Que faire ?</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Contactez l'administrateur pour vous assigner des cours</li>
+                <li>Vérifiez que vous êtes connecté avec le bon compte</li>
+                <li>Ouvrez la console (F12) pour voir les logs de debug</li>
+              </ul>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="glass rounded-3xl p-8">
@@ -288,11 +315,23 @@ export default function GradesInputPage() {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Cours */}
+                  {/* Cours avec recherche */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Cours *
+                      Cours * {courses.length > 0 && <span className="text-gray-500 font-normal">({courses.length} cours)</span>}
                     </label>
+
+                    {/* Barre de recherche */}
+                    {courses.length > 3 && (
+                      <input
+                        type="text"
+                        placeholder="🔍 Rechercher un cours..."
+                        value={searchCourse}
+                        onChange={(e) => setSearchCourse(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
+                      />
+                    )}
+
                     <select
                       value={selectedCourse}
                       onChange={(e) => setSelectedCourse(e.target.value)}
@@ -300,11 +339,20 @@ export default function GradesInputPage() {
                       required
                     >
                       <option value="">Sélectionner un cours</option>
-                      {courses.map(course => (
-                        <option key={course.id} value={course.id}>
-                          {course.name} - {course.code}
-                        </option>
-                      ))}
+                      {courses
+                        .filter(course => {
+                          if (!searchCourse) return true;
+                          const search = searchCourse.toLowerCase();
+                          return (
+                            course.courseName?.toLowerCase().includes(search) ||
+                            course.courseCode?.toLowerCase().includes(search)
+                          );
+                        })
+                        .map(course => (
+                          <option key={course.id} value={course.id}>
+                            {course.courseName} - {course.courseCode}
+                          </option>
+                        ))}
                     </select>
                   </div>
 

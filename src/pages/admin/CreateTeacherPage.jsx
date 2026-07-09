@@ -134,6 +134,7 @@ export default function CreateTeacherPage() {
 
       // 3. Créer le profil enseignant dans l'université
       await set(ref(database, `universities/${userProfile.universityId}/teachers/${teacherUid}`), {
+        uid: teacherUid,
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,

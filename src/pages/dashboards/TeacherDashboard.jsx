@@ -58,6 +58,8 @@ export default function TeacherDashboard() {
   const [students, setStudents] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadDashboardData();
@@ -69,26 +71,16 @@ export default function TeacherDashboard() {
         return;
       }
 
-      // Charger les cours assignés au professeur
-      const teacherRef = ref(database, `universities/${userProfile.universityId}/teachers/${currentUser.uid}`);
-      const teacherSnap = await get(teacherRef);
+      // Charger TOUS les cours et filtrer ceux assignés au professeur
+      const coursesRef = ref(database, `universities/${userProfile.universityId}/courses`);
+      const coursesSnap = await get(coursesRef);
 
       let coursesData = [];
-      if (teacherSnap.exists()) {
-        const teacherData = teacherSnap.val();
-        const courseIds = teacherData.assignedCourses || [];
-
-        // Charger les détails de chaque cours
-        for (const courseId of courseIds) {
-          const courseRef = ref(database, `universities/${userProfile.universityId}/courses/${courseId}`);
-          const courseSnap = await get(courseRef);
-          if (courseSnap.exists()) {
-            coursesData.push({
-              id: courseId,
-              ...courseSnap.val(),
-            });
-          }
-        }
+      if (coursesSnap.exists()) {
+        const allCourses = coursesSnap.val();
+        coursesData = Object.entries(allCourses)
+          .map(([id, data]) => ({ id, ...data }))
+          .filter(course => course.teacherId === currentUser.uid);
       }
 
       setCourses(coursesData);
@@ -138,12 +130,18 @@ export default function TeacherDashboard() {
 
   const handleCourseChange = async (courseId) => {
     setGradeForm({ ...gradeForm, courseId, studentId: '' });
+    setStudents([]); // Reset students
+    setError('');
 
     if (courseId) {
       try {
+        setLoadingStudents(true);
+        // console.log('🔄 Loading students for course:', courseId);
+
         // Charger les infos du cours (avec coefficient)
         const course = courses.find(c => c.id === courseId);
         setSelectedCourse(course);
+        // console.log('📚 Course found:', course);
 
         // Charger les étudiants inscrits au cours
         const courseRef = ref(database, `universities/${userProfile.universityId}/courses/${courseId}`);
@@ -152,6 +150,7 @@ export default function TeacherDashboard() {
         if (courseSnap.exists()) {
           const courseData = courseSnap.val();
           const enrolledIds = courseData.enrolledStudents || [];
+          // console.log('📝 Enrolled IDs:', enrolledIds.length, enrolledIds);
 
           if (enrolledIds.length > 0) {
             const studentsRef = ref(database, `universities/${userProfile.universityId}/students`);
@@ -174,15 +173,22 @@ export default function TeacherDashboard() {
                 }
               });
 
+              // console.log('✅ Students loaded:', studentsData.length, studentsData);
               setStudents(studentsData);
             }
           } else {
+            // console.log('⚠️ No students enrolled');
             setStudents([]);
           }
         }
       } catch (error) {
-        console.error('Error loading course data:', error);
+        console.error('❌ Error loading course data:', error);
+        setError('Erreur lors du chargement des étudiants: ' + error.message);
+      } finally {
+        setLoadingStudents(false);
       }
+    } else {
+      setSelectedCourse(null);
     }
   };
 
@@ -513,7 +519,7 @@ export default function TeacherDashboard() {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="bg-gradient-to-br from-green-500 to-emerald-600 w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                      {course.name?.charAt(0) || 'C'}
+                      {course.courseName?.charAt(0) || 'C'}
                     </div>
                     <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">
                       {course.level || 'L1'}
@@ -521,7 +527,7 @@ export default function TeacherDashboard() {
                   </div>
 
                   <h4 className="font-black text-gray-900 text-lg mb-2 line-clamp-1">
-                    {course.name || 'Cours'}
+                    {course.courseName || 'Cours'}
                   </h4>
 
                   <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
@@ -548,15 +554,39 @@ export default function TeacherDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Saisie Notes Rapide */}
           <div className="glass p-8 rounded-3xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl">
-                <ClipboardCheck className="h-6 w-6 text-white" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl">
+                  <ClipboardCheck className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900">Saisie Notes</h3>
+                  <p className="text-gray-600 text-sm">Enregistrement rapide (1 note à la fois)</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-2xl font-black text-gray-900">Saisie Notes</h3>
-                <p className="text-gray-600 text-sm">Enregistrement rapide</p>
+              <button
+                onClick={() => navigate('/teacher/grades/input')}
+                className="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+              >
+                Saisie complète
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2">
+              <Sparkles className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-blue-800">
+                <p className="font-semibold mb-1">💡 Astuce</p>
+                <p>Pour saisir plusieurs notes d'un coup (évaluation complète), utilisez la <button onClick={() => navigate('/teacher/grades/input')} className="underline font-semibold hover:text-blue-900">page de saisie complète</button></p>
               </div>
             </div>
+
+            {error && (
+              <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                <p className="text-sm text-red-700 font-medium">{error}</p>
+              </div>
+            )}
 
             {successMessage && (
               <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-center gap-3 animate-slide-up">
@@ -580,7 +610,7 @@ export default function TeacherDashboard() {
                   <option value="">Sélectionner un cours</option>
                   {courses.map((course) => (
                     <option key={course.id} value={course.id}>
-                      {course.name}
+                      {course.courseName} - {course.courseCode}
                     </option>
                   ))}
                 </select>
@@ -589,22 +619,44 @@ export default function TeacherDashboard() {
               {/* Select Étudiant */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Étudiant
+                  Étudiant {students.length > 0 && <span className="text-gray-500 font-normal">({students.length} inscrit{students.length > 1 ? 's' : ''})</span>}
                 </label>
-                <select
-                  value={gradeForm.studentId}
-                  onChange={(e) => setGradeForm({ ...gradeForm, studentId: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all outline-none font-medium"
-                  required
-                  disabled={!gradeForm.courseId}
-                >
-                  <option value="">Sélectionner un étudiant</option>
-                  {students.map((student) => (
-                    <option key={student.id} value={student.id}>
-                      {student.firstName} {student.lastName}
-                    </option>
-                  ))}
-                </select>
+
+                {loadingStudents ? (
+                  <div className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl flex items-center gap-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    <span className="text-gray-600 text-sm">Chargement des étudiants...</span>
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      value={gradeForm.studentId}
+                      onChange={(e) => setGradeForm({ ...gradeForm, studentId: e.target.value })}
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all outline-none font-medium"
+                      required
+                      disabled={!gradeForm.courseId}
+                    >
+                      <option value="">
+                        {!gradeForm.courseId
+                          ? 'Sélectionner d\'abord un cours'
+                          : students.length === 0
+                            ? 'Aucun étudiant inscrit'
+                            : 'Sélectionner un étudiant'}
+                      </option>
+                      {students.map((student) => (
+                        <option key={student.id} value={student.id}>
+                          {student.firstName} {student.lastName}
+                        </option>
+                      ))}
+                    </select>
+
+                    {gradeForm.courseId && students.length === 0 && !loadingStudents && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        ⚠️ Aucun étudiant inscrit à ce cours. Vérifiez la console (F12) pour les détails.
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Input Note */}
@@ -729,13 +781,13 @@ export default function TeacherDashboard() {
 
       {/* Floating Action Button - Créer session live */}
       <button
-        onClick={() => setShowSessionForm(true)}
-        className="fixed bottom-8 right-8 bg-gradient-to-r from-green-600 to-emerald-600 text-white p-5 rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 transition-all duration-300 group z-40"
+        onClick={() => alert('⚠️ Fonctionnalité "Sessions Live" en cours de développement.\n\nBientôt vous pourrez créer des sessions de cours en direct avec vos étudiants.')}
+        className="fixed bottom-8 right-8 bg-gradient-to-r from-green-600 to-emerald-600 text-white p-5 rounded-full shadow-2xl hover:shadow-green-400/50 hover:scale-110 transition-all duration-300 group z-40 opacity-75"
       >
         <div className="flex items-center gap-3">
           <Plus className="h-7 w-7" />
           <span className="hidden group-hover:block font-bold text-sm whitespace-nowrap pr-2">
-            Créer session live
+            🔜 Session live
           </span>
         </div>
       </button>

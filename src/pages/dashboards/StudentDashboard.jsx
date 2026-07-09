@@ -4,6 +4,7 @@ import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOverallAverage, getMention, getAverageColor, exportToCSV } from '../../utils/gradesCalculator';
+import { generateBulletinPDF } from '../../utils/bulletinPDFGenerator';
 import {
   TrendingUp,
   BookOpen,
@@ -15,7 +16,8 @@ import {
   Video,
   LogOut,
   Eye,
-  Sparkles
+  Sparkles,
+  FilePlus
 } from 'lucide-react';
 
 const StudentDashboard = () => {
@@ -135,6 +137,19 @@ const StudentDashboard = () => {
         }
       }
 
+      // Load absences
+      const absencesRef = ref(database, `universities/${uniId}/absences`);
+      const absencesQuery = query(absencesRef, orderByChild('studentId'), equalTo(studentId));
+      const absencesSnap = await get(absencesQuery);
+
+      let absencesCount = 0;
+      if (absencesSnap.exists()) {
+        absencesCount = Object.values(absencesSnap.val()).length;
+      }
+
+      // Update stats with real absences count
+      calculateStats(gradesData, studentSnap.exists() ? studentSnap.val() : null, absencesCount);
+
       setLoading(false);
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -143,13 +158,13 @@ const StudentDashboard = () => {
     }
   };
 
-  const calculateStats = (gradesData, studentInfo) => {
+  const calculateStats = (gradesData, studentInfo, absencesCount = 0) => {
     if (!gradesData || gradesData.length === 0) {
       setStats({
         averageGrade: 0,
         coursesCount: 0,
         pendingAssignments: 0,
-        absences: studentInfo?.absences || 0
+        absences: absencesCount
       });
       return;
     }
@@ -177,7 +192,7 @@ const StudentDashboard = () => {
       averageGrade: parseFloat(generalAverage),
       coursesCount: uniqueCourses.size,
       pendingAssignments: 0,
-      absences: studentInfo?.absences || 0
+      absences: absencesCount
     });
   };
 
@@ -331,19 +346,23 @@ const StudentDashboard = () => {
           </div>
 
           {/* Absences */}
-          <div className={`bg-white/60 backdrop-blur-sm rounded-2xl p-6 border ${stats.absences > 0 ? 'border-red-200' : 'border-purple-100'} shadow-lg hover:shadow-xl transition-all duration-300 animate-slide-up`} style={{ animationDelay: '0.3s' }}>
+          <button
+            onClick={() => navigate('/student/absences')}
+            className={`bg-white/60 backdrop-blur-sm rounded-2xl p-6 border ${stats.absences > 0 ? 'border-red-200' : 'border-purple-100'} shadow-lg hover:shadow-xl transition-all duration-300 animate-slide-up cursor-pointer group`}
+            style={{ animationDelay: '0.3s' }}
+          >
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 ${stats.absences > 0 ? 'bg-gradient-to-br from-red-500 to-rose-600' : 'bg-gradient-to-br from-green-500 to-emerald-600'} rounded-xl flex items-center justify-center`}>
                 <AlertCircle className="w-6 h-6 text-white" />
               </div>
             </div>
-            <p className="text-sm text-gray-600 mb-1">Absences</p>
-            <p className="text-3xl font-bold text-gray-900">{stats.absences}</p>
-          </div>
+            <p className="text-sm text-gray-600 mb-1">Absences & Retards</p>
+            <p className="text-3xl font-bold text-gray-900 group-hover:text-red-600 transition-colors">{stats.absences}</p>
+          </button>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
           <button
             onClick={() => navigate('/student/grades')}
             className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
@@ -385,6 +404,36 @@ const StudentDashboard = () => {
               <div className="text-left">
                 <p className="font-bold text-gray-900 group-hover:text-green-600 transition-colors">Mes Devoirs</p>
                 <p className="text-sm text-gray-600">Travaux à rendre</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/student/payments')}
+            className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+                <Download className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">Mes Paiements</p>
+                <p className="text-sm text-gray-600">Frais de scolarité</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/student/absences')}
+            className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 group-hover:text-red-600 transition-colors">Mes Absences</p>
+                <p className="text-sm text-gray-600">Historique et justificatifs</p>
               </div>
             </div>
           </button>
@@ -438,13 +487,40 @@ const StudentDashboard = () => {
                 <TrendingUp className="w-6 h-6 mr-2 text-purple-600" />
                 📊 Mes Moyennes
               </h2>
-              <button
-                onClick={() => exportToCSV(grades, `notes_${studentData?.lastName || 'etudiant'}`)}
-                className="px-4 py-2 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition flex items-center gap-2 border border-purple-200"
-              >
-                <Download className="w-4 h-4" />
-                Exporter CSV
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    try {
+                      generateBulletinPDF({
+                        student: {
+                          firstName: studentData?.firstName || 'Prénom',
+                          lastName: studentData?.lastName || 'Nom',
+                          matricule: studentData?.matricule || 'N/A',
+                          level: studentData?.level || 'N/A',
+                          className: className || 'N/A'
+                        },
+                        grades: grades,
+                        universityName: userProfile?.universityName || 'Université',
+                        period: 'Année académique 2025/2026',
+                        academicYear: '2025/2026'
+                      });
+                    } catch (err) {
+                      alert('Erreur lors de la génération du PDF: ' + err.message);
+                    }
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition flex items-center gap-2"
+                >
+                  <FilePlus className="w-4 h-4" />
+                  Bulletin PDF
+                </button>
+                <button
+                  onClick={() => exportToCSV(grades, `notes_${studentData?.lastName || 'etudiant'}`)}
+                  className="px-4 py-2 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition flex items-center gap-2 border border-purple-200"
+                >
+                  <Download className="w-4 h-4" />
+                  Export CSV
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

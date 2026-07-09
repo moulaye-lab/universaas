@@ -140,17 +140,12 @@ export default function CreateParentModal({ isOpen, onClose, studentData, univer
           childName: `${studentData.firstName} ${studentData.lastName}`
         });
 
-        console.log(`
-📧 EMAIL/SMS À ENVOYER AU PARENT (${loginMethod === 'phone' ? parentPhone : primaryEmail}) :
-
-Bonjour ${existing.displayName},
-
-Un nouvel enfant a été ajouté à votre compte parent :
-- ${studentData.firstName} ${studentData.lastName} (${universityId})
-
-Vous pouvez maintenant suivre ses notes depuis votre compte.
-Connectez-vous sur https://university-saas.com/login
-        `);
+        // console.log('EMAIL/SMS À ENVOYER AU PARENT:', {
+        //   recipient: loginMethod === 'phone' ? parentPhone : primaryEmail,
+        //   displayName: existing.displayName,
+        //   childName: `${studentData.firstName} ${studentData.lastName}`,
+        //   universityId
+        // });
 
       } else {
         // Parent n'existe pas → Créer le compte
@@ -208,20 +203,13 @@ Connectez-vous sur https://university-saas.com/login
           childName: `${studentData.firstName} ${studentData.lastName}`
         });
 
-        console.log(`
-📧 EMAIL/SMS À ENVOYER AU PARENT :
-
-Bonjour ${parentName},
-
-Un compte parent a été créé pour suivre la scolarité de :
-- ${studentData.firstName} ${studentData.lastName} (${universityId})
-
-Identifiant : ${loginMethod === 'phone' ? parentPhone : primaryEmail}
-Mot de passe temporaire : ${tempPassword}
-
-Connectez-vous sur https://university-saas.com/login
-Vous devrez changer votre mot de passe à la première connexion.
-        `);
+        // console.log('EMAIL/SMS À ENVOYER AU PARENT:', {
+        //   parentName,
+        //   childName: `${studentData.firstName} ${studentData.lastName}`,
+        //   universityId,
+        //   identifier: loginMethod === 'phone' ? parentPhone : primaryEmail,
+        //   tempPassword
+        // });
       }
 
     } catch (err) {

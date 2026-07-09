@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ref, get, set, update, runTransaction } from 'firebase/database';
+import { ref, get, set, runTransaction } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminLayout from '../../components/AdminLayout';
@@ -97,15 +97,15 @@ export default function EditStudentPage() {
     setSaving(true);
 
     // DEBUG: Afficher infos utilisateur
-    console.log('=== DEBUG UPDATE STUDENT ===');
-    console.log('User Profile:', {
-      role: userProfile?.role,
-      universityId: userProfile?.universityId,
-      uid: currentUser?.uid
-    });
-    console.log('Student ID:', studentId);
-    console.log('Student data before update:', student);
-    console.log('Form data:', formData);
+    // console.log('=== DEBUG UPDATE STUDENT ===');
+    // console.log('User Profile:', {
+    //   role: userProfile?.role,
+    //   universityId: userProfile?.universityId,
+    //   uid: currentUser?.uid
+    // });
+    // console.log('Student ID:', studentId);
+    // console.log('Student data before update:', student);
+    // console.log('Form data:', formData);
 
     try {
       // Validation
@@ -171,8 +171,8 @@ export default function EditStudentPage() {
         updatedAt: Date.now()
       };
 
-      console.log('Update data to send:', updateData);
-      console.log('Firebase path:', `universities/${userProfile.universityId}/students/${studentId}`);
+      // console.log('Update data to send:', updateData);
+      // console.log('Firebase path:', `universities/${userProfile.universityId}/students/${studentId}`);
 
       // WORKAROUND: Utiliser set() au lieu de update()
       // car Firebase Rules en production ont encore .validate hasChildren

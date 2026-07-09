@@ -545,9 +545,9 @@ export default function TeacherDetailsPage() {
               {assignedCourses.map(course => (
                 <div key={course.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
                   <div>
-                    <h3 className="font-bold text-gray-900">{course.name}</h3>
+                    <h3 className="font-bold text-gray-900">{course.courseName}</h3>
                     <p className="text-sm text-gray-600">
-                      {course.code} • {course.credits} ECTS • {course.level || 'N/A'}
+                      {course.courseCode} • {course.credits} ECTS • {course.level || 'N/A'}
                     </p>
                   </div>
                   <button
@@ -607,9 +607,9 @@ export default function TeacherDetailsPage() {
                         className="w-full text-left bg-white border border-gray-200 rounded-xl p-4 hover:border-green-500 hover:bg-green-50 transition"
                         disabled={saving}
                       >
-                        <h3 className="font-bold text-gray-900">{course.name}</h3>
+                        <h3 className="font-bold text-gray-900">{course.courseName}</h3>
                         <p className="text-sm text-gray-600">
-                          {course.code} • {course.credits} ECTS • {course.level || 'N/A'}
+                          {course.courseCode} • {course.credits} ECTS • {course.level || 'N/A'}
                         </p>
                       </button>
                     ))

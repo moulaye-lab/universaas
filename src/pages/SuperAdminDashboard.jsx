@@ -72,15 +72,15 @@ export default function SuperAdminDashboard() {
       }
 
       // Charger les stats de la plateforme
-      console.log('Loading platform stats...');
+      // console.log('Loading platform stats...');
       const platformRef = ref(database, 'platform/analytics');
       const platformSnap = await get(platformRef);
 
       if (platformSnap.exists()) {
-        console.log('Platform stats found:', platformSnap.val());
+        // console.log('Platform stats found:', platformSnap.val());
         setStats(platformSnap.val());
       } else {
-        console.log('No platform stats, using defaults');
+        // console.log('No platform stats, using defaults');
         setStats({
           totalUniversities: 0,
           activeUniversities: 0,
@@ -93,13 +93,13 @@ export default function SuperAdminDashboard() {
       }
 
       // Charger les universités
-      console.log('Loading universities...');
+      // console.log('Loading universities...');
       const universitiesRef = ref(database, 'universities');
       const universitiesSnap = await get(universitiesRef);
 
       if (universitiesSnap.exists()) {
         const universitiesData = universitiesSnap.val();
-        console.log('Universities found:', Object.keys(universitiesData).length);
+        // console.log('Universities found:', Object.keys(universitiesData).length);
         const universitiesList = Object.keys(universitiesData).map(id => ({
           id,
           ...universitiesData[id].info,
@@ -110,7 +110,7 @@ export default function SuperAdminDashboard() {
 
         setUniversities(universitiesList);
       } else {
-        console.log('No universities found');
+        // console.log('No universities found');
         setUniversities([]);
       }
 

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, get } from 'firebase/database';
+import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import {
   Award,
   AlertCircle,
@@ -13,8 +14,15 @@ import {
   Calendar,
   DollarSign,
   Users,
-  ChevronDown
+  ChevronDown,
+  MessageCircle,
+  Phone,
+  Mail,
+  FilePlus,
+  Download
 } from 'lucide-react';
+import { generateBulletinPDF } from '../../utils/bulletinPDFGenerator';
+import { calculateOverallAverage, getMention, exportToCSV } from '../../utils/gradesCalculator';
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
@@ -180,7 +188,17 @@ const ParentDashboard = () => {
         }
         setPayments(paymentsData);
 
-        calculateStats(gradesData, student, paymentsData);
+        // Load absences
+        const absencesRef = ref(database, `universities/${uniId}/absences`);
+        const absencesQuery = query(absencesRef, orderByChild('studentId'), equalTo(childId));
+        const absencesSnap = await get(absencesQuery);
+
+        let absencesCount = 0;
+        if (absencesSnap.exists()) {
+          absencesCount = Object.values(absencesSnap.val()).length;
+        }
+
+        calculateStats(gradesData, student, paymentsData, absencesCount);
       }
     } catch (error) {
       console.error('Error loading child data:', error);
@@ -189,7 +207,7 @@ const ParentDashboard = () => {
     }
   };
 
-  const calculateStats = (gradesData, studentInfo, paymentsData) => {
+  const calculateStats = (gradesData, studentInfo, paymentsData, absencesCount = 0) => {
     // Calculer moyenne générale pondérée par coefficient
     let totalWeighted = 0;
     let totalCoeff = 0;
@@ -216,7 +234,7 @@ const ParentDashboard = () => {
     setStats({
       averageGrade: generalAverage,
       coursesCount: uniqueCourses.size,
-      absences: studentInfo.absences || 0,
+      absences: absencesCount,
       overduePayments: overdueCount
     });
   };
@@ -350,15 +368,18 @@ const ParentDashboard = () => {
               </div>
 
               {/* Absences */}
-              <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
+              <button
+                onClick={() => navigate('/parent/absences')}
+                className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all text-left w-full group"
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg">
                     <Calendar className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">{stats.absences}</h3>
-                <p className="text-sm text-gray-600">Absences</p>
-              </div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2 group-hover:text-red-600 transition-colors">{stats.absences}</h3>
+                <p className="text-sm text-gray-600">Absences & Retards</p>
+              </button>
 
               {/* Paiements en retard */}
               <div className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all">
@@ -377,12 +398,91 @@ const ParentDashboard = () => {
               </div>
             </div>
 
+            {/* Contacter l'Administration */}
+            <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <MessageCircle className="w-7 h-7 text-white" />
+                <h2 className="text-xl font-bold text-white">Besoin d'aide ?</h2>
+              </div>
+
+              <p className="text-purple-100 text-sm mb-4">
+                Pour justifier une absence, obtenir des informations sur les paiements ou toute autre question, contactez l'administration.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <a
+                  href="mailto:admin@university.com"
+                  className="flex items-center gap-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/30 rounded-xl p-4 transition-all group"
+                >
+                  <div className="p-2 bg-white rounded-lg">
+                    <Mail className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-semibold text-sm">Email</p>
+                    <p className="text-purple-100 text-xs">admin@university.com</p>
+                  </div>
+                </a>
+
+                <a
+                  href="tel:+33123456789"
+                  className="flex items-center gap-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/30 rounded-xl p-4 transition-all group"
+                >
+                  <div className="p-2 bg-white rounded-lg">
+                    <Phone className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-semibold text-sm">Téléphone</p>
+                    <p className="text-purple-100 text-xs">+33 1 23 45 67 89</p>
+                  </div>
+                </a>
+              </div>
+            </div>
+
             {/* Notes par Cours */}
             <div className="bg-white rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                <Award className="w-7 h-7 text-green-600" />
-                Notes de {selectedChild.childName}
-              </h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                  <Award className="w-7 h-7 text-green-600" />
+                  Notes de {selectedChild.childName}
+                </h2>
+                {grades.length > 0 && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        try {
+                          const { overall } = calculateOverallAverage(grades);
+                          generateBulletinPDF({
+                            student: {
+                              firstName: selectedChild.studentData?.firstName || 'Prénom',
+                              lastName: selectedChild.studentData?.lastName || 'Nom',
+                              matricule: selectedChild.studentData?.matricule || 'N/A',
+                              level: selectedChild.studentData?.level || 'N/A',
+                              className: selectedChild.studentData?.className || 'N/A'
+                            },
+                            grades: grades,
+                            universityName: userProfile?.universityName || 'Université',
+                            period: 'Année académique 2025/2026',
+                            academicYear: '2025/2026'
+                          });
+                        } catch (err) {
+                          alert('Erreur lors de la génération du PDF: ' + err.message);
+                        }
+                      }}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition flex items-center gap-2 text-sm font-semibold"
+                    >
+                      <FilePlus className="w-4 h-4" />
+                      Bulletin PDF
+                    </button>
+                    <button
+                      onClick={() => exportToCSV(grades, `notes_${selectedChild.childName.replace(' ', '_')}`)}
+                      className="px-4 py-2 bg-white text-purple-600 border-2 border-purple-200 rounded-xl hover:bg-purple-50 transition flex items-center gap-2 text-sm font-semibold"
+                    >
+                      <Download className="w-4 h-4" />
+                      Export CSV
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {grades.length === 0 ? (
                 <div className="text-center py-12">
@@ -390,7 +490,175 @@ const ParentDashboard = () => {
                   <p className="text-gray-500">Aucune note disponible pour le moment</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                  {/* Stats enrichies */}
+                  {(() => {
+                    const { overall, byCourse } = calculateOverallAverage(grades);
+                    const mention = getMention(overall);
+                    const coursesCount = Object.keys(byCourse).length;
+                    const validatedCourses = Object.values(byCourse).filter(c => c.average >= 10).length;
+                    const successRate = coursesCount > 0 ? ((validatedCourses / coursesCount) * 100).toFixed(0) : 0;
+
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                          <p className="text-xs text-gray-600 mb-1">Moyenne Générale</p>
+                          <p className={`text-3xl font-black ${overall >= 10 ? 'text-green-600' : 'text-red-600'}`}>
+                            {overall !== null ? overall.toFixed(2) : 'N/A'}/20
+                          </p>
+                          {mention && (
+                            <p className="text-xs font-semibold text-gray-700 mt-1">{mention}</p>
+                          )}
+                        </div>
+
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+                          <p className="text-xs text-gray-600 mb-1">Nombre de Cours</p>
+                          <p className="text-3xl font-black text-blue-600">{coursesCount}</p>
+                          <p className="text-xs text-gray-600 mt-1">{grades.length} notes</p>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+                          <p className="text-xs text-gray-600 mb-1">Cours Validés</p>
+                          <p className="text-3xl font-black text-purple-600">{validatedCourses}/{coursesCount}</p>
+                          <p className="text-xs text-gray-600 mt-1">≥ 10/20</p>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-4 border border-yellow-200">
+                          <p className="text-xs text-gray-600 mb-1">Taux de Réussite</p>
+                          <p className={`text-3xl font-black ${successRate >= 50 ? 'text-green-600' : 'text-orange-600'}`}>
+                            {successRate}%
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1">sur tous les cours</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Graphiques */}
+                  {(() => {
+                    const { byCourse } = calculateOverallAverage(grades);
+
+                    // Données pour graphique moyennes par cours (BarChart)
+                    const courseChartData = Object.entries(byCourse).map(([courseId, data]) => ({
+                      cours: data.courseName.length > 15 ? data.courseName.substring(0, 15) + '...' : data.courseName,
+                      moyenne: data.average !== null ? parseFloat(data.average.toFixed(2)) : 0,
+                      notes: data.gradesCount
+                    }));
+
+                    // Données pour graphique évolution (LineChart) - notes chronologiques
+                    const sortedGrades = [...grades].sort((a, b) => (a.date || 0) - (b.date || 0));
+                    const evolutionData = sortedGrades.map((grade, index) => {
+                      const normalized = (grade.grade / grade.maxGrade) * 20;
+                      return {
+                        index: index + 1,
+                        note: parseFloat(normalized.toFixed(2)),
+                        cours: grade.courseName.substring(0, 10),
+                        date: new Date(grade.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+                      };
+                    });
+
+                    return (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        {/* Graphique Moyennes par Cours */}
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            📊 Moyennes par Cours
+                          </h3>
+                          <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={courseChartData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                              <XAxis
+                                dataKey="cours"
+                                tick={{ fontSize: 11, fill: '#6b7280' }}
+                                angle={-45}
+                                textAnchor="end"
+                                height={80}
+                              />
+                              <YAxis
+                                domain={[0, 20]}
+                                tick={{ fontSize: 11, fill: '#6b7280' }}
+                                label={{ value: 'Moyenne /20', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#6b7280' } }}
+                              />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: '#fff',
+                                  border: '2px solid #3b82f6',
+                                  borderRadius: '8px',
+                                  fontSize: '12px'
+                                }}
+                                formatter={(value, name) => {
+                                  if (name === 'moyenne') return [value + '/20', 'Moyenne'];
+                                  if (name === 'notes') return [value, 'Nombre de notes'];
+                                  return [value, name];
+                                }}
+                              />
+                              <Legend
+                                wrapperStyle={{ fontSize: '12px' }}
+                                formatter={(value) => value === 'moyenne' ? 'Moyenne /20' : 'Nb notes'}
+                              />
+                              <Bar dataKey="moyenne" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        {/* Graphique Évolution Notes */}
+                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
+                          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            📈 Évolution des Notes
+                          </h3>
+                          <ResponsiveContainer width="100%" height={250}>
+                            <LineChart data={evolutionData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                              <XAxis
+                                dataKey="index"
+                                tick={{ fontSize: 11, fill: '#6b7280' }}
+                                label={{ value: 'N° Note', position: 'insideBottom', offset: -5, style: { fontSize: 11, fill: '#6b7280' } }}
+                              />
+                              <YAxis
+                                domain={[0, 20]}
+                                tick={{ fontSize: 11, fill: '#6b7280' }}
+                                label={{ value: 'Note /20', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#6b7280' } }}
+                              />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: '#fff',
+                                  border: '2px solid #a855f7',
+                                  borderRadius: '8px',
+                                  fontSize: '12px'
+                                }}
+                                formatter={(value, name, props) => {
+                                  if (name === 'note') return [value + '/20', `${props.payload.cours} (${props.payload.date})`];
+                                  return [value, name];
+                                }}
+                              />
+                              <Legend wrapperStyle={{ fontSize: '12px' }} />
+                              <Line
+                                type="monotone"
+                                dataKey="note"
+                                stroke="#a855f7"
+                                strokeWidth={3}
+                                dot={{ fill: '#a855f7', r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name="Note /20"
+                              />
+                              {/* Ligne moyenne générale */}
+                              <Line
+                                type="monotone"
+                                dataKey={() => calculateOverallAverage(grades).overall}
+                                stroke="#10b981"
+                                strokeWidth={2}
+                                strokeDasharray="5 5"
+                                dot={false}
+                                name="Moyenne générale"
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="bg-gray-50 border-b-2 border-gray-200">
@@ -438,6 +706,7 @@ const ParentDashboard = () => {
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
             </div>
 

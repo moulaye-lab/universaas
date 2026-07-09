@@ -12,19 +12,51 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2 } from 'lucide-react';
-import { ref, remove } from 'firebase/database';
+import { ref, remove, get, query, orderByChild, equalTo } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdvancedListView from '../../components/listing/AdvancedListView';
 import { getAcademicYears, getCurrentAcademicYear } from '../../utils/academicYearHelper';
 import useDynamicFilterOptions from '../../hooks/useDynamicFilterOptions';
+import { useState, useEffect } from 'react';
 
 export default function TeachersListPage() {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
+  const [coursesCountByTeacher, setCoursesCountByTeacher] = useState({});
 
   // Charger les options de filtres dynamiquement depuis Firebase
   const { departments } = useDynamicFilterOptions(userProfile?.universityId);
+
+  // Charger le nombre de cours par enseignant dynamiquement
+  useEffect(() => {
+    const loadCoursesCount = async () => {
+      if (!userProfile?.universityId) return;
+
+      try {
+        const coursesRef = ref(database, `universities/${userProfile.universityId}/courses`);
+        const snapshot = await get(coursesRef);
+
+        if (snapshot.exists()) {
+          const courses = snapshot.val();
+          const counts = {};
+
+          // Compter les cours par teacherId
+          Object.values(courses).forEach(course => {
+            if (course.teacherId) {
+              counts[course.teacherId] = (counts[course.teacherId] || 0) + 1;
+            }
+          });
+
+          setCoursesCountByTeacher(counts);
+        }
+      } catch (err) {
+        console.error('Error loading courses count:', err);
+      }
+    };
+
+    loadCoursesCount();
+  }, [userProfile?.universityId]);
 
   // Configuration des colonnes
   const columns = [
@@ -61,7 +93,7 @@ export default function TeachersListPage() {
       label: 'Cours assignés',
       sortable: false,
       render: (teacher) => {
-        const count = teacher.assignedCourses?.length || 0;
+        const count = coursesCountByTeacher[teacher.id] || 0;
         return (
           <span className={`font-semibold ${count > 0 ? 'text-green-600' : 'text-gray-400'}`}>
             {count}

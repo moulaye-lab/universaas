@@ -56,22 +56,22 @@ export default function CreateCoursePage() {
     const loadData = async () => {
       // Attendre que userProfile soit chargé
       if (authLoading) {
-        console.log('⏳ Waiting for auth to load...');
+        // console.log('⏳ Waiting for auth to load...');
         return;
       }
 
       if (!userProfile) {
-        console.log('❌ No userProfile available');
+        // console.log('❌ No userProfile available');
         return;
       }
 
       if (!userProfile.universityId) {
-        console.log('❌ No universityId in userProfile:', userProfile);
+        // console.log('❌ No universityId in userProfile:', userProfile);
         setError('Erreur: Aucune université associée à votre compte');
         return;
       }
 
-      console.log('🔍 Loading data for university:', userProfile.universityId);
+      // console.log('🔍 Loading data for university:', userProfile.universityId);
 
       try {
         // Charger info université
@@ -79,34 +79,34 @@ export default function CreateCoursePage() {
         const universitySnap = await get(universityRef);
         if (universitySnap.exists()) {
           const info = universitySnap.val();
-          console.log('✅ University info loaded:', info);
+          // console.log('✅ University info loaded:', info);
           setUniversityInfo(info);
         } else {
-          console.log('⚠️ No university info found');
+          // console.log('⚠️ No university info found');
         }
 
         // Charger liste des enseignants
         const teachersRef = ref(database, `universities/${userProfile.universityId}/teachers`);
-        console.log('🔍 Fetching teachers from:', `universities/${userProfile.universityId}/teachers`);
+        // console.log('🔍 Fetching teachers from:', `universities/${userProfile.universityId}/teachers`);
         const teachersSnap = await get(teachersRef);
 
         if (teachersSnap.exists()) {
           const teachersData = teachersSnap.val();
-          console.log('📊 Raw teachers data:', teachersData);
+          // console.log('📊 Raw teachers data:', teachersData);
           const teachersList = Object.entries(teachersData).map(([id, data]) => ({
             id,
             ...data
           }));
-          console.log('✅ Teachers list:', teachersList);
+          // console.log('✅ Teachers list:', teachersList);
           setTeachers(teachersList);
         } else {
-          console.log('⚠️ No teachers found at:', `universities/${userProfile.universityId}/teachers`);
+          // console.log('⚠️ No teachers found at:', `universities/${userProfile.universityId}/teachers`);
           setTeachers([]);
         }
 
         // Charger liste des salles
         const roomsRef = ref(database, `universities/${userProfile.universityId}/rooms`);
-        console.log('🔍 Fetching rooms from:', `universities/${userProfile.universityId}/rooms`);
+        // console.log('🔍 Fetching rooms from:', `universities/${userProfile.universityId}/rooms`);
         const roomsSnap = await get(roomsRef);
 
         if (roomsSnap.exists()) {
@@ -117,10 +117,10 @@ export default function CreateCoursePage() {
               ...data
             }))
             .filter(room => room.status === 'active'); // Seulement les salles actives
-          console.log('✅ Rooms list:', roomsList);
+          // console.log('✅ Rooms list:', roomsList);
           setRooms(roomsList);
         } else {
-          console.log('⚠️ No rooms found');
+          // console.log('⚠️ No rooms found');
           setRooms([]);
         }
 
@@ -167,19 +167,19 @@ export default function CreateCoursePage() {
 
   // Auto-génération du code cours (PREFIX-DEPT-NUM)
   const generateCourseCode = () => {
-    console.log('🔍 generateCourseCode called');
-    console.log('universityInfo:', universityInfo);
-    console.log('formData.department:', formData.department);
+    // console.log('🔍 generateCourseCode called');
+    // console.log('universityInfo:', universityInfo);
+    // console.log('formData.department:', formData.department);
 
     if (!universityInfo) {
       setError('Erreur: Informations université non chargées');
-      console.log('❌ No universityInfo');
+      // console.log('❌ No universityInfo');
       return;
     }
 
     if (!formData.department) {
       setError('Veuillez sélectionner un département d\'abord');
-      console.log('❌ No department selected');
+      // console.log('❌ No department selected');
       return;
     }
 
@@ -188,7 +188,7 @@ export default function CreateCoursePage() {
     const randomNum = Math.floor(Math.random() * 900) + 100;
     const code = `${prefix}-${deptCode}-${randomNum}`;
 
-    console.log('✅ Generated code:', code);
+    // console.log('✅ Generated code:', code);
     setFormData(prev => ({ ...prev, courseCode: code }));
     setError(''); // Clear error
   };
@@ -505,6 +505,14 @@ export default function CreateCoursePage() {
         createdAt: Date.now(),
         createdBy: currentUser.uid
       };
+
+      // console.log('=== DEBUG COURSE CREATION ===');
+      // console.log('User role:', userProfile.role);
+      // console.log('User universityId:', userProfile.universityId);
+      // console.log('Course path:', `universities/${userProfile.universityId}/courses/${courseId}`);
+      // console.log('Course data:', JSON.stringify(courseData, null, 2));
+      // console.log('Schedule type:', typeof courseData.schedule);
+      // console.log('Schedule keys:', Object.keys(courseData.schedule));
 
       await set(courseRef, courseData);
 

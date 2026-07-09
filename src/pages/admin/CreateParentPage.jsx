@@ -452,16 +452,16 @@ export default function CreateParentPage() {
         await set(userRef, userData);
 
         // Mettre à jour chaque étudiant pour ajouter les infos de ce parent
-        console.log('🔍 Mise à jour des étudiants, count:', formData.selectedStudents.length);
+        // console.log('🔍 Mise à jour des étudiants, count:', formData.selectedStudents.length);
         for (const student of formData.selectedStudents) {
-          console.log('📝 Traitement étudiant:', student.id, student.firstName, student.lastName);
+          // console.log('📝 Traitement étudiant:', student.id, student.firstName, student.lastName);
           const studentRef = ref(database, `universities/${userProfile.universityId}/students/${student.id}`);
           const studentSnap = await get(studentRef);
 
           if (studentSnap.exists()) {
             const studentData = studentSnap.val();
             const currentParents = studentData.parents || [];
-            console.log('  → Parents actuels:', currentParents.length);
+            // console.log('  → Parents actuels:', currentParents.length);
 
             // Ajouter le parent (max 2)
             if (currentParents.length < 2) {
@@ -471,17 +471,17 @@ export default function CreateParentPage() {
                 phone: formData.phone,
                 email: formData.email
               };
-              console.log('  → Ajout du parent:', newParent);
+              // console.log('  → Ajout du parent:', newParent);
 
               await update(studentRef, {
                 parents: [...currentParents, newParent]
               });
-              console.log('  ✅ Parent ajouté');
+              // console.log('  ✅ Parent ajouté');
             } else {
-              console.log('  ⚠️ Limite 2 parents atteinte');
+              // console.log('  ⚠️ Limite 2 parents atteinte');
             }
           } else {
-            console.log('  ❌ Étudiant non trouvé dans Firebase');
+            // console.log('  ❌ Étudiant non trouvé dans Firebase');
           }
         }
 

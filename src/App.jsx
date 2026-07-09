@@ -18,6 +18,7 @@ import AdminUniversityDashboard from './pages/dashboards/AdminUniversityDashboar
 import TeacherDashboard from './pages/dashboards/TeacherDashboard';
 import StudentDashboard from './pages/dashboards/StudentDashboard';
 import ParentDashboard from './pages/dashboards/ParentDashboard';
+import ComptableDashboard from './pages/dashboards/ComptableDashboard';
 import CreateTeacherPage from './pages/admin/CreateTeacherPage';
 import TeachersListPage from './pages/admin/TeachersListPage';
 import TeacherDetailsPage from './pages/admin/TeacherDetailsPage';
@@ -34,17 +35,37 @@ import CreateClassPage from './pages/admin/CreateClassPage';
 import ClassesListPage from './pages/admin/ClassesListPage';
 import ClassDetailsPage from './pages/admin/ClassDetailsPage';
 import RoomsManagementPage from './pages/admin/RoomsManagementPage';
+import ClassScheduleManagementPage from './pages/admin/ClassScheduleManagementPage';
 import ManageAcademicDataPage from './pages/admin/ManageAcademicDataPage';
 import ManageStudentsPage from './pages/admin/ManageStudentsPage';
 import ManageTeachersPage from './pages/admin/ManageTeachersPage';
 import ManageCoursesPage from './pages/admin/ManageCoursesPage';
 import GradesInputPage from './pages/teacher/GradesInputPage';
+import TeacherSchedulePage from './pages/teacher/TeacherSchedulePage';
+import AttendancePage from './pages/teacher/AttendancePage';
 import MyGradesPage from './pages/student/MyGradesPage';
 import GradesDashboardPage from './pages/student/GradesDashboardPage';
+import MyAbsencesPage from './pages/student/MyAbsencesPage';
 import GradesListPage from './pages/admin/GradesListPage';
 import EditGradePage from './pages/admin/EditGradePage';
+import GradesStatsPage from './pages/admin/GradesStatsPage';
 import ParentGradesPage from './pages/parent/ParentGradesPage';
+import ChildAbsencesPage from './pages/parent/ChildAbsencesPage';
+import AbsencesManagementPage from './pages/admin/AbsencesManagementPage';
 import MigrateAcademicYearPage from './pages/admin/MigrateAcademicYearPage';
+import PaymentsManagementPage from './pages/admin/PaymentsManagementPage';
+import CreatePaymentPlanPage from './pages/admin/CreatePaymentPlanPage';
+import AccountingDashboardPage from './pages/admin/AccountingDashboardPage';
+import TransactionJournalPage from './pages/admin/TransactionJournalPage';
+import CreateComptablePage from './pages/admin/CreateComptablePage';
+import ExpensesManagementPage from './pages/admin/ExpensesManagementPage';
+import ExpenseCategoriesPage from './pages/admin/ExpenseCategoriesPage';
+import RevenuesManagementPage from './pages/admin/RevenuesManagementPage';
+import RevenueCategoriesPage from './pages/admin/RevenueCategoriesPage';
+import CashJournalPage from './pages/admin/CashJournalPage';
+import FreePaymentPage from './pages/admin/FreePaymentPage';
+import UniversitySettingsPage from './pages/admin/UniversitySettingsPage';
+import MyPaymentsPage from './pages/student/MyPaymentsPage';
 import './App.css';
 
 function App() {
@@ -248,6 +269,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/schedules"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ClassScheduleManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/academic-data"
             element={
               <ProtectedRoute allowedRoles={['admin_universite']}>
@@ -272,6 +301,118 @@ function App() {
             }
           />
           <Route
+            path="/admin/grades/stats"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <GradesStatsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/payments"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <PaymentsManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/payments/create"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreatePaymentPlanPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/payments/free"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <FreePaymentPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/accounting"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <AccountingDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/accounting/journal"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <TransactionJournalPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/accounting/expenses"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <ExpensesManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/accounting/expenses/categories"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <ExpenseCategoriesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/accounting/revenues"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <RevenuesManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/accounting/revenues/categories"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <RevenueCategoriesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/accounting/cash-journal"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'comptable']}>
+                <CashJournalPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/comptable/create"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateComptablePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <UniversitySettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/comptable"
+            element={
+              <ProtectedRoute allowedRoles={['comptable']}>
+                <ComptableDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/dashboard/teacher"
             element={
               <ProtectedRoute allowedRoles={['teacher']}>
@@ -284,6 +425,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['teacher']}>
                 <GradesInputPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/schedule"
+            element={
+              <ProtectedRoute allowedRoles={['teacher']}>
+                <TeacherSchedulePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/attendance"
+            element={
+              <ProtectedRoute allowedRoles={['teacher']}>
+                <AttendancePage />
               </ProtectedRoute>
             }
           />
@@ -312,6 +469,22 @@ function App() {
             }
           />
           <Route
+            path="/student/absences"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <MyAbsencesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/payments"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <MyPaymentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/dashboard/parent"
             element={
               <ProtectedRoute allowedRoles={['parent']}>
@@ -324,6 +497,24 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['parent']}>
                 <ParentGradesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/parent/absences"
+            element={
+              <ProtectedRoute allowedRoles={['parent']}>
+                <ChildAbsencesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Absences Management - Admin Only */}
+          <Route
+            path="/admin/absences"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <AbsencesManagementPage />
               </ProtectedRoute>
             }
           />

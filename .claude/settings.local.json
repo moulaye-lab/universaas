@@ -31,7 +31,17 @@
       "Read(//tmp/**)",
       "Bash(git commit -m 'Debug: Ajouter logs pour diagnostiquer PERMISSION_DENIED *)",
       "Bash(git commit -m 'Fix: Ajouter currentUser manquant dans EditStudentPage *)",
-      "Bash(git commit -m 'Setup: Firebase CLI auto-deploy + fichier Rules sur Desktop *)"
+      "Bash(git commit -m 'Setup: Firebase CLI auto-deploy + fichier Rules sur Desktop *)",
+      "Bash(find src *)",
+      "Bash(lsof -ti:5173)",
+      "Bash(firebase login *)",
+      "Bash(npx eslint *)",
+      "Bash(npx tsc *)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(curl -s http://localhost:5181/)",
+      "Bash(lsof -ti:5181)",
+      "Bash(npm uninstall *)",
+      "Bash(find . -name \"*.jsx\" -type f -exec grep -l \"departments\" {} \\\\;)"
     ]
   }
 }

@@ -12,7 +12,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Edit, Trash2, TrendingUp, Award } from 'lucide-react';
+import { Edit, Trash2, TrendingUp, Award, BarChart3 } from 'lucide-react';
 import { ref, remove, get } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -305,6 +305,17 @@ export default function GradesListPage() {
     );
   };
 
+  // Actions header personnalisées
+  const headerActions = (
+    <button
+      onClick={() => navigate('/admin/grades/stats')}
+      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition flex items-center gap-2 font-semibold"
+    >
+      <BarChart3 className="w-5 h-5" />
+      Statistiques Globales
+    </button>
+  );
+
   if (loadingOptions) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -321,6 +332,7 @@ export default function GradesListPage() {
       entityType="grades"
       collectionPath={`universities/${userProfile?.universityId}/grades`}
       title="📊 Gestion des Notes"
+      headerActions={headerActions}
 
       columns={columns}
 

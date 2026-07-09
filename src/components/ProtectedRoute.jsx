@@ -39,6 +39,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     const roleRedirects = {
       'super_admin_plateforme': '/dashboard/super-admin',
       'admin_universite': '/dashboard/admin',
+      'comptable': '/dashboard/comptable',
       'teacher': '/dashboard/teacher',
       'student': '/dashboard/student',
       'parent': '/dashboard/parent',

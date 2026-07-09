@@ -224,8 +224,26 @@ const AdminUniversityDashboard = () => {
       case 'rooms-management':
         navigate('/admin/rooms');
         break;
+      case 'schedules-management':
+        navigate('/admin/schedules');
+        break;
       case 'academic-data':
         navigate('/admin/academic-data');
+        break;
+      case 'absences-management':
+        navigate('/admin/absences');
+        break;
+      case 'payments-management':
+        navigate('/admin/payments');
+        break;
+      case 'accounting-dashboard':
+        navigate('/admin/accounting');
+        break;
+      case 'create-comptable':
+        navigate('/admin/comptable/create');
+        break;
+      case 'settings':
+        navigate('/admin/settings');
         break;
       case 'close-year':
         if (confirm('Êtes-vous sûr de vouloir clôturer l\'année académique ?')) {
@@ -321,11 +339,53 @@ const AdminUniversityDashboard = () => {
       description: 'Gérer les salles de cours'
     },
     {
+      title: 'Emplois du Temps',
+      icon: Calendar,
+      action: 'schedules-management',
+      gradient: 'from-purple-500 to-purple-600',
+      description: 'Configurer les emplois du temps des classes'
+    },
+    {
       title: 'Données Académiques',
       icon: Settings,
       action: 'academic-data',
       gradient: 'from-indigo-500 to-indigo-600',
       description: 'Gérer les niveaux et semestres'
+    },
+    {
+      title: 'Absences & Retards',
+      icon: AlertCircle,
+      action: 'absences-management',
+      gradient: 'from-red-500 to-orange-600',
+      description: 'Gérer et valider les justificatifs'
+    },
+    {
+      title: 'Paiements',
+      icon: DollarSign,
+      action: 'payments-management',
+      gradient: 'from-emerald-500 to-teal-600',
+      description: 'Gérer les plans de paiement'
+    },
+    {
+      title: 'Comptabilité',
+      icon: FileText,
+      action: 'accounting-dashboard',
+      gradient: 'from-blue-500 to-indigo-600',
+      description: 'Tableau de bord financier'
+    },
+    {
+      title: 'Créer Comptable',
+      icon: UserPlus,
+      action: 'create-comptable',
+      gradient: 'from-amber-500 to-yellow-600',
+      description: 'Créer un compte comptable'
+    },
+    {
+      title: 'Paramètres',
+      icon: Settings,
+      action: 'settings',
+      gradient: 'from-gray-500 to-slate-600',
+      description: 'Devise et configuration'
     }
   ];
 

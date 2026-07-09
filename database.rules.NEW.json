@@ -5,7 +5,7 @@
 
     "users": {
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && data.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val()))",
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && newData.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val()))",
         ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && (newData.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val() || data.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val())))",
 
         "email": {
@@ -27,7 +27,8 @@
           ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
         },
         "role": {
-          ".validate": "newData.isString() && newData.val().matches(/^(super_admin_plateforme|admin_universite|comptable|teacher|student|parent)$/)"
+          ".validate": "newData.isString() && newData.val().matches(/^(super_admin_plateforme|admin_universite|teacher|student|parent)$/)",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'"
         },
         "universityId": {
           ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
@@ -77,17 +78,7 @@
 
           "$studentId": {
             ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
-
-            "paymentHistory": {
-              ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-              ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-              "$historyId": {
-                "$other": {
-                  ".validate": true
-                }
-              }
-            },
+            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
 
             "firstName": {
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
@@ -222,7 +213,7 @@
         },
 
         "grades": {
-          ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'student' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'parent' && root.child('users').child(auth.uid).child('childrenAccess').child($universityId).exists()))",
+          ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
           ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
           ".indexOn": ["studentId", "courseId", "classId", "teacherId", "date", "academicYear"],
 
@@ -277,33 +268,10 @@
           }
         },
 
-        "absences": {
-          ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-          ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-          ".indexOn": ["studentId", "courseId", "teacherId", "date", "status", "academicYear"],
-
-          "$absenceId": {
-            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'student' && data.child('studentId').val() === root.child('users').child(auth.uid).child('profileId').val()) || (root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child(data.child('studentId').val()).val() === true))",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'student' && data.child('studentId').val() === root.child('users').child(auth.uid).child('profileId').val() && (newData.child('justificationUrl').exists() || newData.child('justificationFilename').exists() || newData.child('justificationUploadedAt').exists())))",
-
-            "studentId": {
-              ".validate": "newData.isString() && newData.val().length > 0"
-            },
-            "courseId": {
-              ".validate": "newData.isString() && newData.val().length > 0"
-            },
-            "teacherId": {
-              ".validate": "newData.isString() && newData.val().length > 0"
-            },
-            "date": {
-              ".validate": "newData.isNumber()"
-            },
-            "status": {
-              ".validate": "newData.isString() && newData.val().matches(/^(absent|late)$/)"
-            },
-            "justified": {
-              ".validate": "newData.isBoolean()"
-            },
+        "payments": {
+          "$studentId": {
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('profileId').val() === $studentId || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).val() === true)",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && root.child('users').child(auth.uid).child('role').val() === 'admin_universite'",
             "$other": {
               ".validate": true
             }
@@ -355,132 +323,6 @@
             ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
             "$other": {
               ".validate": true
-            }
-          }
-        },
-
-        "payments": {
-          "$studentId": {
-            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'student' && root.child('users').child(auth.uid).child('universityId').val() === $universityId && root.child('users').child(auth.uid).child('profileId').val() === $studentId) || (root.child('users').child(auth.uid).child('role').val() === 'parent' && root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).exists()) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".indexOn": ["academicYear", "createdAt"],
-
-            "totalAmount": {
-              ".validate": "newData.isNumber() && newData.val() > 0"
-            },
-            "academicYear": {
-              ".validate": "newData.isString() && newData.val().length > 0"
-            },
-            "createdAt": {
-              ".validate": "newData.isNumber()"
-            },
-            "createdBy": {
-              ".validate": "newData.isString() && newData.val().length > 0"
-            },
-            "installments": {
-              ".validate": "newData.hasChildren()"
-            },
-            "$other": {
-              ".validate": true
-            }
-          }
-        },
-
-        "accounting": {
-          "expenseCategories": {
-            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            "$categoryId": {
-              "$other": {
-                ".validate": true
-              }
-            }
-          },
-
-          "revenueCategories": {
-            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            "$categoryId": {
-              "$other": {
-                ".validate": true
-              }
-            }
-          },
-
-          "cashJournal": {
-            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".indexOn": ["date", "type", "processedBy"],
-            "$entryId": {
-              "type": {
-                ".validate": "newData.isString() && newData.val().matches(/^(revenue|expense)$/)"
-              },
-              "amount": {
-                ".validate": "newData.isNumber() && newData.val() > 0"
-              },
-              "$other": {
-                ".validate": true
-              }
-            }
-          },
-
-          "expenses": {
-            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".indexOn": ["date", "category", "academicYear", "status"],
-            "$expenseId": {
-              "amount": {
-                ".validate": "newData.isNumber() && newData.val() > 0"
-              },
-              "category": {
-                ".validate": "newData.isString()"
-              },
-              "date": {
-                ".validate": "newData.isString() || newData.isNumber()"
-              },
-              "status": {
-                ".validate": "newData.isString() && newData.val().matches(/^(en_attente|validee|payee|annulee)$/)"
-              },
-              "$other": {
-                ".validate": true
-              }
-            }
-          },
-
-          "revenues": {
-            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".indexOn": ["date", "category", "academicYear"],
-            "$revenueId": {
-              "amount": {
-                ".validate": "newData.isNumber() && newData.val() > 0"
-              },
-              "category": {
-                ".validate": "newData.isString() && newData.val().length > 0"
-              },
-              "date": {
-                ".validate": "newData.isString() || newData.isNumber()"
-              },
-              "$other": {
-                ".validate": true
-              }
-            }
-          },
-
-          "budgets": {
-            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
-            ".indexOn": ["academicYear"],
-            "$budgetId": {
-              "academicYear": {
-                ".validate": "newData.isString() && newData.val().length > 0"
-              },
-              "totalBudget": {
-                ".validate": "newData.isNumber() && newData.val() > 0"
-              },
-              "$other": {
-                ".validate": true
-              }
             }
           }
         },
