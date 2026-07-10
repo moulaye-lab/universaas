@@ -421,6 +421,31 @@
           }
         },
 
+        "messages": {
+          "$messageId": {
+            ".read": "auth != null && (data.child('from').val() === auth.uid || data.child('to').val() === auth.uid)",
+            ".write": "auth != null && newData.child('from').val() === auth.uid && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".validate": "newData.hasChildren(['id', 'from', 'fromName', 'fromRole', 'to', 'toName', 'toRole', 'subject', 'body', 'read', 'createdAt'])",
+
+            "id": { ".validate": "newData.isString()" },
+            "from": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+            "fromName": { ".validate": "newData.isString()" },
+            "fromRole": { ".validate": "newData.isString()" },
+            "to": { ".validate": "newData.isString() && newData.val() !== auth.uid" },
+            "toName": { ".validate": "newData.isString()" },
+            "toRole": { ".validate": "newData.isString()" },
+            "subject": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+            "body": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 5000" },
+            "read": { ".validate": "newData.isBoolean()" },
+            "starred": { ".validate": "newData.isBoolean() || !newData.exists()" },
+            "archived": { ".validate": "newData.isBoolean() || !newData.exists()" },
+            "createdAt": { ".validate": "newData.isNumber()" },
+            "readAt": { ".validate": "newData.isNumber() || !newData.exists()" },
+            "archivedAt": { ".validate": "newData.isNumber() || !newData.exists()" },
+            "$other": { ".validate": false }
+          }
+        },
+
         "liveSessions": {
           "$sessionId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",

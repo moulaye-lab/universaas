@@ -70,6 +70,9 @@ import UniversitySettingsPage from './pages/admin/UniversitySettingsPage';
 import MyPaymentsPage from './pages/student/MyPaymentsPage';
 import ImportDataPage from './pages/admin/ImportDataPage';
 import NotificationsPage from './pages/NotificationsPage';
+import InboxPage from './pages/messages/InboxPage';
+import ComposeMessagePage from './pages/messages/ComposeMessagePage';
+import MessageDetailPage from './pages/messages/MessageDetailPage';
 import './App.css';
 
 function App() {
@@ -549,6 +552,32 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['super_admin_plateforme', 'admin_universite', 'comptable', 'teacher', 'student', 'parent']}>
                 <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Messages - All authenticated users */}
+          <Route
+            path="/messages/inbox"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin_plateforme', 'admin_universite', 'comptable', 'teacher', 'student', 'parent']}>
+                <InboxPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages/compose"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin_plateforme', 'admin_universite', 'comptable', 'teacher', 'student', 'parent']}>
+                <ComposeMessagePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages/:messageId"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin_plateforme', 'admin_universite', 'comptable', 'teacher', 'student', 'parent']}>
+                <MessageDetailPage />
               </ProtectedRoute>
             }
           />
