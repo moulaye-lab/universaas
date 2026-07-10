@@ -68,6 +68,7 @@ import CashJournalPage from './pages/admin/CashJournalPage';
 import FreePaymentPage from './pages/admin/FreePaymentPage';
 import UniversitySettingsPage from './pages/admin/UniversitySettingsPage';
 import MyPaymentsPage from './pages/student/MyPaymentsPage';
+import ImportDataPage from './pages/admin/ImportDataPage';
 import './App.css';
 
 function App() {
@@ -405,6 +406,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin_universite']}>
                 <UniversitySettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/import"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <ImportDataPage />
               </ProtectedRoute>
             }
           />

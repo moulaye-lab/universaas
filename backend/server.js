@@ -128,7 +128,9 @@ app.use('/api/ai', globalLimiter);
 
 // Routes
 const onboardingRoutes = require('./routes/onboarding');
+const importRoutes = require('./routes/import');
 app.use('/api/onboarding', onboardingRoutes);
+app.use('/api/import', importRoutes);
 
 // Fonction de logging sécurisé
 function securityLog(level, message, metadata = {}) {
