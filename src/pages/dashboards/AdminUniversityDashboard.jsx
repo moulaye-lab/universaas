@@ -52,25 +52,35 @@ const AdminUniversityDashboard = () => {
   const [openPeopleMenu, setOpenPeopleMenu] = useState(false);
 
   useEffect(() => {
+    console.log('📊 AdminDashboard useEffect:', { universityId: userProfile?.universityId });
     let cleanup;
 
     const loadData = async () => {
-      if (!userProfile?.universityId) return;
+      if (!userProfile?.universityId) {
+        console.log('⚠️ AdminDashboard: Pas de universityId');
+        return;
+      }
 
+      console.log('📥 AdminDashboard: Chargement données université...');
       try {
         // Charger les données de l'université
         const universityRef = ref(database, `universities/${userProfile.universityId}`);
         const universitySnapshot = await get(universityRef);
 
         if (universitySnapshot.exists()) {
+          console.log('✅ AdminDashboard: Université chargée');
           setUniversity(universitySnapshot.val());
+        } else {
+          console.log('⚠️ AdminDashboard: Université non trouvée');
         }
 
         // Écouter les changements en temps réel
+        console.log('🔄 AdminDashboard: Lancement loadDashboardData...');
         cleanup = loadDashboardData(userProfile.universityId);
+        console.log('✅ AdminDashboard: loadDashboardData terminé');
 
       } catch (error) {
-        console.error('Error loading user data:', error);
+        console.error('❌ AdminDashboard: Error loading user data:', error);
         navigate('/');
       }
     };
@@ -84,6 +94,7 @@ const AdminUniversityDashboard = () => {
   }, [userProfile, navigate]);
 
   const loadDashboardData = (universityId) => {
+    console.log('🔄 loadDashboardData: Début', { universityId });
     const unsubscribers = [];
 
     // Écouter les étudiants
