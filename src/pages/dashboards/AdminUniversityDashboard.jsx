@@ -31,6 +31,10 @@ const AdminUniversityDashboard = () => {
   const [university, setUniversity] = useState(null);
   const [stats, setStats] = useState({
     totalStudents: 0,
+    activeStudents: 0,
+    pendingStudents: 0,
+    inactiveStudents: 0,
+    suspendedStudents: 0,
     totalTeachers: 0,
     successRate: 0,
     monthlyRevenue: 0,
@@ -43,6 +47,9 @@ const AdminUniversityDashboard = () => {
   const [latePayments, setLatePayments] = useState([]);
   const [showParentModal, setShowParentModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [openFinancialMenu, setOpenFinancialMenu] = useState(false);
+  const [openAcademicMenu, setOpenAcademicMenu] = useState(false);
+  const [openPeopleMenu, setOpenPeopleMenu] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -84,11 +91,19 @@ const AdminUniversityDashboard = () => {
         const pending = studentsArray.filter(s => s.status === 'pending');
         setPendingInscriptions(pending);
 
-        // Calculer stats étudiants
-        const activeStudents = studentsArray.filter(s => s.status === 'active').length;
+        // Calculer stats étudiants par statut
+        const activeCount = studentsArray.filter(s => s.status === 'active').length;
+        const pendingCount = studentsArray.filter(s => s.status === 'pending').length;
+        const inactiveCount = studentsArray.filter(s => s.status === 'inactive').length;
+        const suspendedCount = studentsArray.filter(s => s.status === 'suspended').length;
+
         setStats(prev => ({
           ...prev,
-          totalStudents: activeStudents,
+          totalStudents: studentsArray.length,
+          activeStudents: activeCount,
+          pendingStudents: pendingCount,
+          inactiveStudents: inactiveCount,
+          suspendedStudents: suspendedCount,
           studentsVariation: 12.5
         }));
       } else {
@@ -233,6 +248,21 @@ const AdminUniversityDashboard = () => {
       case 'absences-management':
         navigate('/admin/absences');
         break;
+      case 'financial-menu':
+        setOpenFinancialMenu(!openFinancialMenu);
+        setOpenAcademicMenu(false);
+        setOpenPeopleMenu(false);
+        break;
+      case 'academic-menu':
+        setOpenAcademicMenu(!openAcademicMenu);
+        setOpenFinancialMenu(false);
+        setOpenPeopleMenu(false);
+        break;
+      case 'people-menu':
+        setOpenPeopleMenu(!openPeopleMenu);
+        setOpenFinancialMenu(false);
+        setOpenAcademicMenu(false);
+        break;
       case 'payments-management':
         navigate('/admin/payments');
         break;
@@ -304,11 +334,26 @@ const AdminUniversityDashboard = () => {
       description: 'Créer et gérer les classes'
     },
     {
-      title: 'Gestion Étudiants',
+      title: 'Gestion Personnes',
       icon: Users,
-      action: 'manage-students',
+      action: 'people-menu',
       gradient: 'from-blue-500 to-blue-600',
-      description: 'Créer et gérer les étudiants'
+      description: 'Étudiants et parents',
+      isPeople: true,
+      subActions: [
+        {
+          title: 'Gestion Étudiants',
+          icon: Users,
+          action: 'manage-students',
+          description: 'Créer et gérer les étudiants'
+        },
+        {
+          title: 'Gestion Parents',
+          icon: UsersIcon,
+          action: 'parents-list',
+          description: 'Gérer les comptes parents'
+        }
+      ]
     },
     {
       title: 'Gestion Enseignants',
@@ -318,32 +363,32 @@ const AdminUniversityDashboard = () => {
       description: 'Créer et gérer les enseignants'
     },
     {
-      title: 'Gestion Cours',
+      title: 'Gestion Académique',
       icon: BookOpen,
-      action: 'manage-courses',
+      action: 'academic-menu',
       gradient: 'from-purple-500 to-purple-600',
-      description: 'Créer et gérer les cours'
-    },
-    {
-      title: 'Gestion Parents',
-      icon: UsersIcon,
-      action: 'parents-list',
-      gradient: 'from-pink-500 to-rose-600',
-      description: 'Gérer les comptes parents'
-    },
-    {
-      title: 'Gestion Salles',
-      icon: Building2,
-      action: 'rooms-management',
-      gradient: 'from-cyan-500 to-cyan-600',
-      description: 'Gérer les salles de cours'
-    },
-    {
-      title: 'Emplois du Temps',
-      icon: Calendar,
-      action: 'schedules-management',
-      gradient: 'from-purple-500 to-purple-600',
-      description: 'Configurer les emplois du temps des classes'
+      description: 'Cours, salles et emplois du temps',
+      isAcademic: true,
+      subActions: [
+        {
+          title: 'Gestion des Cours',
+          icon: BookOpen,
+          action: 'manage-courses',
+          description: 'Créer et gérer les cours'
+        },
+        {
+          title: 'Gestion des Salles',
+          icon: Building2,
+          action: 'rooms-management',
+          description: 'Gérer les salles de cours'
+        },
+        {
+          title: 'Emplois du Temps',
+          icon: Calendar,
+          action: 'schedules-management',
+          description: 'Configurer les emplois du temps'
+        }
+      ]
     },
     {
       title: 'Données Académiques',
@@ -360,25 +405,32 @@ const AdminUniversityDashboard = () => {
       description: 'Gérer et valider les justificatifs'
     },
     {
-      title: 'Paiements',
+      title: 'Gestion Financière',
       icon: DollarSign,
-      action: 'payments-management',
+      action: 'financial-menu',
       gradient: 'from-emerald-500 to-teal-600',
-      description: 'Gérer les plans de paiement'
-    },
-    {
-      title: 'Comptabilité',
-      icon: FileText,
-      action: 'accounting-dashboard',
-      gradient: 'from-blue-500 to-indigo-600',
-      description: 'Tableau de bord financier'
-    },
-    {
-      title: 'Créer Comptable',
-      icon: UserPlus,
-      action: 'create-comptable',
-      gradient: 'from-amber-500 to-yellow-600',
-      description: 'Créer un compte comptable'
+      description: 'Paiements, comptabilité et comptables',
+      isFinancial: true,
+      subActions: [
+        {
+          title: 'Paiements Étudiants',
+          icon: DollarSign,
+          action: 'payments-management',
+          description: 'Gérer les plans de paiement'
+        },
+        {
+          title: 'Tableau de Bord Financier',
+          icon: FileText,
+          action: 'accounting-dashboard',
+          description: 'Vue d\'ensemble comptable'
+        },
+        {
+          title: 'Créer un Comptable',
+          icon: UserPlus,
+          action: 'create-comptable',
+          description: 'Nouveau compte comptable'
+        }
+      ]
     },
     {
       title: 'Paramètres',
@@ -442,6 +494,40 @@ const AdminUniversityDashboard = () => {
               </div>
               <h3 className="text-3xl font-bold text-white mb-2">{stat.value}</h3>
               <p className="text-sm text-indigo-200">{stat.title}</p>
+
+              {/* Détail des statuts étudiants */}
+              {stat.title === 'Total Étudiants' && (
+                <div className="mt-4 pt-4 border-t border-white/10 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-green-300 flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      Actifs
+                    </span>
+                    <span className="text-white font-semibold">{stats.activeStudents}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-yellow-300 flex items-center gap-1">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                      En attente
+                    </span>
+                    <span className="text-white font-semibold">{stats.pendingStudents}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-300 flex items-center gap-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      Inactifs
+                    </span>
+                    <span className="text-white font-semibold">{stats.inactiveStudents}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-red-300 flex items-center gap-1">
+                      <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                      Suspendus
+                    </span>
+                    <span className="text-white font-semibold">{stats.suspendedStudents}</span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -608,18 +694,80 @@ const AdminUniversityDashboard = () => {
           <h2 className="text-2xl font-bold text-white mb-6">Actions Rapides</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quickActions.map((action, index) => (
-              <button
-                key={index}
-                onClick={() => handleQuickAction(action.action)}
-                className="group relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 text-left"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className={`p-4 rounded-2xl bg-gradient-to-br ${action.gradient} shadow-lg mb-4 inline-flex group-hover:scale-110 transition-transform duration-300`}>
-                  <action.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-1">{action.title}</h3>
-                <p className="text-sm text-indigo-200">{action.description}</p>
-              </button>
+              <div key={index} className="relative">
+                <button
+                  onClick={() => handleQuickAction(action.action)}
+                  className="group relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 text-left w-full"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className={`p-4 rounded-2xl bg-gradient-to-br ${action.gradient} shadow-lg mb-4 inline-flex group-hover:scale-110 transition-transform duration-300`}>
+                    <action.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-1">{action.title}</h3>
+                  <p className="text-sm text-indigo-200">{action.description}</p>
+                </button>
+
+                {/* Sous-menus */}
+                {action.isFinancial && openFinancialMenu && (
+                  <div className="mt-4 space-y-3 animate-fade-in">
+                    {action.subActions.map((subAction, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => handleQuickAction(subAction.action)}
+                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
+                      >
+                        <div className="p-2 rounded-lg bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
+                          <subAction.icon className="w-5 h-5 text-emerald-300" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
+                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {action.isAcademic && openAcademicMenu && (
+                  <div className="mt-4 space-y-3 animate-fade-in">
+                    {action.subActions.map((subAction, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => handleQuickAction(subAction.action)}
+                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
+                      >
+                        <div className="p-2 rounded-lg bg-purple-500/20 group-hover:bg-purple-500/30 transition-colors">
+                          <subAction.icon className="w-5 h-5 text-purple-300" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
+                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {action.isPeople && openPeopleMenu && (
+                  <div className="mt-4 space-y-3 animate-fade-in">
+                    {action.subActions.map((subAction, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => handleQuickAction(subAction.action)}
+                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
+                      >
+                        <div className="p-2 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors">
+                          <subAction.icon className="w-5 h-5 text-blue-300" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
+                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
