@@ -79,8 +79,13 @@ const AdminUniversityDashboard = () => {
         cleanup = loadDashboardData(userProfile.universityId);
         console.log('✅ AdminDashboard: loadDashboardData terminé');
 
+        // Loading terminé
+        setLoading(false);
+        console.log('✅ AdminDashboard: setLoading(false)');
+
       } catch (error) {
         console.error('❌ AdminDashboard: Error loading user data:', error);
+        setLoading(false);
         navigate('/');
       }
     };
