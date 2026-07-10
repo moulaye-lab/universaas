@@ -194,8 +194,6 @@ const AdminUniversityDashboard = () => {
     return () => {
       unsubscribers.forEach(unsub => unsub());
     };
-
-    setLoading(false);
   };
 
   const handleAcceptInscription = async (studentId) => {
