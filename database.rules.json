@@ -62,6 +62,55 @@
         ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).exists())",
         ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
 
+        "aiEnabled": {
+          ".validate": "newData.isBoolean() || !newData.exists()"
+        },
+        "aiAssistantName": {
+          ".validate": "(newData.isString() && newData.val().length > 0 && newData.val().length <= 50) || !newData.exists()"
+        },
+        "aiPersonality": {
+          ".validate": "(newData.isString() && newData.val().matches(/^(professional|friendly|concise)$/)) || !newData.exists()"
+        },
+        "aiLanguage": {
+          ".validate": "(newData.isString() && newData.val().matches(/^(fr|en|ar|es)$/)) || !newData.exists()"
+        },
+        "aiResponseStyle": {
+          ".validate": "(newData.isString() && newData.val().matches(/^(detailed|balanced|brief)$/)) || !newData.exists()"
+        },
+        "aiContextAwareness": {
+          ".validate": "(newData.isString() && newData.val().matches(/^(full|partial|minimal)$/)) || !newData.exists()"
+        },
+        "aiFeatures": {
+          ".validate": "newData.hasChildren() || !newData.exists()",
+          "studentSupport": {
+            ".validate": "newData.isBoolean() || !newData.exists()"
+          },
+          "teacherSupport": {
+            ".validate": "newData.isBoolean() || !newData.exists()"
+          },
+          "adminSupport": {
+            ".validate": "newData.isBoolean() || !newData.exists()"
+          },
+          "parentSupport": {
+            ".validate": "newData.isBoolean() || !newData.exists()"
+          },
+          "paymentReminders": {
+            ".validate": "newData.isBoolean() || !newData.exists()"
+          },
+          "gradeNotifications": {
+            ".validate": "newData.isBoolean() || !newData.exists()"
+          },
+          "scheduleAssistance": {
+            ".validate": "newData.isBoolean() || !newData.exists()"
+          },
+          "dataAnalytics": {
+            ".validate": "newData.isBoolean() || !newData.exists()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+
         "info": {
           ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
           ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
@@ -481,6 +530,70 @@
               "$other": {
                 ".validate": true
               }
+            }
+          }
+        },
+
+        "aiConversations": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && root.child('users').child(auth.uid).child('role').val() === 'admin_universite'",
+          ".write": false,
+          ".indexOn": ["userId", "timestamp"],
+
+          "$userId": {
+            ".read": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin_universite') && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && auth.uid === $userId && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+
+            "$messageId": {
+              ".validate": "newData.hasChildren(['role', 'content', 'timestamp', 'userId', 'userRole'])",
+              "role": {
+                ".validate": "newData.isString() && newData.val().matches(/^(user|assistant)$/)"
+              },
+              "content": {
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 10000"
+              },
+              "timestamp": {
+                ".validate": "newData.isNumber() && newData.val() <= now"
+              },
+              "userId": {
+                ".validate": "newData.isString() && newData.val() === $userId"
+              },
+              "userRole": {
+                ".validate": "newData.isString() && newData.val().matches(/^(student|teacher|admin_universite|parent|comptable)$/)"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
+        },
+
+        "aiAnalytics": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && root.child('users').child(auth.uid).child('role').val() === 'admin_universite'",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+          ".indexOn": ["userId", "userRole", "timestamp"],
+
+          "$analyticsId": {
+            ".validate": "newData.hasChildren(['userId', 'userRole', 'timestamp', 'messageLength', 'responseLength', 'tokensUsed'])",
+            "userId": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "userRole": {
+              ".validate": "newData.isString() && newData.val().matches(/^(student|teacher|admin_universite|parent|comptable)$/)"
+            },
+            "timestamp": {
+              ".validate": "newData.isNumber() && newData.val() <= now"
+            },
+            "messageLength": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "responseLength": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "tokensUsed": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "$other": {
+              ".validate": false
             }
           }
         },

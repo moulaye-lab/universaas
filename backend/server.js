@@ -37,8 +37,10 @@ let serviceAccount;
 try {
   serviceAccount = require(firebaseConfigPath);
   console.log('✅ Configuration Firebase chargée depuis:', firebaseConfigPath);
-  console.log('   Type:', typeof serviceAccount);
-  console.log('   Project ID:', serviceAccount?.project_id);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('   Type:', typeof serviceAccount);
+    console.log('   Project ID:', serviceAccount?.project_id);
+  }
 } catch (error) {
   console.error('❌ Erreur lors du chargement du fichier Firebase:', firebaseConfigPath);
   console.error('   Erreur:', error.message);
@@ -75,14 +77,72 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
-// Rate limiting
-const limiter = rateLimit({
+// Rate limiting global (par IP)
+const globalLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60000, // 1 minute
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10, // 10 requêtes par minute
-  message: { error: 'Trop de requêtes, veuillez réessayer plus tard.' }
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 20, // 20 requêtes par minute par IP
+  message: { error: 'Trop de requêtes, veuillez réessayer plus tard.' },
+  standardHeaders: true,
+  legacyHeaders: false
 });
 
-app.use('/api/ai', limiter);
+// Rate limiting par utilisateur (plus strict)
+const userLimiters = new Map();
+function getUserRateLimiter(userId) {
+  if (!userLimiters.has(userId)) {
+    userLimiters.set(userId, {
+      count: 0,
+      resetAt: Date.now() + 60000
+    });
+  }
+  return userLimiters.get(userId);
+}
+
+// Middleware de rate limiting par utilisateur
+function perUserRateLimit(req, res, next) {
+  const userId = req.userProfile?.uid;
+  if (!userId) return next();
+
+  const limiter = getUserRateLimiter(userId);
+  const now = Date.now();
+
+  // Reset si la fenêtre est expirée
+  if (now > limiter.resetAt) {
+    limiter.count = 0;
+    limiter.resetAt = now + 60000;
+  }
+
+  // Vérifier la limite (10 requêtes par minute par utilisateur)
+  if (limiter.count >= 10) {
+    return res.status(429).json({
+      error: 'Limite de requêtes atteinte pour cet utilisateur',
+      retryAfter: Math.ceil((limiter.resetAt - now) / 1000)
+    });
+  }
+
+  limiter.count++;
+  next();
+}
+
+app.use('/api/ai', globalLimiter);
+
+// Fonction de logging sécurisé
+function securityLog(level, message, metadata = {}) {
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...metadata
+  };
+
+  // En production, envoyer à un service de logging (Datadog, CloudWatch, etc.)
+  if (process.env.NODE_ENV === 'production') {
+    // TODO: Intégrer un service de logging externe
+    console.log(JSON.stringify(logEntry));
+  } else {
+    console.log(`[${level}] ${message}`, metadata);
+  }
+}
 
 // Middleware d'authentification Firebase
 async function authenticateUser(req, res, next) {
@@ -90,6 +150,10 @@ async function authenticateUser(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      securityLog('WARN', 'Authentication attempt without token', {
+        ip: req.ip,
+        path: req.path
+      });
       return res.status(401).json({ error: 'Token d\'authentification manquant' });
     }
 
@@ -106,6 +170,10 @@ async function authenticateUser(req, res, next) {
     const userData = userSnapshot.val();
 
     if (!userData) {
+      securityLog('WARN', 'User profile not found', {
+        uid: decodedToken.uid,
+        email: decodedToken.email
+      });
       return res.status(404).json({ error: 'Profil utilisateur non trouvé' });
     }
 
@@ -116,7 +184,11 @@ async function authenticateUser(req, res, next) {
 
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    securityLog('ERROR', 'Authentication failed', {
+      error: error.message,
+      ip: req.ip,
+      path: req.path
+    });
     return res.status(403).json({ error: 'Token invalide ou expiré' });
   }
 }
@@ -259,19 +331,98 @@ async function loadUserContext(userProfile, aiSettings) {
   }
 }
 
+// Fonction de détection de prompt injection
+function detectPromptInjection(message) {
+  const suspiciousPatterns = [
+    /ignore\s+(previous|all|above)\s+instructions?/i,
+    /you\s+are\s+now/i,
+    /system\s*:/i,
+    /\[system\]/i,
+    /forget\s+(everything|all|that)/i,
+    /<\|im_start\|>/i,
+    /<\|im_end\|>/i,
+    /###\s*instruction/i,
+    /assistant\s*:/i,
+    /\[assistant\]/i,
+    /new\s+role/i,
+    /pretend\s+(you|to\s+be)/i
+  ];
+
+  return suspiciousPatterns.some(pattern => pattern.test(message));
+}
+
+// Fonction de validation et sanitisation des entrées
+function validateAndSanitizeInput(message, conversationHistory) {
+  const errors = [];
+
+  // Validation du message
+  if (!message || typeof message !== 'string') {
+    errors.push('Message invalide');
+  } else {
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length === 0) {
+      errors.push('Le message ne peut pas être vide');
+    }
+    if (trimmedMessage.length > 2000) {
+      errors.push('Message invalide');
+    }
+    // Vérifier les caractères suspects
+    if (trimmedMessage.includes('\\x00') || trimmedMessage.includes('\0')) {
+      errors.push('Contenu invalide détecté');
+    }
+    // Détecter les tentatives de prompt injection
+    if (detectPromptInjection(trimmedMessage)) {
+      securityLog('WARN', 'Prompt injection attempt detected', {
+        messagePreview: trimmedMessage.substring(0, 50)
+      });
+      errors.push('Contenu suspect détecté');
+    }
+  }
+
+  // Validation de l'historique de conversation
+  if (!Array.isArray(conversationHistory)) {
+    errors.push('L\'historique de conversation doit être un tableau');
+  } else if (conversationHistory.length > 20) {
+    errors.push('Historique de conversation trop long (maximum 20 messages)');
+  } else {
+    for (const msg of conversationHistory) {
+      if (!msg || typeof msg !== 'object') {
+        errors.push('Format d\'historique invalide');
+        break;
+      }
+      if (!msg.role || !['user', 'assistant'].includes(msg.role)) {
+        errors.push('Rôle de message invalide dans l\'historique');
+        break;
+      }
+      if (!msg.content || typeof msg.content !== 'string') {
+        errors.push('Contenu de message invalide dans l\'historique');
+        break;
+      }
+      if (msg.content.length > 5000) {
+        errors.push('Message dans l\'historique trop long');
+        break;
+      }
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
 // Route principale de chat
-app.post('/api/ai/chat', authenticateUser, loadAISettings, async (req, res) => {
+app.post('/api/ai/chat', authenticateUser, perUserRateLimit, loadAISettings, async (req, res) => {
   try {
     const { message, conversationHistory = [] } = req.body;
 
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return res.status(400).json({ error: 'Message invalide' });
+    // Validation complète des entrées
+    const validation = validateAndSanitizeInput(message, conversationHistory);
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: 'Données invalides',
+        details: validation.errors
+      });
     }
 
-    // Limiter la longueur du message
-    if (message.length > 500) {
-      return res.status(400).json({ error: 'Message trop long (maximum 500 caractères)' });
-    }
+    const trimmedMessage = message.trim();
 
     // Charger le contexte utilisateur
     const userContext = await loadUserContext(req.userProfile, req.aiSettings);
@@ -279,36 +430,47 @@ app.post('/api/ai/chat', authenticateUser, loadAISettings, async (req, res) => {
     // Construire le prompt système
     const systemPrompt = buildSystemPrompt(req.aiSettings, req.userProfile, userContext);
 
-    // Préparer l'historique de conversation
+    // Préparer l'historique de conversation (sanitisé)
     const messages = conversationHistory
       .slice(-10) // Garder seulement les 10 derniers messages
       .map(msg => ({
         role: msg.role === 'assistant' ? 'assistant' : 'user',
-        content: msg.content
+        content: String(msg.content).substring(0, 5000) // Limiter la longueur
       }));
 
     // Ajouter le nouveau message
     messages.push({
       role: 'user',
-      content: message
+      content: trimmedMessage
     });
 
-    // Appeler l'API Claude
-    const response = await anthropic.messages.create({
+    // Appeler l'API Claude avec timeout
+    const apiCallPromise = anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: systemPrompt,
       messages: messages
     });
 
+    // Timeout de 30 secondes
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout API Claude')), 30000)
+    );
+
+    const response = await Promise.race([apiCallPromise, timeoutPromise]);
+
     const aiResponse = response.content[0].text;
 
     // Logger l'interaction (optionnel - pour analytics)
+    // Note: userId est hashé pour la confidentialité
+    const crypto = require('crypto');
+    const userIdHash = crypto.createHash('sha256').update(req.userProfile.uid).digest('hex').substring(0, 16);
+
     await db.ref(`universities/${req.userProfile.universityId}/aiAnalytics`).push({
-      userId: req.userProfile.uid,
+      userIdHash: userIdHash, // Hash au lieu de l'UID en clair
       userRole: req.userProfile.role,
       timestamp: Date.now(),
-      messageLength: message.length,
+      messageLength: trimmedMessage.length,
       responseLength: aiResponse.length,
       tokensUsed: response.usage.input_tokens + response.usage.output_tokens
     });
@@ -329,15 +491,58 @@ app.post('/api/ai/chat', authenticateUser, loadAISettings, async (req, res) => {
   }
 });
 
-// Health check
+// Middleware de gestion d'erreurs globale
+app.use((err, req, res, next) => {
+  // Logger l'erreur complète en dev
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Error:', err);
+  } else {
+    // En production, logger uniquement le type et le message
+    console.error(`Error [${err.name}]: ${err.message}`);
+  }
+
+  // Réponse générique en production
+  const isDev = process.env.NODE_ENV === 'development';
+  res.status(err.statusCode || 500).json({
+    error: isDev ? err.message : 'Une erreur interne s\'est produite',
+    ...(isDev && { stack: err.stack })
+  });
+});
+
+// Health check (public - informations minimales)
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    anthropicApiConfigured: !!process.env.ANTHROPIC_API_KEY,
-    firebaseProjectId: serviceAccount.project_id,
-    environment: process.env.NODE_ENV || 'development'
+    services: {
+      ai: !!process.env.ANTHROPIC_API_KEY,
+      database: true
+    }
   });
+});
+
+// Health check détaillé (authentifié - admin uniquement)
+app.get('/api/health/detailed', authenticateUser, async (req, res) => {
+  try {
+    // Vérifier que l'utilisateur est admin
+    if (req.userProfile.role !== 'admin_universite' && req.userProfile.role !== 'super_admin_plateforme') {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
+
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      services: {
+        anthropicApiConfigured: !!process.env.ANTHROPIC_API_KEY,
+        firebaseConnected: true,
+        firebaseProject: serviceAccount.project_id
+      },
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur lors de la récupération du statut' });
+  }
 });
 
 // Démarrer le serveur

@@ -15,6 +15,7 @@ import { database } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useAISettings } from '../hooks/useAISettings';
 import { generateAIResponse as callAIAPI } from '../services/aiService';
+import DOMPurify from 'dompurify';
 import {
   MessageCircle,
   X,
@@ -59,6 +60,14 @@ export default function AIChatBot() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Fonction de sanitisation pour protéger contre XSS
+  const sanitizeContent = (content) => {
+    return DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: [], // Pas de HTML autorisé, texte brut uniquement
+      ALLOWED_ATTR: []
+    });
   };
 
   const loadConversationHistory = async () => {
@@ -323,7 +332,7 @@ Que souhaitez-vous savoir exactement?`;
                           ? 'bg-blue-600 text-white rounded-br-none'
                           : 'bg-white text-gray-900 rounded-bl-none shadow-sm border border-gray-200'
                       }`}>
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-sm whitespace-pre-wrap">{sanitizeContent(message.content)}</p>
                       </div>
                       <p className="text-xs text-gray-500 mt-1 px-2">
                         {new Date(message.timestamp).toLocaleTimeString('fr-FR', {
