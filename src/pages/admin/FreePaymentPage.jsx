@@ -35,7 +35,7 @@ function getCurrentAcademicYear() {
 
 export default function FreePaymentPage() {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { currentUser, userProfile } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -270,7 +270,7 @@ export default function FreePaymentPage() {
         date: todayDate,
         paymentMethod: paymentData.paymentMethod,
         category: 'Frais de scolarité',
-        processedBy: userProfile.uid,
+        processedBy: currentUser.uid,
         processedByName: userProfile.displayName,
         processedByRole: userProfile.role,
         studentId: selectedStudent.id,
