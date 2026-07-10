@@ -48,7 +48,8 @@
       "Bash(curl *)",
       "Bash(npm start *)",
       "Bash(awk '{print $9, \"\\(\"$5\"\\)\"}')",
-      "Bash(/tmp/fix_timeouts.sh)"
+      "Bash(/tmp/fix_timeouts.sh)",
+      "Bash(kill 13128 12902)"
     ]
   }
 }
