@@ -15,8 +15,11 @@ import { useAuth } from '../contexts/AuthContext';
 export default function PublicRoute({ children }) {
   const { currentUser, userProfile, loading } = useAuth();
 
+  console.log('🔍 PublicRoute:', { loading, currentUser: !!currentUser, userProfile: !!userProfile, role: userProfile?.role });
+
   // Pendant le chargement - ne rien afficher
   if (loading) {
+    console.log('⏳ PublicRoute: Affichage loader (loading=true)');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
@@ -32,14 +35,18 @@ export default function PublicRoute({ children }) {
     const roleRedirects = {
       'super_admin_plateforme': '/dashboard/super-admin',
       'admin_universite': '/dashboard/admin',
+      'comptable': '/dashboard/comptable',
       'teacher': '/dashboard/teacher',
       'student': '/dashboard/student',
       'parent': '/dashboard/parent',
     };
 
-    return <Navigate to={roleRedirects[userProfile.role] || '/'} replace />;
+    const redirectTo = roleRedirects[userProfile.role] || '/';
+    console.log(`🔄 PublicRoute: Redirection vers ${redirectTo} (role: ${userProfile.role})`);
+    return <Navigate to={redirectTo} replace />;
   }
 
   // Pas d'utilisateur - afficher la page publique
+  console.log('✅ PublicRoute: Affichage page publique (pas d\'utilisateur)');
   return children;
 }
