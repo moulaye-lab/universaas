@@ -11,11 +11,16 @@
 
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useEffect } from 'react';
 
 export default function PublicRoute({ children }) {
   const { currentUser, userProfile, loading } = useAuth();
 
-  console.log('🔍 PublicRoute:', { loading, currentUser: !!currentUser, userProfile: !!userProfile, role: userProfile?.role });
+  useEffect(() => {
+    console.log('🔍 PublicRoute useEffect:', { loading, currentUser: !!currentUser, userProfile: !!userProfile, role: userProfile?.role });
+  }, [loading, currentUser, userProfile]);
+
+  console.log('🔍 PublicRoute RENDER:', { loading, currentUser: !!currentUser, userProfile: !!userProfile, role: userProfile?.role });
 
   // Pendant le chargement - ne rien afficher
   if (loading) {
