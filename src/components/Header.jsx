@@ -103,8 +103,8 @@ export default function Header() {
 
           {/* Desktop: Info utilisateur et déconnexion */}
           <div className="hidden md:flex items-center gap-4">
-            <NotificationBell />
-            <div className="h-10 w-px bg-gray-300"></div>
+            {userProfile && <NotificationBell />}
+            {userProfile && <div className="h-10 w-px bg-gray-300"></div>}
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{userProfile?.displayName}</p>
               <p className="text-xs text-gray-600">{userProfile?.email}</p>
@@ -146,7 +146,7 @@ export default function Header() {
                   <p className="text-xs text-gray-600">{userProfile?.email}</p>
                   <p className="text-xs text-indigo-600 font-medium mt-1">{getRoleName(userProfile?.role)}</p>
                 </div>
-                <NotificationBell />
+                {userProfile && <NotificationBell />}
               </div>
               <button
                 onClick={handleLogout}
