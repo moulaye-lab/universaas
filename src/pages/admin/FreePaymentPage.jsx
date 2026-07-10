@@ -176,6 +176,11 @@ export default function FreePaymentPage() {
     setError('');
     setSuccess('');
 
+    if (!currentUser || !userProfile) {
+      setError('Session invalide. Veuillez vous reconnecter.');
+      return;
+    }
+
     if (!selectedStudent || !studentPaymentPlan) {
       setError('Veuillez sélectionner un étudiant avec un plan de paiement');
       return;
@@ -270,9 +275,9 @@ export default function FreePaymentPage() {
         date: todayDate,
         paymentMethod: paymentData.paymentMethod,
         category: 'Frais de scolarité',
-        processedBy: currentUser.uid,
-        processedByName: userProfile.displayName,
-        processedByRole: userProfile.role,
+        processedBy: currentUser?.uid || 'unknown',
+        processedByName: userProfile?.displayName || 'Unknown',
+        processedByRole: userProfile?.role || 'unknown',
         studentId: selectedStudent.id,
         studentName: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
         createdAt: now
