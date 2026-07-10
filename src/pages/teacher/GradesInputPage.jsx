@@ -13,10 +13,12 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, push, set } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTimeout } from '../../hooks/useTimeout';
 
 export default function GradesInputPage() {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
+  const setTimeoutSafe = useTimeout();
 
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
@@ -39,13 +41,11 @@ export default function GradesInputPage() {
   useEffect(() => {
     const loadCourses = async () => {
       if (!userProfile?.universityId || !currentUser?.uid) {
-        // console.log('❌ Missing data:', { universityId: userProfile?.universityId, userId: currentUser?.uid });
         return;
       }
 
       try {
         setLoading(true);
-        // console.log('🔄 Loading courses for teacher:', currentUser.uid);
 
         const coursesRef = ref(database, `universities/${userProfile.universityId}/courses`);
         const coursesSnap = await get(coursesRef);
@@ -55,10 +55,8 @@ export default function GradesInputPage() {
             .map(([id, data]) => ({ id, ...data }))
             .filter(course => course.teacherId === currentUser.uid);
 
-          // console.log('✅ Courses loaded:', allCourses.length, allCourses);
           setCourses(allCourses);
         } else {
-          // console.log('⚠️ No courses found in database');
           setCourses([]);
         }
       } catch (err) {
@@ -79,24 +77,20 @@ export default function GradesInputPage() {
 
       try {
         const univId = userProfile.universityId;
-        // console.log('🔄 Loading students for course:', selectedCourse);
 
         // 1. Récupérer le cours pour avoir la liste des étudiants inscrits
         const courseRef = ref(database, `universities/${univId}/courses/${selectedCourse}`);
         const courseSnap = await get(courseRef);
 
         if (!courseSnap.exists()) {
-          // console.log('⚠️ Course not found');
           setStudents([]);
           return;
         }
 
         const courseData = courseSnap.val();
         const enrolledStudentIds = courseData.enrolledStudents || [];
-        // console.log('📝 Enrolled student IDs:', enrolledStudentIds.length, enrolledStudentIds);
 
         if (enrolledStudentIds.length === 0) {
-          // console.log('⚠️ No students enrolled in this course');
           setStudents([]);
           return;
         }
@@ -127,7 +121,6 @@ export default function GradesInputPage() {
           return lastNameA.localeCompare(lastNameB);
         });
 
-        // console.log('✅ Students loaded:', enrolledStudents.length, enrolledStudents);
         setStudents(enrolledStudents);
 
         // Initialiser les notes à vide
@@ -233,7 +226,7 @@ export default function GradesInputPage() {
       setStudents([]);
       setGrades({});
 
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeoutSafe(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error saving grades:', err);
       setError(err.message || 'Erreur lors de la sauvegarde');

@@ -13,11 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import { ref, set, get } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTimeout } from '../../hooks/useTimeout';
 import { ChevronLeft, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function CreateComptablePage() {
   const navigate = useNavigate();
   const { userProfile, currentUser } = useAuth();
+  const setTimeoutSafe = useTimeout();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -111,7 +113,7 @@ export default function CreateComptablePage() {
 
       setSuccess(`✅ Comptable créé avec succès! Email: ${formData.email}`);
 
-      setTimeout(() => {
+      setTimeoutSafe(() => {
         navigate('/dashboard/admin');
       }, 2000);
     } catch (err) {

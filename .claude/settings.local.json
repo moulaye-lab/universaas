@@ -46,7 +46,9 @@
       "Bash(mkdir -p backend)",
       "Bash(npm init *)",
       "Bash(curl *)",
-      "Bash(npm start *)"
+      "Bash(npm start *)",
+      "Bash(awk '{print $9, \"\\(\"$5\"\\)\"}')",
+      "Bash(/tmp/fix_timeouts.sh)"
     ]
   }
 }

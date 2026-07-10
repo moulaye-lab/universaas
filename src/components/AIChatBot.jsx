@@ -49,9 +49,15 @@ export default function AIChatBot() {
   const canUseAI = enabled && isEnabledForRole(userProfile?.role);
 
   useEffect(() => {
+    let cleanup;
+
     if (isOpen && canUseAI) {
-      loadConversationHistory();
+      cleanup = loadConversationHistory();
     }
+
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, [isOpen, canUseAI, userProfile?.uid]);
 
   useEffect(() => {
@@ -80,7 +86,7 @@ export default function AIChatBot() {
       );
       const conversationQuery = query(conversationRef, orderByChild('timestamp'), limitToLast(50));
 
-      onValue(conversationQuery, (snapshot) => {
+      const unsubscribe = onValue(conversationQuery, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
           const conversationMessages = Object.entries(data).map(([id, msg]) => ({
@@ -99,6 +105,8 @@ export default function AIChatBot() {
           }]);
         }
       });
+
+      return unsubscribe;
     } catch (error) {
       console.error('Error loading conversation:', error);
     }

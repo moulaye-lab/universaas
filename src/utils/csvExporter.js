@@ -125,7 +125,6 @@ export function exportToCSV(data, columns, options = {}) {
   // Télécharger
   downloadCSV(csvContent, finalFilename);
 
-  console.log(`✅ Export CSV réussi: ${data.length} lignes, ${columns.length} colonnes`);
 }
 
 /**

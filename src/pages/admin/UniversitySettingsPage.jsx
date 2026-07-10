@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, update } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTimeout } from '../../hooks/useTimeout';
 import {
   ChevronLeft,
   Settings,
@@ -74,6 +75,7 @@ const TIMEZONES = [
 export default function UniversitySettingsPage() {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
+  const setTimeoutSafe = useTimeout();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -230,7 +232,7 @@ export default function UniversitySettingsPage() {
       setSaving(false);
 
       // Recharger après 2 secondes
-      setTimeout(() => {
+      setTimeoutSafe(() => {
         window.location.reload();
       }, 2000);
     } catch (err) {

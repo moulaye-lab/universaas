@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, update } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTimeout } from '../../hooks/useTimeout';
 import {
   ChevronLeft,
   AlertCircle,
@@ -32,6 +33,7 @@ import {
 export default function AbsencesManagementPage() {
   const navigate = useNavigate();
   const { userProfile, currentUser } = useAuth();
+  const setTimeoutSafe = useTimeout();
 
   const [absences, setAbsences] = useState([]);
   const [filteredAbsences, setFilteredAbsences] = useState([]);
@@ -238,7 +240,7 @@ export default function AbsencesManagementPage() {
       });
 
       setSuccess('✅ Justificatif validé avec succès');
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeoutSafe(() => setSuccess(''), 3000);
 
       // Recharger
       loadAbsences();
@@ -266,7 +268,7 @@ export default function AbsencesManagementPage() {
       });
 
       setSuccess('Justificatif rejeté');
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeoutSafe(() => setSuccess(''), 3000);
       loadAbsences();
     } catch (err) {
       console.error('Error rejecting justification:', err);

@@ -52,6 +52,8 @@ const AdminUniversityDashboard = () => {
   const [openPeopleMenu, setOpenPeopleMenu] = useState(false);
 
   useEffect(() => {
+    let cleanup;
+
     const loadData = async () => {
       if (!userProfile?.universityId) return;
 
@@ -65,7 +67,7 @@ const AdminUniversityDashboard = () => {
         }
 
         // Écouter les changements en temps réel
-        loadDashboardData(userProfile.universityId);
+        cleanup = loadDashboardData(userProfile.universityId);
 
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -74,12 +76,19 @@ const AdminUniversityDashboard = () => {
     };
 
     loadData();
+
+    // Cleanup listeners quand le composant se démonte
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, [userProfile, navigate]);
 
   const loadDashboardData = (universityId) => {
+    const unsubscribers = [];
+
     // Écouter les étudiants
     const studentsRef = ref(database, `universities/${universityId}/students`);
-    onValue(studentsRef, (snapshot) => {
+    const unsubStudents = onValue(studentsRef, (snapshot) => {
       if (snapshot.exists()) {
         const studentsData = snapshot.val();
         const studentsArray = Object.keys(studentsData).map(key => ({
@@ -112,9 +121,11 @@ const AdminUniversityDashboard = () => {
       }
     });
 
+    unsubscribers.push(unsubStudents);
+
     // Écouter les enseignants
     const teachersRef = ref(database, `universities/${universityId}/teachers`);
-    onValue(teachersRef, (snapshot) => {
+    const unsubTeachers = onValue(teachersRef, (snapshot) => {
       if (snapshot.exists()) {
         const teachersData = snapshot.val();
         const teachersCount = Object.keys(teachersData).length;
@@ -128,9 +139,11 @@ const AdminUniversityDashboard = () => {
       }
     });
 
+    unsubscribers.push(unsubTeachers);
+
     // Écouter les paiements
     const paymentsRef = ref(database, `universities/${universityId}/payments`);
-    onValue(paymentsRef, (snapshot) => {
+    const unsubPayments = onValue(paymentsRef, (snapshot) => {
       if (snapshot.exists()) {
         const paymentsData = snapshot.val();
         const paymentsArray = Object.keys(paymentsData).map(key => ({
@@ -168,12 +181,19 @@ const AdminUniversityDashboard = () => {
       }
     });
 
+    unsubscribers.push(unsubPayments);
+
     // Calculer taux de réussite (simulation)
     setStats(prev => ({
       ...prev,
       successRate: 87.5,
       successVariation: 3.2
     }));
+
+    // Retourner fonction de nettoyage
+    return () => {
+      unsubscribers.forEach(unsub => unsub());
+    };
 
     setLoading(false);
   };

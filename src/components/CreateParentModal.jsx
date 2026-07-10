@@ -5,8 +5,7 @@
 
 import { useState } from 'react';
 import { X, User, Mail, Phone, Users, AlertCircle, CheckCircle } from 'lucide-react';
-import { auth, database } from '../config/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { database } from '../config/firebase';
 import { ref, get, set, update } from 'firebase/database';
 
 export default function CreateParentModal({ isOpen, onClose, studentData, universityId, adminUid }) {
@@ -151,14 +150,28 @@ export default function CreateParentModal({ isOpen, onClose, studentData, univer
         // Parent n'existe pas → Créer le compte
         const tempPassword = generateTempPassword();
 
-        // Créer compte Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          primaryEmail,
-          tempPassword
+        // Créer compte Firebase Auth via API REST (conformément à la méthodologie)
+        const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+        const response = await fetch(
+          `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: primaryEmail,
+              password: tempPassword,
+              returnSecureToken: false
+            })
+          }
         );
 
-        const parentUid = userCredential.user.uid;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'Erreur lors de la création du compte');
+        }
+
+        const authResult = await response.json();
+        const parentUid = authResult.localId;
 
         // Créer l'index d'accès sécurisé
         const childrenAccess = {};

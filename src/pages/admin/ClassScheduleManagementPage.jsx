@@ -13,11 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, update } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTimeout } from '../../hooks/useTimeout';
 import { Calendar, Clock, MapPin, BookOpen, Plus, Trash2, Save, ChevronLeft, Users, AlertCircle } from 'lucide-react';
 
 export default function ClassScheduleManagementPage() {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
+  const setTimeoutSafe = useTimeout();
 
   const [classes, setClasses] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -52,13 +54,11 @@ export default function ClassScheduleManagementPage() {
 
   const loadData = async () => {
     if (!userProfile?.universityId) {
-      // console.log('❌ No universityId found');
       return;
     }
 
     try {
       setLoading(true);
-      // console.log('🔄 Loading data for university:', userProfile.universityId);
 
       // Charger classes
       const classesRef = ref(database, `universities/${userProfile.universityId}/classes`);
@@ -69,10 +69,8 @@ export default function ClassScheduleManagementPage() {
           id,
           ...data
         }));
-        // console.log('✅ Classes loaded:', classesData.length, classesData);
         setClasses(classesData);
       } else {
-        // console.log('⚠️ No classes found');
         setClasses([]);
       }
 
@@ -85,10 +83,8 @@ export default function ClassScheduleManagementPage() {
           id,
           ...data
         }));
-        // console.log('✅ Courses loaded:', coursesData.length, coursesData);
         setCourses(coursesData);
       } else {
-        // console.log('⚠️ No courses found');
         setCourses([]);
       }
 
@@ -101,10 +97,8 @@ export default function ClassScheduleManagementPage() {
           id,
           ...data
         }));
-        // console.log('✅ Teachers loaded:', teachersData.length, teachersData);
         setTeachers(teachersData);
       } else {
-        // console.log('⚠️ No teachers found');
         setTeachers([]);
       }
 
@@ -117,10 +111,8 @@ export default function ClassScheduleManagementPage() {
           id,
           ...data
         }));
-        // console.log('✅ Rooms loaded:', roomsData.length, roomsData);
         setRooms(roomsData);
       } else {
-        // console.log('⚠️ No rooms found');
         setRooms([]);
       }
     } catch (err) {
@@ -164,7 +156,7 @@ export default function ClassScheduleManagementPage() {
     setNewSessionIndex(newIndex);
 
     // Scroller vers la nouvelle séance
-    setTimeout(() => {
+    setTimeoutSafe(() => {
       const element = document.getElementById(`session-${newIndex}`);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -385,7 +377,7 @@ export default function ClassScheduleManagementPage() {
       });
 
       setSuccess('✅ Emploi du temps enregistré avec succès !');
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeoutSafe(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error saving schedule:', err);
       setError('Erreur lors de l\'enregistrement : ' + err.message);

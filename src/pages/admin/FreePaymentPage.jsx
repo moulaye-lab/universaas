@@ -116,10 +116,6 @@ export default function FreePaymentPage() {
   const applyFilters = () => {
     let filtered = [...allStudents];
 
-    console.log('=== FILTRAGE ===');
-    console.log('Total étudiants:', allStudents.length);
-    console.log('Filtres actifs:', { searchTerm, departmentFilter, levelFilter, classFilter });
-
     // Filtre recherche
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -130,34 +126,25 @@ export default function FreePaymentPage() {
           s.matricule?.toLowerCase().includes(term) ||
           s.email?.toLowerCase().includes(term)
       );
-      console.log('Après recherche:', filtered.length);
     }
 
     // Filtre département
     if (departmentFilter !== 'all') {
-      console.log('Départements des étudiants:', [...new Set(allStudents.map(s => s.department))]);
-      console.log('Recherche département:', departmentFilter);
       filtered = filtered.filter(s => s.department === departmentFilter);
-      console.log('Après filtre département:', filtered.length);
       if (filtered.length === 0 && allStudents.length > 0) {
-        console.log('Aucun étudiant trouvé pour département:', departmentFilter);
-        console.log('Exemple d\'étudiant:', allStudents[0]);
       }
     }
 
     // Filtre niveau
     if (levelFilter !== 'all') {
       filtered = filtered.filter(s => s.level === levelFilter);
-      console.log('Après filtre niveau:', filtered.length);
     }
 
     // Filtre classe
     if (classFilter !== 'all') {
       filtered = filtered.filter(s => s.class === classFilter);
-      console.log('Après filtre classe:', filtered.length);
     }
 
-    console.log('Total après filtres:', filtered.length);
     setFilteredStudents(filtered);
   };
 

@@ -114,8 +114,23 @@
         "info": {
           ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
           ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
+          "name": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+          },
+          "address": {
+            ".validate": "(newData.isString() && newData.val().length <= 200) || !newData.exists()"
+          },
+          "phone": {
+            ".validate": "(newData.isString() && newData.val().length <= 20) || !newData.exists()"
+          },
+          "email": {
+            ".validate": "(newData.isString() && newData.val().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/)) || !newData.exists()"
+          },
+          "website": {
+            ".validate": "(newData.isString() && newData.val().length <= 100) || !newData.exists()"
+          },
           "$other": {
-            ".validate": true
+            ".validate": false
           }
         },
 
@@ -159,8 +174,29 @@
             "status": {
               ".validate": "newData.isString() && newData.val().matches(/^(active|inactive|suspended)$/)"
             },
+            "classId": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "class": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "dateOfBirth": {
+              ".validate": "(newData.isString() || newData.isNumber()) || !newData.exists()"
+            },
+            "phone": {
+              ".validate": "(newData.isString() && newData.val().length <= 20) || !newData.exists()"
+            },
+            "address": {
+              ".validate": "(newData.isString() && newData.val().length <= 300) || !newData.exists()"
+            },
+            "guardianName": {
+              ".validate": "(newData.isString() && newData.val().length <= 100) || !newData.exists()"
+            },
+            "guardianPhone": {
+              ".validate": "(newData.isString() && newData.val().length <= 20) || !newData.exists()"
+            },
             "$other": {
-              ".validate": true
+              ".validate": false
             }
           }
         },
@@ -280,7 +316,7 @@
             ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'teacher' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
 
             "studentId": {
-              ".validate": "newData.isString() && newData.val().length > 0"
+              ".validate": "newData.isString() && newData.val().length > 0 && root.child('universities').child($universityId).child('students').child(newData.val()).exists()"
             },
             "courseId": {
               ".validate": "newData.isString() && newData.val().length > 0"
@@ -361,11 +397,11 @@
 
         "audit": {
           ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
-          ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'comptable') && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
 
           "$auditId": {
             ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
-            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'comptable') && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
             "$other": {
               ".validate": true
             }

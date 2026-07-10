@@ -13,11 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, push, set } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTimeout } from '../../hooks/useTimeout';
 import { UserCheck, UserX, Clock, ChevronLeft, Search, CheckCircle } from 'lucide-react';
 
 export default function AttendancePage() {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
+  const setTimeoutSafe = useTimeout();
 
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
@@ -280,7 +282,7 @@ export default function AttendancePage() {
       setSuccess(`✅ Présences enregistrées avec succès !\n${presentCount} présent(s) • ${absentCount} absent(s) • ${lateCount} retard(s)`);
 
       // Réinitialiser après 3 secondes
-      setTimeout(() => {
+      setTimeoutSafe(() => {
         setSuccess('');
         setSelectedCourse('');
         setSelectedSession('');
