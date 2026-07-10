@@ -41,7 +41,11 @@
       "Bash(curl -s http://localhost:5181/)",
       "Bash(lsof -ti:5181)",
       "Bash(npm uninstall *)",
-      "Bash(find . -name \"*.jsx\" -type f -exec grep -l \"departments\" {} \\\\;)"
+      "Bash(find . -name \"*.jsx\" -type f -exec grep -l \"departments\" {} \\\\;)",
+      "Bash(git commit *)",
+      "Bash(mkdir -p backend)",
+      "Bash(npm init *)",
+      "Bash(curl *)"
     ]
   }
 }

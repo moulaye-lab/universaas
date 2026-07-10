@@ -14,20 +14,18 @@ import {
   TrendingUp,
   TrendingDown,
   FileText,
-  LogOut,
-  BookOpen as BookOpenIcon,
   Users,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  BookOpen
 } from 'lucide-react';
-const BookOpen = BookOpenIcon;
 import { useAuth } from '../../contexts/AuthContext';
 import { database } from '../../config/firebase';
 import { ref, get, onValue } from 'firebase/database';
 
 export default function ComptableDashboard() {
   const navigate = useNavigate();
-  const { userProfile, signOut } = useAuth();
+  const { userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [university, setUniversity] = useState(null);
   const [stats, setStats] = useState({
@@ -146,15 +144,6 @@ export default function ComptableDashboard() {
     loadData();
   }, [userProfile, navigate]);
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
   const quickActions = [
     {
       title: 'Tableau de Bord Comptable',
@@ -241,37 +230,6 @@ export default function ComptableDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Navbar Sticky */}
-      <nav className="sticky top-0 z-50 backdrop-blur-sm bg-white/95 border-b border-gray-200 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <BookOpen className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {university?.name || 'Université'}
-                </h1>
-                <p className="text-sm text-gray-600">Dashboard Comptable</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{userProfile?.displayName}</p>
-                <p className="text-xs text-gray-600">{userProfile?.email}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-all duration-300 hover:scale-110"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Info - Accès limité */}

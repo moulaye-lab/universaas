@@ -10,6 +10,7 @@
 
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import Layout from './Layout';
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, userProfile, loading } = useAuth();
@@ -48,6 +49,6 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to={roleRedirects[userProfile?.role] || '/login'} replace />;
   }
 
-  // Tout est OK - afficher la page
-  return children;
+  // Tout est OK - afficher la page avec le Layout
+  return <Layout>{children}</Layout>;
 }
