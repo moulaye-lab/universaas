@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, set, push } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { createNotification, NOTIFICATION_TYPES } from '../../services/notificationService';
 import {
   ChevronLeft,
   Search,
@@ -276,6 +277,20 @@ export default function FreePaymentPage() {
         studentName: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
         createdAt: now
       });
+
+      // 5. Notifier l'étudiant du paiement reçu
+      await createNotification(userProfile.universityId, {
+        type: NOTIFICATION_TYPES.PAYMENT_RECEIVED,
+        title: '✅ Paiement reçu',
+        message: `Votre paiement de ${amount}${university?.currencySymbol || '€'} a été enregistré avec succès`,
+        recipientId: selectedStudent.id,
+        priority: 'normal',
+        metadata: {
+          amount: amount,
+          paymentMethod: paymentData.paymentMethod,
+          description: paymentData.description
+        }
+      }).catch(err => console.error('Error sending notification:', err));
 
       setSuccess(`Paiement de ${amount}€ enregistré avec succès. ${adjustedCount} échéance(s) ajustée(s).`);
       setPaymentData({

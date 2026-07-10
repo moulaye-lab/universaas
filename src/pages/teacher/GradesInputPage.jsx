@@ -14,6 +14,7 @@ import { ref, get, push, set } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTimeout } from '../../hooks/useTimeout';
+import { notifyNewGrade } from '../../services/notificationService';
 
 export default function GradesInputPage() {
   const navigate = useNavigate();
@@ -211,6 +212,24 @@ export default function GradesInputPage() {
       }
 
       await Promise.all(promises);
+
+      // Envoyer notifications aux étudiants
+      const notificationPromises = [];
+      for (const [studentId, grade] of Object.entries(formData.grades)) {
+        if (grade !== '' && grade !== null && grade !== undefined) {
+          const student = students.find(s => s.id === studentId);
+          notificationPromises.push(
+            notifyNewGrade(universityId, studentId, {
+              courseId: selectedCourse,
+              courseName: course.courseName,
+              grade: grade,
+              maxGrade: formData.maxGrade,
+              teacherId: currentUser.uid
+            }).catch(err => console.error('Error sending notification:', err))
+          );
+        }
+      }
+      await Promise.all(notificationPromises);
 
       setSuccess(`✅ ${promises.length} note(s) enregistrée(s) avec succès`);
 

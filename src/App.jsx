@@ -69,6 +69,7 @@ import FreePaymentPage from './pages/admin/FreePaymentPage';
 import UniversitySettingsPage from './pages/admin/UniversitySettingsPage';
 import MyPaymentsPage from './pages/student/MyPaymentsPage';
 import ImportDataPage from './pages/admin/ImportDataPage';
+import NotificationsPage from './pages/NotificationsPage';
 import './App.css';
 
 function App() {
@@ -538,6 +539,16 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin_universite']}>
                 <MigrateAcademicYearPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Notifications - All authenticated users */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin_plateforme', 'admin_universite', 'comptable', 'teacher', 'student', 'parent']}>
+                <NotificationsPage />
               </ProtectedRoute>
             }
           />

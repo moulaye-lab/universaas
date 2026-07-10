@@ -14,6 +14,7 @@ import { ref, get, push, set } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTimeout } from '../../hooks/useTimeout';
+import { notifyAbsence } from '../../services/notificationService';
 import { UserCheck, UserX, Clock, ChevronLeft, Search, CheckCircle } from 'lucide-react';
 
 export default function AttendancePage() {
@@ -276,6 +277,23 @@ export default function AttendancePage() {
       });
 
       await Promise.all(promises);
+
+      // Notifier les étudiants absents
+      const notificationPromises = [];
+      Object.entries(attendance).forEach(([studentId, status]) => {
+        if (status === 'absent') {
+          const student = students.find(s => s.id === studentId);
+          notificationPromises.push(
+            notifyAbsence(userProfile.universityId, studentId, {
+              courseId: selectedCourse,
+              courseName: course?.courseName || 'Cours',
+              date: new Date(sessionDate).getTime(),
+              reason: 'Non justifiée'
+            }).catch(err => console.error('Error sending notification:', err))
+          );
+        }
+      });
+      await Promise.all(notificationPromises);
 
       const presentCount = students.length - absentCount - lateCount;
 

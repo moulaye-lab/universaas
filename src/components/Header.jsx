@@ -14,6 +14,7 @@ import { ref, get } from 'firebase/database';
 import { database } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { BookOpen, LogOut, User, Menu, X } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -102,6 +103,8 @@ export default function Header() {
 
           {/* Desktop: Info utilisateur et déconnexion */}
           <div className="hidden md:flex items-center gap-4">
+            <NotificationBell />
+            <div className="h-10 w-px bg-gray-300"></div>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{userProfile?.displayName}</p>
               <p className="text-xs text-gray-600">{userProfile?.email}</p>
@@ -138,11 +141,12 @@ export default function Header() {
                 <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                   <User className="w-6 h-6 text-white" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">{userProfile?.displayName}</p>
                   <p className="text-xs text-gray-600">{userProfile?.email}</p>
                   <p className="text-xs text-indigo-600 font-medium mt-1">{getRoleName(userProfile?.role)}</p>
                 </div>
+                <NotificationBell />
               </div>
               <button
                 onClick={handleLogout}
