@@ -126,6 +126,10 @@ function perUserRateLimit(req, res, next) {
 
 app.use('/api/ai', globalLimiter);
 
+// Routes
+const onboardingRoutes = require('./routes/onboarding');
+app.use('/api/onboarding', onboardingRoutes);
+
 // Fonction de logging sécurisé
 function securityLog(level, message, metadata = {}) {
   const logEntry = {

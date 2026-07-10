@@ -13,6 +13,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/public/SignupPage';
+import SignupSuccessPage from './pages/public/SignupSuccessPage';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdminUniversityDashboard from './pages/dashboards/AdminUniversityDashboard';
 import TeacherDashboard from './pages/dashboards/TeacherDashboard';
@@ -78,6 +80,8 @@ function App() {
 
           {/* Pages publiques (accessible UNIQUEMENT si NON connecté) */}
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/signup/success" element={<SignupSuccessPage />} />
           <Route path="/onboarding" element={<PublicRoute><div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50"><div className="text-center glass p-12 rounded-3xl"><h1 className="text-3xl font-black text-gray-900 mb-4">Onboarding Université</h1><p className="text-gray-600 text-lg">En cours de développement...</p></div></div></PublicRoute>} />
 
           {/* Route démo (accessible par tous pour l'instant) */}
