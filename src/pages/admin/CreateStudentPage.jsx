@@ -315,16 +315,16 @@ export default function CreateStudentPage() {
           return currentClass;
         });
 
-        // 4. Initialiser structure paiements (vide)
+        // 4. Initialiser structure paiements (vide) - Respecter validation Firebase Rules
         await set(ref(database, `universities/${userProfile.universityId}/payments/${studentUid}`), {
-          academicYear: formData.academicYear,
-          tuitionFee: 0,
+          studentId: studentUid,
+          totalAmount: 0,
           paidAmount: 0,
-          remainingAmount: 0,
           currency: 'EUR',
+          academicYear: formData.academicYear,
           status: 'pending',
-          installments: [],
-          createdAt: Date.now(),
+          createdAt: Date.now()
+          // installments sera ajouté plus tard lors de la création du plan
         });
 
         // 5. Log d'audit
