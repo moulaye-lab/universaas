@@ -156,8 +156,23 @@
               ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
               ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
               "$historyId": {
+                "amount": {
+                  ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 10000000"
+                },
+                "date": {
+                  ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now"
+                },
+                "method": {
+                  ".validate": "newData.isString() && newData.val().matches(/^(cash|check|transfer|card|mobile)$/)"
+                },
+                "status": {
+                  ".validate": "(newData.isString() && newData.val().matches(/^(pending|completed|failed|cancelled)$/)) || !newData.exists()"
+                },
+                "description": {
+                  ".validate": "(newData.isString() && newData.val().length > 0 && newData.val().length <= 500) || !newData.exists()"
+                },
                 "$other": {
-                  ".validate": true
+                  ".validate": false
                 }
               }
             },
@@ -632,8 +647,58 @@
             ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
             ".indexOn": ["academicYear", "createdAt"],
 
+            "studentId": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "totalAmount": {
+              ".validate": "(newData.isNumber() && newData.val() > 0 && newData.val() <= 10000000) || !newData.exists()"
+            },
+            "paidAmount": {
+              ".validate": "(newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000) || !newData.exists()"
+            },
+            "currency": {
+              ".validate": "(newData.isString() && newData.val().matches(/^(EUR|USD|GBP|XOF|XAF|MAD|CAD|CHF|TND|DZD)$/)) || !newData.exists()"
+            },
+            "academicYear": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "status": {
+              ".validate": "(newData.isString() && newData.val().matches(/^(pending|partial|completed|overdue)$/)) || !newData.exists()"
+            },
+            "createdAt": {
+              ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+            },
+            "migratedAt": {
+              ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+            },
+            "migratedBy": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "installments": {
+              ".validate": "newData.hasChildren() || !newData.exists()",
+              "$installmentIndex": {
+                "amount": {
+                  ".validate": "(newData.isNumber() && newData.val() > 0 && newData.val() <= 10000000) || !newData.exists()"
+                },
+                "dueDate": {
+                  ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+                },
+                "status": {
+                  ".validate": "(newData.isString() && newData.val().matches(/^(pending|paid|overdue)$/)) || !newData.exists()"
+                },
+                "paidAt": {
+                  ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+                },
+                "method": {
+                  ".validate": "(newData.isString() && newData.val().matches(/^(cash|check|transfer|card|mobile)$/)) || !newData.exists()"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              }
+            },
             "$other": {
-              ".validate": true
+              ".validate": false
             }
           }
         },
