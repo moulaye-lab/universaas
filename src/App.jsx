@@ -56,6 +56,10 @@ import ChildAbsencesPage from './pages/parent/ChildAbsencesPage';
 import AbsencesManagementPage from './pages/admin/AbsencesManagementPage';
 import MigrateAcademicYearPage from './pages/admin/MigrateAcademicYearPage';
 import PaymentsManagementPage from './pages/admin/PaymentsManagementPage';
+import MigratePaymentsPage from './pages/admin/MigratePaymentsPage';
+import MigrateCurrencyPage from './pages/admin/MigrateCurrencyPage';
+import TuitionFeesManagementPage from './pages/admin/TuitionFeesManagementPage';
+import CreateBulkPaymentPlansPage from './pages/admin/CreateBulkPaymentPlansPage';
 import CreatePaymentPlanPage from './pages/admin/CreatePaymentPlanPage';
 import AccountingDashboardPage from './pages/admin/AccountingDashboardPage';
 import TransactionJournalPage from './pages/admin/TransactionJournalPage';
@@ -73,6 +77,10 @@ import NotificationsPage from './pages/NotificationsPage';
 import InboxPage from './pages/messages/InboxPage';
 import ComposeMessagePage from './pages/messages/ComposeMessagePage';
 import MessageDetailPage from './pages/messages/MessageDetailPage';
+import MessageBatchDetailPage from './pages/messages/MessageBatchDetailPage';
+import StudentSchedulePage from './pages/student/StudentSchedulePage';
+import SubscriptionPlansPage from './pages/admin/SubscriptionPlansPage';
+import AcademicPeriodsManagementPage from './pages/admin/AcademicPeriodsManagementPage';
 import './App.css';
 
 function App() {
@@ -326,6 +334,38 @@ function App() {
             }
           />
           <Route
+            path="/admin/migrate-currency"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <MigrateCurrencyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/payments/migrate"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <MigratePaymentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tuition-fees"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <TuitionFeesManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/payments/create-bulk"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CreateBulkPaymentPlansPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/payments/create"
             element={
               <ProtectedRoute allowedRoles={['admin_universite']}>
@@ -422,6 +462,22 @@ function App() {
             }
           />
           <Route
+            path="/admin/subscription/plans"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <SubscriptionPlansPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/academic-periods"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <AcademicPeriodsManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/dashboard/comptable"
             element={
               <ProtectedRoute allowedRoles={['comptable']}>
@@ -490,6 +546,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['student']}>
                 <MyAbsencesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/schedule"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <StudentSchedulePage />
               </ProtectedRoute>
             }
           />
@@ -570,6 +634,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['super_admin_plateforme', 'admin_universite', 'comptable', 'teacher', 'student', 'parent']}>
                 <ComposeMessagePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages/batch/:batchId"
+            element={
+              <ProtectedRoute allowedRoles={['super_admin_plateforme', 'admin_universite', 'comptable', 'teacher', 'student', 'parent']}>
+                <MessageBatchDetailPage />
               </ProtectedRoute>
             }
           />

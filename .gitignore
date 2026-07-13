@@ -78,3 +78,13 @@ scripts/cleanDuplicateParents.cjs
 
 # Fichiers de test/debug
 test-firebase-rules.mjs
+check_*.js
+check_*.mjs
+check-*.js
+check-*.mjs
+create-*.mjs
+find_*.mjs
+fix-*.mjs
+clean-*.mjs
+deploy-rules.sh
+TODO-*.md

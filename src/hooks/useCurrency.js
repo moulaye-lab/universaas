@@ -26,26 +26,37 @@ const CURRENCIES = {
 
 export function useCurrency() {
   const { userProfile } = useAuth();
-  const [currency, setCurrency] = useState('EUR');
-  const [symbol, setSymbol] = useState('€');
+  const [currency, setCurrency] = useState('XOF'); // Par défaut CFA
+  const [symbol, setSymbol] = useState('CFA');
 
   useEffect(() => {
     if (!userProfile?.universityId) return;
 
-    // Écouter les changements de devise en temps réel
-    const univRef = ref(database, `universities/${userProfile.universityId}`);
-    const unsubscribe = onValue(univRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const univData = snapshot.val();
-        const currencyCode = univData.currency || 'EUR';
-        const currencyData = CURRENCIES[currencyCode] || CURRENCIES.EUR;
+    // Charger la devise une seule fois (pas de listener temps réel pour éviter les problèmes)
+    const loadCurrency = async () => {
+      try {
+        const currencyRef = ref(database, `universities/${userProfile.universityId}/info/currency`);
+        const snapshot = await get(currencyRef);
 
-        setCurrency(currencyCode);
-        setSymbol(currencyData.symbol);
+        if (snapshot.exists()) {
+          const currencyCode = snapshot.val();
+          const currencyData = CURRENCIES[currencyCode] || CURRENCIES.XOF;
+          setCurrency(currencyCode);
+          setSymbol(currencyData.symbol);
+        } else {
+          // Par défaut CFA si le champ n'existe pas
+          setCurrency('XOF');
+          setSymbol('CFA');
+        }
+      } catch (error) {
+        // En cas d'erreur, utiliser CFA par défaut sans bloquer
+        console.warn('Could not load currency, using default CFA:', error.message);
+        setCurrency('XOF');
+        setSymbol('CFA');
       }
-    });
+    };
 
-    return () => unsubscribe();
+    loadCurrency();
   }, [userProfile?.universityId]);
 
   /**

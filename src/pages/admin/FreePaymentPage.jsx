@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, set, push } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../hooks/useCurrency';
 import { createNotification, NOTIFICATION_TYPES } from '../../services/notificationService';
 import {
   ChevronLeft,
@@ -36,6 +37,7 @@ function getCurrentAcademicYear() {
 export default function FreePaymentPage() {
   const navigate = useNavigate();
   const { currentUser, userProfile } = useAuth();
+  const { symbol, formatAmount } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -192,7 +194,7 @@ export default function FreePaymentPage() {
       return;
     }
 
-    if (!confirm(`Confirmer le paiement libre de ${amount}€ pour ${selectedStudent.firstName} ${selectedStudent.lastName} ?`)) {
+    if (!confirm(`Confirmer le paiement libre de ${formatAmount(amount)} pour ${selectedStudent.firstName} ${selectedStudent.lastName} ?`)) {
       return;
     }
 
@@ -287,7 +289,7 @@ export default function FreePaymentPage() {
       await createNotification(userProfile.universityId, {
         type: NOTIFICATION_TYPES.PAYMENT_RECEIVED,
         title: '✅ Paiement reçu',
-        message: `Votre paiement de ${amount}${university?.currencySymbol || '€'} a été enregistré avec succès`,
+        message: `Votre paiement de ${formatAmount(amount)} a été enregistré avec succès`,
         recipientId: selectedStudent.id,
         priority: 'normal',
         metadata: {
@@ -297,7 +299,7 @@ export default function FreePaymentPage() {
         }
       }).catch(err => console.error('Error sending notification:', err));
 
-      setSuccess(`Paiement de ${amount}€ enregistré avec succès. ${adjustedCount} échéance(s) ajustée(s).`);
+      setSuccess(`Paiement de ${formatAmount(amount)} enregistré avec succès. ${adjustedCount} échéance(s) ajustée(s).`);
       setPaymentData({
         amount: '',
         paymentMethod: 'cash',
@@ -528,18 +530,18 @@ export default function FreePaymentPage() {
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total:</span>
-                        <span className="font-semibold text-gray-900">{studentPaymentPlan.totalAmount}€</span>
+                        <span className="font-semibold text-gray-900">{formatAmount(studentPaymentPlan.totalAmount)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Payé:</span>
                         <span className="font-semibold text-green-600">
-                          {studentPaymentPlan.installments.filter(i => i.status === 'paid').reduce((sum, i) => sum + (i.amount || 0), 0)}€
+                          {formatAmount(studentPaymentPlan.installments.filter(i => i.status === 'paid').reduce((sum, i) => sum + (i.amount || 0), 0))}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Restant:</span>
                         <span className="font-semibold text-orange-600">
-                          {studentPaymentPlan.installments.filter(i => i.status === 'pending').reduce((sum, i) => sum + (i.amount || 0), 0)}€
+                          {formatAmount(studentPaymentPlan.installments.filter(i => i.status === 'pending').reduce((sum, i) => sum + (i.amount || 0), 0))}
                         </span>
                       </div>
                     </div>
@@ -549,7 +551,7 @@ export default function FreePaymentPage() {
                   <form onSubmit={handleSubmitPayment} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Montant (€) <span className="text-red-500">*</span>
+                        Montant ({symbol}) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"

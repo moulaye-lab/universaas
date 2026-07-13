@@ -24,6 +24,8 @@ export default function RoomsManagementPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRoom, setEditingRoom] = useState(null);
 
   const [formData, setFormData] = useState({
     roomName: '',
@@ -92,6 +94,48 @@ export default function RoomsManagementPage() {
 
     loadRooms();
   }, [userProfile, authLoading]);
+
+  // Auto-générer le numéro de salle quand on ouvre le modal
+  useEffect(() => {
+    if (showCreateModal && rooms.length >= 0) {
+      // Générer le prochain numéro de salle
+      const nextNumber = generateNextRoomNumber();
+      setFormData(prev => ({ ...prev, roomNumber: nextNumber }));
+    }
+  }, [showCreateModal, rooms]);
+
+  // Fonction pour générer le prochain numéro de salle
+  const generateNextRoomNumber = () => {
+    if (rooms.length === 0) {
+      return 'A-101'; // Première salle
+    }
+
+    // Extraire tous les numéros existants
+    const roomNumbers = rooms.map(r => r.roomNumber).filter(Boolean);
+
+    // Pattern: [Lettre]-[Nombre]
+    const pattern = /^([A-Z])-(\d+)$/;
+
+    // Trouver le dernier numéro utilisé
+    let maxNum = 100;
+    let lastBuilding = 'A';
+
+    roomNumbers.forEach(num => {
+      const match = num.match(pattern);
+      if (match) {
+        const building = match[1];
+        const number = parseInt(match[2]);
+        if (number > maxNum) {
+          maxNum = number;
+          lastBuilding = building;
+        }
+      }
+    });
+
+    // Incrémenter
+    const nextNum = maxNum + 1;
+    return `${lastBuilding}-${nextNum}`;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -188,6 +232,86 @@ export default function RoomsManagementPage() {
     } catch (err) {
       console.error('Error creating room:', err);
       setError(err.message || 'Erreur lors de la création de la salle');
+    }
+  };
+
+  const handleEdit = (room) => {
+    setEditingRoom(room);
+    setFormData({
+      roomName: room.roomName,
+      roomNumber: room.roomNumber,
+      building: room.building || '',
+      capacity: room.capacity.toString(),
+      type: room.type,
+      equipment: room.equipment || []
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    try {
+      if (!editingRoom) return;
+
+      // Validation
+      if (!formData.roomName.trim()) {
+        throw new Error('Le nom de la salle est requis');
+      }
+      if (!formData.roomNumber.trim()) {
+        throw new Error('Le numéro de salle est requis');
+      }
+
+      // Vérifier si le numéro de salle existe déjà (sauf pour la salle en cours)
+      const roomExists = rooms.some(
+        r => r.id !== editingRoom.id &&
+             r.roomNumber.toLowerCase() === formData.roomNumber.trim().toLowerCase()
+      );
+      if (roomExists) {
+        throw new Error('Ce numéro de salle existe déjà');
+      }
+
+      const roomRef = ref(database, `universities/${userProfile.universityId}/rooms/${editingRoom.id}`);
+
+      const roomData = {
+        ...editingRoom,
+        roomName: formData.roomName.trim(),
+        roomNumber: formData.roomNumber.trim().toUpperCase(),
+        building: formData.building.trim(),
+        capacity: parseInt(formData.capacity),
+        type: formData.type,
+        equipment: formData.equipment,
+        updatedAt: Date.now(),
+        updatedBy: currentUser.uid
+      };
+
+      await set(roomRef, roomData);
+
+      setSuccess(`Salle "${formData.roomName}" modifiée avec succès !`);
+
+      // Mettre à jour la liste locale
+      setRooms(prev => prev.map(r => r.id === editingRoom.id ? roomData : r));
+
+      // Fermer modal
+      setTimeout(() => {
+        setShowEditModal(false);
+        setEditingRoom(null);
+        setSuccess('');
+        setFormData({
+          roomName: '',
+          roomNumber: '',
+          building: '',
+          capacity: '30',
+          type: 'Salle de cours',
+          equipment: []
+        });
+      }, 1500);
+
+    } catch (err) {
+      console.error('Error updating room:', err);
+      setError(err.message || 'Erreur lors de la modification de la salle');
     }
   };
 
@@ -356,13 +480,22 @@ export default function RoomsManagementPage() {
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleDelete(room.id, room.roomName)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                    title="Supprimer"
-                  >
-                    🗑️
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(room)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      title="Modifier"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDelete(room.id, room.roomName)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
 
                 {/* Type et capacité */}
@@ -451,17 +584,33 @@ export default function RoomsManagementPage() {
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Numéro *
+                        Numéro * <span className="text-xs text-gray-500 font-normal">(Auto-généré, modifiable)</span>
                       </label>
-                      <input
-                        type="text"
-                        name="roomNumber"
-                        value={formData.roomNumber}
-                        onChange={handleChange}
-                        placeholder="Ex: A-201"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                        required
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          name="roomNumber"
+                          value={formData.roomNumber}
+                          onChange={handleChange}
+                          placeholder="Ex: A-201"
+                          className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase font-semibold"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, roomNumber: generateNextRoomNumber() }))}
+                          className="px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center gap-2 font-semibold whitespace-nowrap"
+                          title="Régénérer le numéro automatiquement"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          <span>Auto</span>
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 Le numéro est généré automatiquement mais vous pouvez le modifier
+                      </p>
                     </div>
 
                     <div>
@@ -565,6 +714,172 @@ export default function RoomsManagementPage() {
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold"
                   >
                     Créer la salle
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Modification */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-black text-gray-900">
+                  ✏️ Modifier la Salle
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingRoom(null);
+                    setError('');
+                    setSuccess('');
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdate} className="space-y-6">
+                {/* Même formulaire que la création */}
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-4">Informations de base</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Nom de la salle *
+                      </label>
+                      <input
+                        type="text"
+                        name="roomName"
+                        value={formData.roomName}
+                        onChange={handleChange}
+                        placeholder="Ex: Amphithéâtre Descartes"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Numéro *
+                      </label>
+                      <input
+                        type="text"
+                        name="roomNumber"
+                        value={formData.roomNumber}
+                        onChange={handleChange}
+                        placeholder="Ex: A-201"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase font-semibold"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Bâtiment
+                      </label>
+                      <input
+                        type="text"
+                        name="building"
+                        value={formData.building}
+                        onChange={handleChange}
+                        placeholder="Ex: Bâtiment A"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Capacité *
+                      </label>
+                      <input
+                        type="number"
+                        name="capacity"
+                        value={formData.capacity}
+                        onChange={handleChange}
+                        min="1"
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Type de salle *
+                      </label>
+                      <select
+                        name="type"
+                        value={formData.type}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      >
+                        {roomTypes.map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Équipements */}
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-4">Équipements disponibles</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {availableEquipment.map(equipment => (
+                      <label
+                        key={equipment}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.equipment.includes(equipment)}
+                          onChange={() => handleEquipmentToggle(equipment)}
+                          className="w-4 h-4 text-blue-600 rounded"
+                        />
+                        <span className="text-sm font-semibold text-gray-700">{equipment}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Messages */}
+                {error && (
+                  <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl">
+                    <p className="text-red-700 font-semibold">❌ {error}</p>
+                  </div>
+                )}
+
+                {success && (
+                  <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-xl">
+                    <p className="text-green-700 font-semibold">✅ {success}</p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingRoom(null);
+                      setError('');
+                      setSuccess('');
+                    }}
+                    className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold"
+                  >
+                    Enregistrer les modifications
                   </button>
                 </div>
               </form>

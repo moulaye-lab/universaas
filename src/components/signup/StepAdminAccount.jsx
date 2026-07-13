@@ -1,9 +1,13 @@
-import { User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import { User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Loader, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function StepAdminAccount({ formData, updateFormData }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [emailSuggestions, setEmailSuggestions] = useState([]);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState(null);
+  const [emailCheckMessage, setEmailCheckMessage] = useState('');
 
   const passwordStrength = (password) => {
     if (password.length === 0) return { level: 0, label: '', color: '' };
@@ -20,6 +24,107 @@ export default function StepAdminAccount({ formData, updateFormData }) {
   const passwordsMatch = formData.adminPassword &&
                         formData.adminPasswordConfirm &&
                         formData.adminPassword === formData.adminPasswordConfirm;
+
+  // Générer des suggestions d'email basées sur le slug et le nom
+  useEffect(() => {
+    if (formData.slug && (formData.adminFirstName || formData.adminLastName)) {
+      const suggestions = [];
+      const firstName = formData.adminFirstName.toLowerCase().trim();
+      const lastName = formData.adminLastName.toLowerCase().trim();
+      const slug = formData.slug;
+
+      // Normaliser (enlever accents)
+      const normalize = (str) => str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z]/g, '');
+
+      const normalizedFirst = normalize(firstName);
+      const normalizedLast = normalize(lastName);
+
+      if (normalizedFirst && normalizedLast) {
+        suggestions.push(`${normalizedFirst}.${normalizedLast}@${slug}.fr`);
+        suggestions.push(`admin@${slug}.fr`);
+        suggestions.push(`${normalizedFirst[0]}${normalizedLast}@${slug}.fr`);
+        suggestions.push(`${normalizedFirst}@${slug}.fr`);
+        suggestions.push(`direction@${slug}.fr`);
+      } else if (normalizedFirst || normalizedLast) {
+        const name = normalizedFirst || normalizedLast;
+        suggestions.push(`${name}@${slug}.fr`);
+        suggestions.push(`admin@${slug}.fr`);
+      } else {
+        suggestions.push(`admin@${slug}.fr`);
+      }
+
+      setEmailSuggestions(suggestions.slice(0, 5));
+    } else {
+      setEmailSuggestions([]);
+    }
+  }, [formData.slug, formData.adminFirstName, formData.adminLastName]);
+
+  // Vérifier la disponibilité de l'email en temps réel
+  const checkEmailAvailability = async (email) => {
+    if (!email || !email.includes('@') || email.length < 5) {
+      setEmailAvailable(null);
+      setEmailCheckMessage('');
+      return;
+    }
+
+    // Validation format email basique
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      setEmailAvailable(false);
+      setEmailCheckMessage('Format d\'email invalide');
+      return;
+    }
+
+    setCheckingEmail(true);
+    setEmailCheckMessage('Vérification...');
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_AI_API_URL || 'http://localhost:3001'}/api/onboarding/check-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const result = await response.json();
+
+      if (result.available) {
+        setEmailAvailable(true);
+        setEmailCheckMessage('✓ Email disponible');
+        updateFormData('adminEmailAvailable', true);
+      } else {
+        setEmailAvailable(false);
+        setEmailCheckMessage('✗ Cet email est déjà utilisé');
+        updateFormData('adminEmailAvailable', false);
+      }
+    } catch (err) {
+      console.error('Error checking email:', err);
+      setEmailAvailable(null);
+      setEmailCheckMessage('Erreur de vérification');
+      updateFormData('adminEmailAvailable', null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
+  // Debounce check email
+  useEffect(() => {
+    if (!formData.adminEmail) {
+      setEmailCheckMessage('');
+      setEmailAvailable(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      checkEmailAvailability(formData.adminEmail);
+    }, 800); // Attendre 800ms après la dernière frappe
+
+    return () => clearTimeout(timer);
+  }, [formData.adminEmail]);
 
   return (
     <div className="space-y-6">
@@ -81,11 +186,66 @@ export default function StepAdminAccount({ formData, updateFormData }) {
             value={formData.adminEmail}
             onChange={(e) => updateFormData('adminEmail', e.target.value)}
             placeholder="admin@universite.fr"
-            className="w-full pl-11 pr-4 py-3 bg-white/10 border-2 border-white/20 rounded-xl text-white placeholder-white/50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/30 transition outline-none"
+            className={`w-full pl-11 pr-12 py-3 bg-white/10 border-2 rounded-xl text-white placeholder-white/50 focus:ring-4 transition outline-none ${
+              emailAvailable === true
+                ? 'border-green-500 focus:border-green-500 focus:ring-green-500/30'
+                : emailAvailable === false
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30'
+                : 'border-white/20 focus:border-indigo-500 focus:ring-indigo-500/30'
+            }`}
             required
           />
+          {/* Indicateur de vérification */}
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            {checkingEmail && (
+              <Loader className="w-5 h-5 text-indigo-400 animate-spin" />
+            )}
+            {!checkingEmail && emailAvailable === true && (
+              <CheckCircle className="w-5 h-5 text-green-400" />
+            )}
+            {!checkingEmail && emailAvailable === false && (
+              <XCircle className="w-5 h-5 text-red-400" />
+            )}
+          </div>
         </div>
-        <p className="text-xs text-indigo-300 mt-1">
+
+        {/* Message de vérification */}
+        {emailCheckMessage && (
+          <div className={`mt-2 flex items-center gap-2 text-sm ${
+            emailAvailable === true
+              ? 'text-green-300'
+              : emailAvailable === false
+              ? 'text-red-300'
+              : 'text-indigo-300'
+          }`}>
+            {checkingEmail && <Loader className="w-4 h-4 animate-spin" />}
+            {!checkingEmail && emailAvailable === true && <CheckCircle className="w-4 h-4" />}
+            {!checkingEmail && emailAvailable === false && <XCircle className="w-4 h-4" />}
+            {!checkingEmail && emailAvailable === null && <AlertCircle className="w-4 h-4" />}
+            {emailCheckMessage}
+          </div>
+        )}
+
+        {/* Suggestions d'email */}
+        {emailSuggestions.length > 0 && !formData.adminEmail && (
+          <div className="mt-2">
+            <p className="text-xs text-indigo-300 mb-2">💡 Suggestions:</p>
+            <div className="flex flex-wrap gap-2">
+              {emailSuggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => updateFormData('adminEmail', suggestion)}
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs rounded-lg transition"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-indigo-300 mt-2">
           Cet email sera votre identifiant de connexion
         </p>
       </div>

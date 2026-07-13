@@ -32,6 +32,7 @@ export default function GradesInputPage() {
     date: new Date().toISOString().split('T')[0]
   });
   const [grades, setGrades] = useState({});
+  const [observations, setObservations] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -79,19 +80,32 @@ export default function GradesInputPage() {
       try {
         const univId = userProfile.universityId;
 
-        // 1. Récupérer le cours pour avoir la liste des étudiants inscrits
-        const courseRef = ref(database, `universities/${univId}/courses/${selectedCourse}`);
-        const courseSnap = await get(courseRef);
+        // CORRECTION : Trouver toutes les classes qui ont ce cours dans leur emploi du temps
+        const classesRef = ref(database, `universities/${univId}/classes`);
+        const classesSnap = await get(classesRef);
 
-        if (!courseSnap.exists()) {
-          setStudents([]);
-          return;
+        const enrolledStudentIds = new Set(); // Utiliser Set pour éviter doublons
+
+        if (classesSnap.exists()) {
+          const allClasses = classesSnap.val();
+
+          // Pour chaque classe, vérifier si elle a ce cours
+          Object.entries(allClasses).forEach(([classId, classData]) => {
+            if (classData.schedule && Array.isArray(classData.schedule)) {
+              // Vérifier si le cours est dans l'emploi du temps
+              const hasCourse = classData.schedule.some(
+                scheduleItem => scheduleItem.courseId === selectedCourse
+              );
+
+              if (hasCourse && classData.students) {
+                // Ajouter tous les étudiants de cette classe
+                classData.students.forEach(studentId => enrolledStudentIds.add(studentId));
+              }
+            }
+          });
         }
 
-        const courseData = courseSnap.val();
-        const enrolledStudentIds = courseData.enrolledStudents || [];
-
-        if (enrolledStudentIds.length === 0) {
+        if (enrolledStudentIds.size === 0) {
           setStudents([]);
           return;
         }
@@ -124,12 +138,15 @@ export default function GradesInputPage() {
 
         setStudents(enrolledStudents);
 
-        // Initialiser les notes à vide
+        // Initialiser les notes et observations à vide
         const initialGrades = {};
+        const initialObservations = {};
         enrolledStudents.forEach(student => {
           initialGrades[student.id] = '';
+          initialObservations[student.id] = '';
         });
         setGrades(initialGrades);
+        setObservations(initialObservations);
       } catch (err) {
         console.error('❌ Error loading students:', err);
         setError('Erreur lors du chargement des étudiants: ' + err.message);
@@ -143,6 +160,10 @@ export default function GradesInputPage() {
 
   const handleGradeChange = (studentId, value) => {
     setGrades(prev => ({ ...prev, [studentId]: value }));
+  };
+
+  const handleObservationChange = (studentId, value) => {
+    setObservations(prev => ({ ...prev, [studentId]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -159,6 +180,14 @@ export default function GradesInputPage() {
 
       if (!formData.title) {
         throw new Error('Veuillez donner un titre à l\'évaluation');
+      }
+
+      // Validation date : ne pas autoriser date future
+      const evaluationDate = new Date(formData.date).setHours(0, 0, 0, 0);
+      const today = new Date().setHours(0, 0, 0, 0);
+
+      if (evaluationDate > today) {
+        throw new Error('❌ La date de l\'évaluation ne peut pas être dans le futur');
       }
 
       // Compter les notes saisies
@@ -184,6 +213,8 @@ export default function GradesInputPage() {
           // Trouver les infos de l'étudiant (nom complet et classe)
           const student = students.find(s => s.id === studentId);
 
+          const observation = observations[studentId]?.trim() || null;
+
           const newGradeRef = push(gradesRef);
           promises.push(
             set(newGradeRef, {
@@ -199,6 +230,7 @@ export default function GradesInputPage() {
               coefficient: parseFloat(formData.coefficient),
               gradeType: formData.gradeType,
               title: formData.title,
+              observation: observation,
               date: new Date(formData.date).getTime(),
               semester: course.semester || 1,
               academicYear: course.academicYear || '2025-2026',
@@ -215,14 +247,14 @@ export default function GradesInputPage() {
 
       // Envoyer notifications aux étudiants
       const notificationPromises = [];
-      for (const [studentId, grade] of Object.entries(formData.grades)) {
-        if (grade !== '' && grade !== null && grade !== undefined) {
+      for (const [studentId, gradeValue] of Object.entries(grades)) {
+        if (gradeValue !== '' && gradeValue !== null && gradeValue !== undefined) {
           const student = students.find(s => s.id === studentId);
           notificationPromises.push(
-            notifyNewGrade(universityId, studentId, {
+            notifyNewGrade(userProfile.universityId, studentId, {
               courseId: selectedCourse,
               courseName: course.courseName,
-              grade: grade,
+              grade: gradeValue,
               maxGrade: formData.maxGrade,
               teacherId: currentUser.uid
             }).catch(err => console.error('Error sending notification:', err))
@@ -244,6 +276,7 @@ export default function GradesInputPage() {
       setSelectedCourse('');
       setStudents([]);
       setGrades({});
+      setObservations({});
 
       setTimeoutSafe(() => setSuccess(''), 3000);
     } catch (err) {
@@ -444,10 +477,14 @@ export default function GradesInputPage() {
                     <input
                       type="date"
                       value={formData.date}
+                      max={new Date().toISOString().split('T')[0]}
                       onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      ⚠️ La date ne peut pas être dans le futur
+                    </p>
                   </div>
                 </div>
               </div>
@@ -461,26 +498,45 @@ export default function GradesInputPage() {
 
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {students.map(student => (
-                      <div key={student.id} className="flex items-center gap-4 bg-white p-4 rounded-xl">
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900">
-                            {student.firstName} {student.lastName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {student.studentNumber}
-                          </p>
+                      <div key={student.id} className="bg-white p-4 rounded-xl space-y-3">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">
+                              {student.firstName} {student.lastName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {student.matricule || student.studentNumber}
+                            </p>
+                          </div>
+                          <div className="w-32">
+                            <label className="block text-xs text-gray-600 mb-1 text-center">Note *</label>
+                            <input
+                              type="number"
+                              step="0.25"
+                              min="0"
+                              max={formData.maxGrade}
+                              value={grades[student.id] || ''}
+                              onChange={(e) => handleGradeChange(student.id, e.target.value)}
+                              placeholder={`/ ${formData.maxGrade}`}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-semibold"
+                            />
+                          </div>
                         </div>
-                        <div className="w-32">
-                          <input
-                            type="number"
-                            step="0.25"
-                            min="0"
-                            max={formData.maxGrade}
-                            value={grades[student.id] || ''}
-                            onChange={(e) => handleGradeChange(student.id, e.target.value)}
-                            placeholder={`/ ${formData.maxGrade}`}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Observation (facultatif - visible par les parents)
+                          </label>
+                          <textarea
+                            value={observations[student.id] || ''}
+                            onChange={(e) => handleObservationChange(student.id, e.target.value)}
+                            placeholder="Ex: Bon travail, Manque de rigueur, Très bien..."
+                            rows="2"
+                            maxLength="200"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                           />
+                          <p className="text-xs text-gray-400 mt-1">
+                            {(observations[student.id] || '').length}/200 caractères
+                          </p>
                         </div>
                       </div>
                     ))}

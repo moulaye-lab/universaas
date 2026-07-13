@@ -18,10 +18,11 @@ import {
   User,
   Calendar,
   AlertCircle,
-  Mail
+  Mail,
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getMessage, markMessageAsRead, deleteMessage } from '../../services/messageService';
+import { getMessage, markMessageAsRead, deleteMessage, getThreadMessages } from '../../services/messageService';
 
 export default function MessageDetailPage() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function MessageDetailPage() {
   const universityId = userProfile?.universityId;
 
   const [message, setMessage] = useState(null);
+  const [threadMessages, setThreadMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -54,6 +56,11 @@ export default function MessageDetailPage() {
 
       setMessage(messageData);
 
+      // Charger tout le thread (conversation complète)
+      const threadId = messageData.threadId || messageData.id;
+      const thread = await getThreadMessages(universityId, threadId);
+      setThreadMessages(thread);
+
       // Si je suis le destinataire et le message n'est pas lu, le marquer comme lu
       if (messageData.to === currentUser.uid && !messageData.read) {
         await markMessageAsRead(universityId, messageId);
@@ -70,12 +77,18 @@ export default function MessageDetailPage() {
   };
 
   const handleReply = () => {
+    // Déterminer à qui répondre : l'autre personne de la conversation
+    const replyToUserId = message.from === currentUser.uid ? message.to : message.from;
+    const replyToUserName = message.from === currentUser.uid ? message.toName : message.fromName;
+
     navigate('/messages/compose', {
       state: {
         replyTo: {
-          from: message.from,
-          fromName: message.fromName,
-          subject: message.subject
+          recipientId: replyToUserId,
+          recipientName: replyToUserName,
+          subject: message.subject,
+          threadId: message.threadId || message.id,
+          messageId: message.id
         }
       }
     });
@@ -204,66 +217,105 @@ export default function MessageDetailPage() {
           </div>
         </div>
 
-        {/* Message */}
+        {/* Conversation (Thread) */}
         <div className="glass rounded-2xl overflow-hidden">
-          {/* En-tête du message */}
+          {/* En-tête de la conversation */}
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
-            <h2 className="text-2xl font-bold mb-4">{message.subject}</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              {/* De */}
-              <div className="flex items-start gap-3">
-                <User className="h-5 w-5 flex-shrink-0 mt-0.5 opacity-80" />
-                <div>
-                  <p className="text-white/70 text-xs mb-1">De</p>
-                  <p className="font-semibold">{message.fromName}</p>
-                  <span className={`inline-block text-xs px-2 py-1 rounded-full mt-1 ${getRoleBadgeColor(message.fromRole)} bg-white/20 text-white`}>
-                    {getRoleLabel(message.fromRole)}
-                  </span>
-                </div>
-              </div>
-
-              {/* À */}
-              <div className="flex items-start gap-3">
-                <User className="h-5 w-5 flex-shrink-0 mt-0.5 opacity-80" />
-                <div>
-                  <p className="text-white/70 text-xs mb-1">À</p>
-                  <p className="font-semibold">{message.toName}</p>
-                  <span className={`inline-block text-xs px-2 py-1 rounded-full mt-1 ${getRoleBadgeColor(message.toRole)} bg-white/20 text-white`}>
-                    {getRoleLabel(message.toRole)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Date */}
-              <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 flex-shrink-0 mt-0.5 opacity-80" />
-                <div>
-                  <p className="text-white/70 text-xs mb-1">Date</p>
-                  <p className="font-semibold">{formatDate(message.createdAt)}</p>
-                </div>
-              </div>
-
-              {/* Statut lecture */}
-              {isRecipient && message.read && message.readAt && (
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 flex-shrink-0 mt-0.5 opacity-80" />
-                  <div>
-                    <p className="text-white/70 text-xs mb-1">Lu le</p>
-                    <p className="font-semibold">{formatDate(message.readAt)}</p>
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center gap-3 mb-4">
+              <MessageCircle className="h-6 w-6" />
+              <h2 className="text-2xl font-bold">{message.subject}</h2>
             </div>
+            <p className="text-white/80 text-sm">
+              {threadMessages.length} message{threadMessages.length > 1 ? 's' : ''} dans la conversation
+            </p>
           </div>
 
-          {/* Corps du message */}
-          <div className="p-8">
-            <div className="prose max-w-none">
-              <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                {message.body}
-              </div>
-            </div>
+          {/* Timeline des messages */}
+          <div className="p-6 space-y-4">
+            {threadMessages.map((msg, index) => {
+              const isFromMe = msg.from === currentUser.uid;
+              const isFirstMessage = index === 0;
+
+              return (
+                <div
+                  key={msg.id}
+                  className={`relative ${!isFirstMessage ? 'ml-6' : ''}`}
+                >
+                  {/* Ligne de connexion */}
+                  {!isFirstMessage && (
+                    <div className="absolute left-[-24px] top-[-16px] bottom-0 w-0.5 bg-gray-300"></div>
+                  )}
+
+                  {/* Message */}
+                  <div className={`rounded-2xl p-5 ${
+                    isFromMe
+                      ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200'
+                      : 'bg-white border-2 border-gray-200'
+                  }`}>
+                    {/* En-tête du message */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+                          isFromMe ? 'bg-indigo-600' : 'bg-gray-600'
+                        }`}>
+                          {isFromMe ? msg.fromName[0] : msg.fromName[0]}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900">{msg.fromName}</p>
+                            <span className={`text-xs px-2 py-1 rounded-full ${getRoleBadgeColor(msg.fromRole)}`}>
+                              {getRoleLabel(msg.fromRole)}
+                            </span>
+                            {isFromMe && (
+                              <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-medium">
+                                Vous
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(msg.createdAt)}
+                            {msg.read && msg.readAt && !isFromMe && (
+                              <span className="text-green-600 flex items-center gap-1">
+                                ✓✓ Lu
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Badge nouveau message si c'est le premier */}
+                      {isFirstMessage && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
+                          Message initial
+                        </span>
+                      )}
+                      {!isFirstMessage && (
+                        <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-semibold">
+                          Réponse
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Destinataire */}
+                    <div className="text-xs text-gray-500 mb-3 flex items-center gap-2">
+                      <span>À:</span>
+                      <span className="font-medium">{msg.toName}</span>
+                      <span className={`px-2 py-0.5 rounded-full ${getRoleBadgeColor(msg.toRole)}`}>
+                        {getRoleLabel(msg.toRole)}
+                      </span>
+                    </div>
+
+                    {/* Corps du message */}
+                    <div className="prose max-w-none">
+                      <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                        {msg.body}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Actions du bas */}
@@ -274,15 +326,13 @@ export default function MessageDetailPage() {
             >
               Retour
             </button>
-            {isRecipient && (
-              <button
-                onClick={handleReply}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center gap-2 font-medium"
-              >
-                <Reply className="h-5 w-5" />
-                Répondre
-              </button>
-            )}
+            <button
+              onClick={handleReply}
+              className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition flex items-center gap-2 font-medium"
+            >
+              <Reply className="h-5 w-5" />
+              Répondre à la conversation
+            </button>
           </div>
         </div>
       </div>

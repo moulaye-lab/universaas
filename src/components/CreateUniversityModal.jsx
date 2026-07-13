@@ -22,6 +22,8 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
     adminLastName: '',
     subscriptionPlan: 'standard',
     maxStudents: 500,
+    currency: 'EUR',
+    timezone: 'Europe/Paris',
   });
 
   // Auto-générer prénom/nom admin basé sur le nom de l'université
@@ -71,13 +73,41 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
       .substring(0, 30) + '-' + new Date().getFullYear();
   };
 
-  const getPlanPrice = (plan) => {
-    const prices = {
+  const getPlanPrice = (plan, currency = 'EUR') => {
+    const basePrices = {
       standard: 149,
       premium: 299,
       enterprise: 599
     };
-    return prices[plan] || 149;
+
+    const basePrice = basePrices[plan] || 149;
+
+    // Taux de conversion approximatifs (EUR comme base)
+    const conversionRates = {
+      EUR: 1,
+      USD: 1.08,
+      GBP: 0.86,
+      MAD: 10.8,
+      XOF: 655,
+      CAD: 1.47,
+      CHF: 0.95
+    };
+
+    const convertedPrice = Math.round(basePrice * (conversionRates[currency] || 1));
+    return convertedPrice;
+  };
+
+  const getCurrencySymbol = (currency) => {
+    const symbols = {
+      EUR: '€',
+      USD: '$',
+      GBP: '£',
+      MAD: 'DH',
+      XOF: 'CFA',
+      CAD: '$',
+      CHF: 'Fr'
+    };
+    return symbols[currency] || currency;
   };
 
   const getPlanMaxStudents = (plan) => {
@@ -174,7 +204,9 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
           subscriptionStatus: 'active',
           maxStudents: formData.maxStudents,
           currentStudents: 0,
-          price: getPlanPrice(formData.subscriptionPlan),
+          price: getPlanPrice(formData.subscriptionPlan, formData.currency),
+          currency: formData.currency,
+          timezone: formData.timezone,
           createdAt: Date.now(),
           createdBy: currentUser?.uid,
           trialEndsAt: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 jours
@@ -249,8 +281,10 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
 
       platformStats.totalUniversities = (platformStats.totalUniversities || 0) + 1;
       platformStats.activeUniversities = (platformStats.activeUniversities || 0) + 1;
-      platformStats.monthlyRevenue = (platformStats.monthlyRevenue || 0) + getPlanPrice(formData.subscriptionPlan);
-      platformStats.yearlyRevenue = (platformStats.yearlyRevenue || 0) + (getPlanPrice(formData.subscriptionPlan) * 12);
+      // Convertir en EUR pour les stats globales de la plateforme
+      const priceInEUR = getPlanPrice(formData.subscriptionPlan, 'EUR');
+      platformStats.monthlyRevenue = (platformStats.monthlyRevenue || 0) + priceInEUR;
+      platformStats.yearlyRevenue = (platformStats.yearlyRevenue || 0) + (priceInEUR * 12);
 
       await set(platformRef, platformStats);
 
@@ -265,11 +299,13 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
       setFormData({
         universityName: '',
         adminEmail: '',
-        adminPassword: '',
+        adminPassword: '12345678',
         adminFirstName: '',
         adminLastName: '',
         subscriptionPlan: 'standard',
         maxStudents: 500,
+        currency: 'EUR',
+        timezone: 'Europe/Paris',
       });
 
       onClose();
@@ -341,6 +377,50 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
                   ID généré: <span className="font-mono font-semibold text-indigo-600">{generateSlug(formData.universityName)}</span>
                 </p>
               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Devise *
+                </label>
+                <select
+                  value={formData.currency}
+                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none"
+                  required
+                >
+                  <option value="EUR">EUR (€) - Euro</option>
+                  <option value="USD">USD ($) - Dollar US</option>
+                  <option value="GBP">GBP (£) - Livre Sterling</option>
+                  <option value="MAD">MAD (DH) - Dirham Marocain</option>
+                  <option value="XOF">XOF (CFA) - Franc CFA</option>
+                  <option value="CAD">CAD ($) - Dollar Canadien</option>
+                  <option value="CHF">CHF (Fr) - Franc Suisse</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fuseau horaire *
+                </label>
+                <select
+                  value={formData.timezone}
+                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none"
+                  required
+                >
+                  <option value="Europe/Paris">Europe/Paris (GMT+1)</option>
+                  <option value="Europe/London">Europe/London (GMT+0)</option>
+                  <option value="America/New_York">America/New_York (GMT-5)</option>
+                  <option value="America/Los_Angeles">America/Los_Angeles (GMT-8)</option>
+                  <option value="Africa/Casablanca">Africa/Casablanca (GMT+0)</option>
+                  <option value="Africa/Abidjan">Africa/Abidjan (GMT+0)</option>
+                  <option value="Africa/Dakar">Africa/Dakar (GMT+0)</option>
+                  <option value="America/Montreal">America/Montreal (GMT-5)</option>
+                  <option value="Asia/Dubai">Asia/Dubai (GMT+4)</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -494,7 +574,9 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
                 }`}
               >
                 <p className="font-bold text-gray-900">Standard</p>
-                <p className="text-2xl font-black text-indigo-600 my-2">149€</p>
+                <p className="text-2xl font-black text-indigo-600 my-2">
+                  {getPlanPrice('standard', formData.currency)}{getCurrencySymbol(formData.currency)}
+                </p>
                 <p className="text-xs text-gray-600">/mois</p>
                 <p className="text-xs text-gray-600 mt-2">500 étudiants max</p>
               </button>
@@ -510,7 +592,9 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
                 }`}
               >
                 <p className="font-bold text-gray-900">Premium</p>
-                <p className="text-2xl font-black text-purple-600 my-2">299€</p>
+                <p className="text-2xl font-black text-purple-600 my-2">
+                  {getPlanPrice('premium', formData.currency)}{getCurrencySymbol(formData.currency)}
+                </p>
                 <p className="text-xs text-gray-600">/mois</p>
                 <p className="text-xs text-gray-600 mt-2">2000 étudiants max</p>
               </button>
@@ -526,7 +610,9 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
                 }`}
               >
                 <p className="font-bold text-gray-900">Enterprise</p>
-                <p className="text-2xl font-black text-pink-600 my-2">599€</p>
+                <p className="text-2xl font-black text-pink-600 my-2">
+                  {getPlanPrice('enterprise', formData.currency)}{getCurrencySymbol(formData.currency)}
+                </p>
                 <p className="text-xs text-gray-600">/mois</p>
                 <p className="text-xs text-gray-600 mt-2">10000+ étudiants</p>
               </button>
@@ -539,8 +625,10 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
             <ul className="space-y-1 text-sm text-indigo-700">
               <li>• Université: <span className="font-semibold">{formData.universityName || 'Non défini'}</span></li>
               <li>• Admin: <span className="font-semibold">{formData.adminEmail || 'Non défini'}</span></li>
-              <li>• Plan: <span className="font-semibold capitalize">{formData.subscriptionPlan}</span> ({getPlanPrice(formData.subscriptionPlan)}€/mois)</li>
+              <li>• Plan: <span className="font-semibold capitalize">{formData.subscriptionPlan}</span> ({getPlanPrice(formData.subscriptionPlan, formData.currency)}{getCurrencySymbol(formData.currency)}/mois)</li>
               <li>• Capacité: <span className="font-semibold">{formData.maxStudents} étudiants</span></li>
+              <li>• Devise: <span className="font-semibold">{formData.currency}</span></li>
+              <li>• Fuseau: <span className="font-semibold">{formData.timezone}</span></li>
               <li>• Période d'essai: <span className="font-semibold">30 jours gratuits</span></li>
             </ul>
           </div>

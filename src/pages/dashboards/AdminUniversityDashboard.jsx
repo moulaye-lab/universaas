@@ -47,41 +47,38 @@ const AdminUniversityDashboard = () => {
   const [latePayments, setLatePayments] = useState([]);
   const [showParentModal, setShowParentModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [openFinancialMenu, setOpenFinancialMenu] = useState(false);
-  const [openAcademicMenu, setOpenAcademicMenu] = useState(false);
-  const [openPeopleMenu, setOpenPeopleMenu] = useState(false);
 
   useEffect(() => {
-    console.log('📊 AdminDashboard useEffect:', { universityId: userProfile?.universityId });
+    // console.log('📊 AdminDashboard useEffect:', { universityId: userProfile?.universityId });
     let cleanup;
 
     const loadData = async () => {
       if (!userProfile?.universityId) {
-        console.log('⚠️ AdminDashboard: Pas de universityId');
+        // console.log('⚠️ AdminDashboard: Pas de universityId');
         return;
       }
 
-      console.log('📥 AdminDashboard: Chargement données université...');
+      // console.log('📥 AdminDashboard: Chargement données université...');
       try {
         // Charger les données de l'université
         const universityRef = ref(database, `universities/${userProfile.universityId}`);
         const universitySnapshot = await get(universityRef);
 
         if (universitySnapshot.exists()) {
-          console.log('✅ AdminDashboard: Université chargée');
+          // console.log('✅ AdminDashboard: Université chargée');
           setUniversity(universitySnapshot.val());
         } else {
-          console.log('⚠️ AdminDashboard: Université non trouvée');
+          // console.log('⚠️ AdminDashboard: Université non trouvée');
         }
 
         // Écouter les changements en temps réel
-        console.log('🔄 AdminDashboard: Lancement loadDashboardData...');
+        // console.log('🔄 AdminDashboard: Lancement loadDashboardData...');
         cleanup = loadDashboardData(userProfile.universityId);
-        console.log('✅ AdminDashboard: loadDashboardData terminé');
+        // console.log('✅ AdminDashboard: loadDashboardData terminé');
 
         // Loading terminé
         setLoading(false);
-        console.log('✅ AdminDashboard: setLoading(false)');
+        // console.log('✅ AdminDashboard: setLoading(false)');
 
       } catch (error) {
         console.error('❌ AdminDashboard: Error loading user data:', error);
@@ -99,7 +96,7 @@ const AdminUniversityDashboard = () => {
   }, [userProfile, navigate]);
 
   const loadDashboardData = (universityId) => {
-    console.log('🔄 loadDashboardData: Début', { universityId });
+    // console.log('🔄 loadDashboardData: Début', { universityId });
     const unsubscribers = [];
 
     // Écouter les étudiants
@@ -129,7 +126,7 @@ const AdminUniversityDashboard = () => {
           pendingStudents: pendingCount,
           inactiveStudents: inactiveCount,
           suspendedStudents: suspendedCount,
-          studentsVariation: 12.5
+          studentsVariation: 0
         }));
       } else {
         setPendingInscriptions([]);
@@ -148,7 +145,7 @@ const AdminUniversityDashboard = () => {
         setStats(prev => ({
           ...prev,
           totalTeachers: teachersCount,
-          teachersVariation: 8.3
+          teachersVariation: 0
         }));
       } else {
         setStats(prev => ({ ...prev, totalTeachers: 0 }));
@@ -189,7 +186,7 @@ const AdminUniversityDashboard = () => {
         setStats(prev => ({
           ...prev,
           monthlyRevenue: revenue,
-          revenueVariation: 15.2
+          revenueVariation: 0
         }));
       } else {
         setLatePayments([]);
@@ -199,12 +196,34 @@ const AdminUniversityDashboard = () => {
 
     unsubscribers.push(unsubPayments);
 
-    // Calculer taux de réussite (simulation)
-    setStats(prev => ({
-      ...prev,
-      successRate: 87.5,
-      successVariation: 3.2
-    }));
+    // Calculer taux de réussite réel basé sur les notes
+    const gradesRef = ref(database, `universities/${universityId}/grades`);
+    const unsubGrades = onValue(gradesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const gradesData = snapshot.val();
+        const gradesArray = Object.values(gradesData);
+
+        // Calculer la moyenne générale et le taux de réussite (>= 10/20)
+        if (gradesArray.length > 0) {
+          const totalGrades = gradesArray.reduce((sum, grade) => sum + (grade.value || 0), 0);
+          const avgGrade = totalGrades / gradesArray.length;
+          const passedGrades = gradesArray.filter(g => g.value >= 10).length;
+          const successRate = (passedGrades / gradesArray.length) * 100;
+
+          setStats(prev => ({
+            ...prev,
+            successRate: Math.round(successRate * 10) / 10, // Arrondi à 1 décimale
+            successVariation: 0
+          }));
+        } else {
+          setStats(prev => ({ ...prev, successRate: 0, successVariation: 0 }));
+        }
+      } else {
+        setStats(prev => ({ ...prev, successRate: 0, successVariation: 0 }));
+      }
+    });
+
+    unsubscribers.push(unsubGrades);
 
     // Retourner fonction de nettoyage
     return () => {
@@ -282,23 +301,11 @@ const AdminUniversityDashboard = () => {
       case 'absences-management':
         navigate('/admin/absences');
         break;
-      case 'financial-menu':
-        setOpenFinancialMenu(!openFinancialMenu);
-        setOpenAcademicMenu(false);
-        setOpenPeopleMenu(false);
-        break;
-      case 'academic-menu':
-        setOpenAcademicMenu(!openAcademicMenu);
-        setOpenFinancialMenu(false);
-        setOpenPeopleMenu(false);
-        break;
-      case 'people-menu':
-        setOpenPeopleMenu(!openPeopleMenu);
-        setOpenFinancialMenu(false);
-        setOpenAcademicMenu(false);
-        break;
       case 'payments-management':
         navigate('/admin/payments');
+        break;
+      case 'tuition-fees':
+        navigate('/admin/tuition-fees');
         break;
       case 'accounting-dashboard':
         navigate('/admin/accounting');
@@ -368,26 +375,18 @@ const AdminUniversityDashboard = () => {
       description: 'Créer et gérer les classes'
     },
     {
-      title: 'Gestion Personnes',
+      title: 'Gestion Étudiants',
       icon: Users,
-      action: 'people-menu',
+      action: 'manage-students',
       gradient: 'from-blue-500 to-blue-600',
-      description: 'Étudiants et parents',
-      isPeople: true,
-      subActions: [
-        {
-          title: 'Gestion Étudiants',
-          icon: Users,
-          action: 'manage-students',
-          description: 'Créer et gérer les étudiants'
-        },
-        {
-          title: 'Gestion Parents',
-          icon: UsersIcon,
-          action: 'parents-list',
-          description: 'Gérer les comptes parents'
-        }
-      ]
+      description: 'Créer et gérer les étudiants'
+    },
+    {
+      title: 'Gestion Parents',
+      icon: UsersIcon,
+      action: 'parents-list',
+      gradient: 'from-cyan-500 to-cyan-600',
+      description: 'Gérer les comptes parents'
     },
     {
       title: 'Gestion Enseignants',
@@ -397,32 +396,25 @@ const AdminUniversityDashboard = () => {
       description: 'Créer et gérer les enseignants'
     },
     {
-      title: 'Gestion Académique',
+      title: 'Gestion des Cours',
       icon: BookOpen,
-      action: 'academic-menu',
+      action: 'manage-courses',
       gradient: 'from-purple-500 to-purple-600',
-      description: 'Cours, salles et emplois du temps',
-      isAcademic: true,
-      subActions: [
-        {
-          title: 'Gestion des Cours',
-          icon: BookOpen,
-          action: 'manage-courses',
-          description: 'Créer et gérer les cours'
-        },
-        {
-          title: 'Gestion des Salles',
-          icon: Building2,
-          action: 'rooms-management',
-          description: 'Gérer les salles de cours'
-        },
-        {
-          title: 'Emplois du Temps',
-          icon: Calendar,
-          action: 'schedules-management',
-          description: 'Configurer les emplois du temps'
-        }
-      ]
+      description: 'Créer et gérer les cours'
+    },
+    {
+      title: 'Gestion des Salles',
+      icon: Building2,
+      action: 'rooms-management',
+      gradient: 'from-pink-500 to-pink-600',
+      description: 'Gérer les salles de cours'
+    },
+    {
+      title: 'Emplois du Temps',
+      icon: Calendar,
+      action: 'schedules-management',
+      gradient: 'from-violet-500 to-violet-600',
+      description: 'Configurer les emplois du temps'
     },
     {
       title: 'Données Académiques',
@@ -439,32 +431,32 @@ const AdminUniversityDashboard = () => {
       description: 'Gérer et valider les justificatifs'
     },
     {
-      title: 'Gestion Financière',
+      title: 'Paiements Étudiants',
       icon: DollarSign,
-      action: 'financial-menu',
-      gradient: 'from-emerald-500 to-teal-600',
-      description: 'Paiements, comptabilité et comptables',
-      isFinancial: true,
-      subActions: [
-        {
-          title: 'Paiements Étudiants',
-          icon: DollarSign,
-          action: 'payments-management',
-          description: 'Gérer les plans de paiement'
-        },
-        {
-          title: 'Tableau de Bord Financier',
-          icon: FileText,
-          action: 'accounting-dashboard',
-          description: 'Vue d\'ensemble comptable'
-        },
-        {
-          title: 'Créer un Comptable',
-          icon: UserPlus,
-          action: 'create-comptable',
-          description: 'Nouveau compte comptable'
-        }
-      ]
+      action: 'payments-management',
+      gradient: 'from-emerald-500 to-emerald-600',
+      description: 'Gérer les plans de paiement'
+    },
+    {
+      title: 'Tarifs de Scolarité',
+      icon: DollarSign,
+      action: 'tuition-fees',
+      gradient: 'from-teal-500 to-teal-600',
+      description: 'Configurer les frais par niveau'
+    },
+    {
+      title: 'Tableau de Bord Financier',
+      icon: FileText,
+      action: 'accounting-dashboard',
+      gradient: 'from-lime-500 to-lime-600',
+      description: 'Vue d\'ensemble comptable'
+    },
+    {
+      title: 'Créer un Comptable',
+      icon: UserPlus,
+      action: 'create-comptable',
+      gradient: 'from-yellow-500 to-yellow-600',
+      description: 'Nouveau compte comptable'
     },
     {
       title: 'Paramètres',
@@ -564,6 +556,89 @@ const AdminUniversityDashboard = () => {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Actions Rapides */}
+        <div className="animate-fade-in mb-8">
+          <h2 className="text-2xl font-bold text-white mb-6">Actions Rapides</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {quickActions.map((action, index) => (
+              <div key={index} className="relative">
+                <button
+                  onClick={() => handleQuickAction(action.action)}
+                  className="group relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 text-left w-full"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className={`p-4 rounded-2xl bg-gradient-to-br ${action.gradient} shadow-lg mb-4 inline-flex group-hover:scale-110 transition-transform duration-300`}>
+                    <action.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-1">{action.title}</h3>
+                  <p className="text-sm text-indigo-200">{action.description}</p>
+                </button>
+
+                {/* Sous-menus */}
+                {action.isFinancial && openFinancialMenu && (
+                  <div className="mt-4 space-y-3 animate-fade-in">
+                    {action.subActions.map((subAction, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => handleQuickAction(subAction.action)}
+                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
+                      >
+                        <div className="p-2 rounded-lg bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
+                          <subAction.icon className="w-5 h-5 text-emerald-300" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
+                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {action.isAcademic && openAcademicMenu && (
+                  <div className="mt-4 space-y-3 animate-fade-in">
+                    {action.subActions.map((subAction, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => handleQuickAction(subAction.action)}
+                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
+                      >
+                        <div className="p-2 rounded-lg bg-purple-500/20 group-hover:bg-purple-500/30 transition-colors">
+                          <subAction.icon className="w-5 h-5 text-purple-300" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
+                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {action.isPeople && openPeopleMenu && (
+                  <div className="mt-4 space-y-3 animate-fade-in">
+                    {action.subActions.map((subAction, subIndex) => (
+                      <button
+                        key={subIndex}
+                        onClick={() => handleQuickAction(subAction.action)}
+                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
+                      >
+                        <div className="p-2 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors">
+                          <subAction.icon className="w-5 h-5 text-blue-300" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
+                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Inscriptions en Attente */}
@@ -721,89 +796,6 @@ const AdminUniversityDashboard = () => {
               </table>
             </div>
           )}
-        </div>
-
-        {/* Actions Rapides */}
-        <div className="animate-fade-in">
-          <h2 className="text-2xl font-bold text-white mb-6">Actions Rapides</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {quickActions.map((action, index) => (
-              <div key={index} className="relative">
-                <button
-                  onClick={() => handleQuickAction(action.action)}
-                  className="group relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 text-left w-full"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className={`p-4 rounded-2xl bg-gradient-to-br ${action.gradient} shadow-lg mb-4 inline-flex group-hover:scale-110 transition-transform duration-300`}>
-                    <action.icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-1">{action.title}</h3>
-                  <p className="text-sm text-indigo-200">{action.description}</p>
-                </button>
-
-                {/* Sous-menus */}
-                {action.isFinancial && openFinancialMenu && (
-                  <div className="mt-4 space-y-3 animate-fade-in">
-                    {action.subActions.map((subAction, subIndex) => (
-                      <button
-                        key={subIndex}
-                        onClick={() => handleQuickAction(subAction.action)}
-                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
-                      >
-                        <div className="p-2 rounded-lg bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
-                          <subAction.icon className="w-5 h-5 text-emerald-300" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
-                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {action.isAcademic && openAcademicMenu && (
-                  <div className="mt-4 space-y-3 animate-fade-in">
-                    {action.subActions.map((subAction, subIndex) => (
-                      <button
-                        key={subIndex}
-                        onClick={() => handleQuickAction(subAction.action)}
-                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
-                      >
-                        <div className="p-2 rounded-lg bg-purple-500/20 group-hover:bg-purple-500/30 transition-colors">
-                          <subAction.icon className="w-5 h-5 text-purple-300" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
-                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {action.isPeople && openPeopleMenu && (
-                  <div className="mt-4 space-y-3 animate-fade-in">
-                    {action.subActions.map((subAction, subIndex) => (
-                      <button
-                        key={subIndex}
-                        onClick={() => handleQuickAction(subAction.action)}
-                        className="w-full flex items-start gap-3 backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 text-left group"
-                      >
-                        <div className="p-2 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors">
-                          <subAction.icon className="w-5 h-5 text-blue-300" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-semibold text-white">{subAction.title}</h4>
-                          <p className="text-xs text-indigo-300 mt-0.5">{subAction.description}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 

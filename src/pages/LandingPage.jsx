@@ -142,7 +142,7 @@ export default function LandingPage() {
   ];
 
   const handleStartTrial = (planId) => {
-    navigate(`/onboarding?plan=${planId}`);
+    navigate(`/signup?plan=${planId}`);
   };
 
   return (

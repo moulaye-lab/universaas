@@ -30,8 +30,12 @@ export default function ClassDetailsPage() {
   const [existingSchedules, setExistingSchedules] = useState([]);
 
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
+  const [showEditCourseModal, setShowEditCourseModal] = useState(false);
+  const [editingScheduleIndex, setEditingScheduleIndex] = useState(null);
   const [courseFormData, setCourseFormData] = useState({
-    courseId: '',
+    courseId: ''
+  });
+  const [editFormData, setEditFormData] = useState({
     teacherId: '',
     day: 'Lundi',
     startTime: '08:00',
@@ -43,8 +47,6 @@ export default function ClassDetailsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [roomAvailability, setRoomAvailability] = useState('');
-  const [teacherAvailability, setTeacherAvailability] = useState('');
 
   const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
@@ -97,7 +99,11 @@ export default function ClassDetailsPage() {
             id,
             ...data
           }));
+          console.log('✅ Cours chargés:', coursesData.length, coursesData);
           setAllCourses(coursesData);
+        } else {
+          console.log('⚠️ Aucun cours trouvé dans Firebase');
+          setAllCourses([]);
         }
 
         // Charger tous les enseignants
@@ -145,133 +151,30 @@ export default function ClassDetailsPage() {
     loadData();
   }, [classId, userProfile]);
 
-  // Vérifier disponibilité salle en temps réel
-  useEffect(() => {
-    const checkAvailability = () => {
-      const { room, day, startTime, endTime } = courseFormData;
-
-      if (room && day && startTime && endTime) {
-        const parseTime = (time) => {
-          const [hours, minutes] = time.split(':').map(Number);
-          return hours * 60 + minutes;
-        };
-
-        const newStart = parseTime(startTime);
-        const newEnd = parseTime(endTime);
-
-        if (newEnd <= newStart) {
-          setRoomAvailability('❌ L\'heure de fin doit être après l\'heure de début');
-          return;
-        }
-
-        const duration = newEnd - newStart;
-        if (duration < 30) {
-          setRoomAvailability('⚠️ Durée minimale : 30 minutes');
-          return;
-        }
-
-        // Vérifier conflits avec emploi du temps actuel de la classe (avec battement)
-        const classConflict = (classData?.schedule || []).find(sch => {
-          if (sch.room === room && sch.day === day) {
-            const existingStart = parseTime(sch.startTime);
-            const existingEnd = parseTime(sch.endTime);
-            // Ajouter temps de battement pour éviter les cours collés
-            return (newStart < existingEnd + BUFFER_TIME && newEnd + BUFFER_TIME > existingStart);
-          }
-          return false;
-        });
-
-        if (classConflict) {
-          setRoomAvailability(`⚠️ Conflit dans cette classe : ${classConflict.courseName} (${classConflict.startTime}-${classConflict.endTime})`);
-          return;
-        }
-
-        // Vérifier conflits avec autres classes (avec battement)
-        const externalConflict = existingSchedules.find(sch => {
-          if (sch.room === room && sch.day === day) {
-            const existingStart = parseTime(sch.startTime);
-            const existingEnd = parseTime(sch.endTime);
-            // Ajouter temps de battement pour éviter les cours collés
-            return (newStart < existingEnd + BUFFER_TIME && newEnd + BUFFER_TIME > existingStart);
-          }
-          return false;
-        });
-
-        if (externalConflict) {
-          setRoomAvailability(`⚠️ Conflit : Salle occupée par ${externalConflict.courseName}`);
-        } else {
-          setRoomAvailability('✅ Salle disponible');
-        }
-      } else {
-        setRoomAvailability('');
-      }
-    };
-
-    checkAvailability();
-  }, [courseFormData, classData, existingSchedules]);
-
-  // Vérifier disponibilité enseignant en temps réel
-  useEffect(() => {
-    const checkTeacherAvailability = () => {
-      const { teacherId, day, startTime, endTime } = courseFormData;
-
-      if (teacherId && day && startTime && endTime) {
-        const parseTime = (time) => {
-          const [hours, minutes] = time.split(':').map(Number);
-          return hours * 60 + minutes;
-        };
-
-        const newStart = parseTime(startTime);
-        const newEnd = parseTime(endTime);
-
-        if (newEnd <= newStart) {
-          setTeacherAvailability('');
-          return;
-        }
-
-        // Vérifier conflits avec emploi du temps actuel de la classe (avec battement)
-        const classConflict = (classData?.schedule || []).find(sch => {
-          if (sch.teacherId === teacherId && sch.day === day) {
-            const existingStart = parseTime(sch.startTime);
-            const existingEnd = parseTime(sch.endTime);
-            // Ajouter temps de battement pour éviter les cours collés
-            return (newStart < existingEnd + BUFFER_TIME && newEnd + BUFFER_TIME > existingStart);
-          }
-          return false;
-        });
-
-        if (classConflict) {
-          setTeacherAvailability(`⚠️ Enseignant occupé : ${classConflict.courseName}`);
-          return;
-        }
-
-        // Vérifier conflits avec autres classes (avec battement)
-        const externalConflict = existingSchedules.find(sch => {
-          if (sch.teacherId === teacherId && sch.day === day) {
-            const existingStart = parseTime(sch.startTime);
-            const existingEnd = parseTime(sch.endTime);
-            // Ajouter temps de battement pour éviter les cours collés
-            return (newStart < existingEnd + BUFFER_TIME && newEnd + BUFFER_TIME > existingStart);
-          }
-          return false;
-        });
-
-        if (externalConflict) {
-          setTeacherAvailability(`⚠️ Enseignant occupé : ${externalConflict.courseName}`);
-        } else {
-          setTeacherAvailability('✅ Enseignant disponible');
-        }
-      } else {
-        setTeacherAvailability('');
-      }
-    };
-
-    checkTeacherAvailability();
-  }, [courseFormData, classData, existingSchedules]);
+  // Pas besoin de vérifier disponibilité en temps réel
+  // Les horaires/salles sont déjà définis lors de la création du cours
 
   const handleCourseFormChange = (e) => {
     const { name, value } = e.target;
     setCourseFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSchedule = (scheduleIndex) => {
+    const scheduleEntry = classData.schedule[scheduleIndex];
+    setEditingScheduleIndex(scheduleIndex);
+    setEditFormData({
+      teacherId: scheduleEntry.teacherId,
+      day: scheduleEntry.day,
+      startTime: scheduleEntry.startTime,
+      endTime: scheduleEntry.endTime,
+      room: scheduleEntry.room
+    });
+    setShowEditCourseModal(true);
   };
 
   const handleAddCourseToSchedule = async (e) => {
@@ -281,14 +184,24 @@ export default function ClassDetailsPage() {
 
     try {
       const course = allCourses.find(c => c.id === courseFormData.courseId);
-      const teacher = allTeachers.find(t => t.id === courseFormData.teacherId);
 
-      if (!course || !teacher) {
-        throw new Error('Cours ou enseignant introuvable');
+      if (!course) {
+        throw new Error('Cours introuvable');
+      }
+
+      // Vérifier que le cours a bien un schedule défini
+      if (!course.schedule || !course.schedule.day || !course.schedule.room) {
+        throw new Error('Ce cours n\'a pas d\'horaire ou de salle défini');
+      }
+
+      // Vérifier que le cours n'est pas déjà dans le planning
+      const alreadyAdded = (classData.schedule || []).some(sch => sch.courseId === course.id);
+      if (alreadyAdded) {
+        throw new Error('Ce cours est déjà dans le planning de cette classe');
       }
 
       // Vérifier capacité de la salle vs taille de la classe
-      const selectedRoom = allRooms.find(r => r.roomName === courseFormData.room);
+      const selectedRoom = allRooms.find(r => r.roomName === course.schedule.room);
       const classCapacity = classData.occupiedSeats || 0;
 
       if (selectedRoom && classCapacity > selectedRoom.capacity) {
@@ -298,16 +211,43 @@ export default function ClassDetailsPage() {
         );
       }
 
+      // Vérifier conflit d'horaire avec le planning existant de la classe
+      const parseTime = (time) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+      };
+
+      const newStart = parseTime(course.schedule.startTime);
+      const newEnd = parseTime(course.schedule.endTime);
+
+      const conflict = (classData.schedule || []).find(sch => {
+        if (sch.day === course.schedule.day) {
+          const existingStart = parseTime(sch.startTime);
+          const existingEnd = parseTime(sch.endTime);
+          return (newStart < existingEnd && newEnd > existingStart);
+        }
+        return false;
+      });
+
+      if (conflict) {
+        throw new Error(
+          `⚠️ Conflit d'horaire : Le ${course.schedule.day} de ${course.schedule.startTime} à ${course.schedule.endTime} est déjà occupé par "${conflict.courseName}"`
+        );
+      }
+
+      // Récupérer l'enseignant depuis le cours
+      const teacher = allTeachers.find(t => t.id === course.teacherId);
+
       const newScheduleEntry = {
         courseId: course.id,
-        courseName: course.courseName || course.name,
-        courseCode: course.courseCode || course.code,
-        teacherId: teacher.id,
-        teacherName: `${teacher.firstName} ${teacher.lastName}`,
-        day: courseFormData.day,
-        startTime: courseFormData.startTime,
-        endTime: courseFormData.endTime,
-        room: courseFormData.room,
+        courseName: course.courseName,
+        courseCode: course.courseCode,
+        teacherId: course.teacherId,
+        teacherName: course.teacherName,
+        day: course.schedule.day,
+        startTime: course.schedule.startTime,
+        endTime: course.schedule.endTime,
+        room: course.schedule.room,
         addedAt: Date.now()
       };
 
@@ -322,11 +262,11 @@ export default function ClassDetailsPage() {
       // Créer log d'audit sécurisé
       if (currentUser?.uid && userProfile?.universityId) {
         await logCreate('COURSE_SCHEDULE', {
-          id: courseFormData.courseId,
+          id: course.id,
           name: course.courseName,
-          teacher: `${teacher.firstName} ${teacher.lastName}`,
-          schedule: `${courseFormData.day} ${courseFormData.startTime}-${courseFormData.endTime}`,
-          room: courseFormData.room
+          teacher: course.teacherName,
+          schedule: `${course.schedule.day} ${course.schedule.startTime}-${course.schedule.endTime}`,
+          room: course.schedule.room
         }, userProfile.universityId, currentUser.uid, userProfile.displayName || userProfile.email || 'Admin');
       }
 
@@ -335,20 +275,103 @@ export default function ClassDetailsPage() {
       setClassData(updatedClassSnap.val());
 
       setShowAddCourseModal(false);
-      setCourseFormData({
-        courseId: '',
-        teacherId: '',
-        day: 'Lundi',
-        startTime: '08:00',
-        endTime: '10:00',
-        room: ''
-      });
+      setCourseFormData({ courseId: '' });
       setSuccess('✅ Cours ajouté au planning avec succès');
       setTimeout(() => setSuccess(''), 3000);
 
     } catch (err) {
       console.error('Error adding course:', err);
       setError(err.message || 'Erreur lors de l\'ajout du cours');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateSchedule = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+
+    try {
+      // Validation horaires
+      const parseTime = (time) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+      };
+
+      const newStart = parseTime(editFormData.startTime);
+      const newEnd = parseTime(editFormData.endTime);
+
+      if (newEnd <= newStart) {
+        throw new Error('L\'heure de fin doit être après l\'heure de début');
+      }
+
+      const duration = newEnd - newStart;
+      if (duration < 30) {
+        throw new Error('La durée du cours doit être d\'au moins 30 minutes');
+      }
+
+      // Vérifier capacité de la salle vs taille de la classe
+      const selectedRoom = allRooms.find(r => r.roomName === editFormData.room);
+      const classCapacity = classData.occupiedSeats || 0;
+
+      if (selectedRoom && classCapacity > selectedRoom.capacity) {
+        throw new Error(
+          `❌ Salle trop petite : La salle ${selectedRoom.roomName} a une capacité de ${selectedRoom.capacity} places, ` +
+          `mais la classe compte ${classCapacity} étudiants inscrits.`
+        );
+      }
+
+      // Vérifier conflit avec autres cours de la classe (sauf celui qu'on modifie)
+      const conflict = (classData.schedule || []).find((sch, idx) => {
+        if (idx === editingScheduleIndex) return false; // Ignorer le cours qu'on modifie
+
+        if (sch.day === editFormData.day) {
+          const existingStart = parseTime(sch.startTime);
+          const existingEnd = parseTime(sch.endTime);
+          return (newStart < existingEnd && newEnd > existingStart);
+        }
+        return false;
+      });
+
+      if (conflict) {
+        throw new Error(
+          `⚠️ Conflit d'horaire : Le ${editFormData.day} de ${editFormData.startTime} à ${editFormData.endTime} est déjà occupé par "${conflict.courseName}"`
+        );
+      }
+
+      const teacher = allTeachers.find(t => t.id === editFormData.teacherId);
+
+      const updatedSchedule = [...(classData.schedule || [])];
+      updatedSchedule[editingScheduleIndex] = {
+        ...updatedSchedule[editingScheduleIndex],
+        teacherId: editFormData.teacherId,
+        teacherName: teacher ? `${teacher.firstName} ${teacher.lastName}` : updatedSchedule[editingScheduleIndex].teacherName,
+        day: editFormData.day,
+        startTime: editFormData.startTime,
+        endTime: editFormData.endTime,
+        room: editFormData.room,
+        modifiedAt: Date.now()
+      };
+
+      const classRef = ref(database, `universities/${userProfile.universityId}/classes/${classId}`);
+      await update(classRef, {
+        schedule: updatedSchedule,
+        updatedAt: Date.now()
+      });
+
+      // Recharger les données
+      const updatedClassSnap = await get(classRef);
+      setClassData(updatedClassSnap.val());
+
+      setShowEditCourseModal(false);
+      setEditingScheduleIndex(null);
+      setSuccess('✅ Horaire modifié avec succès');
+      setTimeout(() => setSuccess(''), 3000);
+
+    } catch (err) {
+      console.error('Error updating schedule:', err);
+      setError(err.message || 'Erreur lors de la modification');
     } finally {
       setSaving(false);
     }
@@ -539,31 +562,47 @@ export default function ClassDetailsPage() {
                         <div key={day} className="border-l-4 border-blue-500 pl-4">
                           <h3 className="font-bold text-gray-900 mb-2">{day}</h3>
                           <div className="space-y-2">
-                            {courses.map((course, idx) => (
-                              <div key={idx} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <h4 className="font-bold text-gray-900">{course.courseName}</h4>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      👨‍🏫 {course.teacherName}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      🕐 {course.startTime} - {course.endTime}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      🏢 {course.room}
-                                    </p>
+                            {courses.map((course, idx) => {
+                              const scheduleIndex = schedule.findIndex(s =>
+                                s.courseId === course.courseId &&
+                                s.day === course.day &&
+                                s.startTime === course.startTime
+                              );
+                              return (
+                                <div key={idx} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <h4 className="font-bold text-gray-900">{course.courseName}</h4>
+                                      <p className="text-sm text-gray-600 mt-1">
+                                        👨‍🏫 {course.teacherName}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        🕐 {course.startTime} - {course.endTime}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        🏢 {course.room}
+                                      </p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => handleEditSchedule(scheduleIndex)}
+                                        className="px-3 py-1 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition text-sm font-semibold"
+                                        disabled={saving}
+                                      >
+                                        ✏️ Modifier
+                                      </button>
+                                      <button
+                                        onClick={() => handleRemoveCourseFromSchedule(course.courseId)}
+                                        className="px-3 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition text-sm font-semibold"
+                                        disabled={saving}
+                                      >
+                                        🗑️ Retirer
+                                      </button>
+                                    </div>
                                   </div>
-                                  <button
-                                    onClick={() => handleRemoveCourseFromSchedule(course.courseId)}
-                                    className="px-3 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition text-sm font-semibold"
-                                    disabled={saving}
-                                  >
-                                    Retirer
-                                  </button>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )
@@ -574,25 +613,18 @@ export default function ClassDetailsPage() {
             </div>
           </div>
 
-          {/* Modal Ajouter Cours */}
-          {showAddCourseModal && (
+          {/* Modal Modifier Cours */}
+          {showEditCourseModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="glass rounded-3xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-black text-gray-900">
-                    ➕ Ajouter un Cours au Planning
+                    ✏️ Modifier l'Horaire du Cours
                   </h2>
                   <button
                     onClick={() => {
-                      setShowAddCourseModal(false);
-                      setCourseFormData({
-                        courseId: '',
-                        teacherId: '',
-                        day: 'Lundi',
-                        startTime: '08:00',
-                        endTime: '10:00',
-                        room: ''
-                      });
+                      setShowEditCourseModal(false);
+                      setEditingScheduleIndex(null);
                       setError('');
                     }}
                     className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -601,37 +633,28 @@ export default function ClassDetailsPage() {
                   </button>
                 </div>
 
-                <form onSubmit={handleAddCourseToSchedule} className="space-y-6">
-                  {/* Sélection cours */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Cours *
-                    </label>
-                    <select
-                      name="courseId"
-                      value={courseFormData.courseId}
-                      onChange={handleCourseFormChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="">Sélectionner un cours</option>
-                      {allCourses.map(course => (
-                        <option key={course.id} value={course.id}>
-                          {course.courseName || course.name} ({course.courseCode || course.code})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                {/* Warning */}
+                <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-400 rounded-xl">
+                  <p className="text-sm text-amber-800 font-semibold mb-1 flex items-center gap-2">
+                    <span className="text-xl">⚠️</span>
+                    Modification locale
+                  </p>
+                  <p className="text-sm text-amber-700">
+                    Ces changements s'appliquent uniquement à l'emploi du temps de cette classe.
+                    L'emploi du temps de l'enseignant et des autres classes ne sera pas affecté.
+                  </p>
+                </div>
 
-                  {/* Sélection enseignant */}
+                <form onSubmit={handleUpdateSchedule} className="space-y-6">
+                  {/* Enseignant */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Enseignant *
                     </label>
                     <select
                       name="teacherId"
-                      value={courseFormData.teacherId}
-                      onChange={handleCourseFormChange}
+                      value={editFormData.teacherId}
+                      onChange={handleEditFormChange}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     >
@@ -642,21 +665,6 @@ export default function ClassDetailsPage() {
                         </option>
                       ))}
                     </select>
-                    {teacherAvailability && (
-                      <div className={`mt-2 p-3 rounded-xl ${
-                        teacherAvailability.includes('✅')
-                          ? 'bg-green-50 border-2 border-green-500'
-                          : 'bg-amber-50 border-2 border-amber-500'
-                      }`}>
-                        <p className={`text-sm font-semibold ${
-                          teacherAvailability.includes('✅')
-                            ? 'text-green-700'
-                            : 'text-amber-700'
-                        }`}>
-                          {teacherAvailability}
-                        </p>
-                      </div>
-                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -667,8 +675,8 @@ export default function ClassDetailsPage() {
                       </label>
                       <select
                         name="day"
-                        value={courseFormData.day}
-                        onChange={handleCourseFormChange}
+                        value={editFormData.day}
+                        onChange={handleEditFormChange}
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
                       >
@@ -685,15 +693,15 @@ export default function ClassDetailsPage() {
                       </label>
                       <select
                         name="room"
-                        value={courseFormData.room}
-                        onChange={handleCourseFormChange}
+                        value={editFormData.room}
+                        onChange={handleEditFormChange}
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
                       >
                         <option value="">Sélectionner une salle</option>
                         {allRooms.map(room => (
                           <option key={room.id} value={room.roomName}>
-                            {room.roomName} - {room.capacity} places
+                            {room.roomName} ({room.roomNumber}) - {room.capacity} places
                           </option>
                         ))}
                       </select>
@@ -704,20 +712,14 @@ export default function ClassDetailsPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Heure de début *
                       </label>
-                      <select
+                      <input
+                        type="time"
                         name="startTime"
-                        value={courseFormData.startTime}
-                        onChange={handleCourseFormChange}
+                        value={editFormData.startTime}
+                        onChange={handleEditFormChange}
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
-                      >
-                        {STANDARD_TIME_SLOTS.map(time => (
-                          <option key={time} value={time}>{time}</option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        ⏰ Horaires standardisés (battement de 15 min automatique)
-                      </p>
+                      />
                     </div>
 
                     {/* Heure fin */}
@@ -725,40 +727,133 @@ export default function ClassDetailsPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Heure de fin *
                       </label>
-                      <select
+                      <input
+                        type="time"
                         name="endTime"
-                        value={courseFormData.endTime}
-                        onChange={handleCourseFormChange}
+                        value={editFormData.endTime}
+                        onChange={handleEditFormChange}
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
-                      >
-                        {STANDARD_TIME_SLOTS.map(time => (
-                          <option key={time} value={time}>{time}</option>
-                        ))}
-                      </select>
+                      />
                     </div>
                   </div>
 
-                  {/* Indicateur disponibilité salle */}
-                  {roomAvailability && (
-                    <div className={`p-4 rounded-xl ${
-                      roomAvailability.includes('✅')
-                        ? 'bg-green-50 border-2 border-green-500'
-                        : roomAvailability.includes('❌')
-                        ? 'bg-red-50 border-2 border-red-500'
-                        : 'bg-amber-50 border-2 border-amber-500'
-                    }`}>
-                      <p className={`font-semibold ${
-                        roomAvailability.includes('✅')
-                          ? 'text-green-700'
-                          : roomAvailability.includes('❌')
-                          ? 'text-red-700'
-                          : 'text-amber-700'
-                      }`}>
-                        {roomAvailability}
-                      </p>
+                  {error && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl">
+                      <p className="text-red-700 font-semibold">❌ {error}</p>
                     </div>
                   )}
+
+                  {/* Actions */}
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditCourseModal(false);
+                        setEditingScheduleIndex(null);
+                        setError('');
+                      }}
+                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:from-amber-600 hover:to-orange-700 transition font-semibold disabled:opacity-50"
+                    >
+                      {saving ? 'Modification...' : 'Enregistrer les modifications'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Ajouter Cours */}
+          {showAddCourseModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="glass rounded-3xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-black text-gray-900">
+                    ➕ Ajouter un Cours au Planning
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowAddCourseModal(false);
+                      setCourseFormData({ courseId: '' });
+                      setError('');
+                    }}
+                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleAddCourseToSchedule} className="space-y-6">
+                  {/* Sélection cours */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Sélectionner un cours *
+                    </label>
+                    <select
+                      name="courseId"
+                      value={courseFormData.courseId}
+                      onChange={handleCourseFormChange}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                      disabled={allCourses.length === 0}
+                    >
+                      <option value="">
+                        {allCourses.length === 0 ? 'Aucun cours disponible' : 'Choisir un cours...'}
+                      </option>
+                      {allCourses.map(course => (
+                        <option key={course.id} value={course.id}>
+                          {course.courseName} ({course.courseCode}) - {course.teacherName} - {course.schedule?.day} {course.schedule?.startTime}-{course.schedule?.endTime} - {course.schedule?.room}
+                        </option>
+                      ))}
+                    </select>
+                    {allCourses.length === 0 && (
+                      <div className="mt-3 p-4 bg-amber-50 border-2 border-amber-400 rounded-xl">
+                        <p className="text-sm text-amber-800 font-semibold mb-2 flex items-center gap-2">
+                          <span className="text-xl">⚠️</span>
+                          Aucun cours disponible
+                        </p>
+                        <p className="text-sm text-amber-700 mb-3">
+                          Vous devez d'abord créer au moins un cours avant de pouvoir l'ajouter à l'emploi du temps de cette classe.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/admin/courses/create')}
+                          className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Créer un cours
+                        </button>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      💡 Le cours inclut déjà l'enseignant, l'horaire et la salle définis lors de sa création
+                    </p>
+                  </div>
+
+                  {/* Aperçu du cours sélectionné */}
+                  {courseFormData.courseId && (() => {
+                    const selectedCourse = allCourses.find(c => c.id === courseFormData.courseId);
+                    return selectedCourse ? (
+                      <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-xl">
+                        <h3 className="font-bold text-blue-900 mb-2">📋 Détails du cours</h3>
+                        <div className="space-y-1 text-sm text-blue-800">
+                          <p><strong>Cours :</strong> {selectedCourse.courseName} ({selectedCourse.courseCode})</p>
+                          <p><strong>Enseignant :</strong> {selectedCourse.teacherName}</p>
+                          <p><strong>Horaire :</strong> {selectedCourse.schedule?.day} {selectedCourse.schedule?.startTime} - {selectedCourse.schedule?.endTime}</p>
+                          <p><strong>Salle :</strong> {selectedCourse.schedule?.room}</p>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
 
                   {error && (
                     <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl">
@@ -772,14 +867,7 @@ export default function ClassDetailsPage() {
                       type="button"
                       onClick={() => {
                         setShowAddCourseModal(false);
-                        setCourseFormData({
-                          courseId: '',
-                          teacherId: '',
-                          day: 'Lundi',
-                          startTime: '08:00',
-                          endTime: '10:00',
-                          room: ''
-                        });
+                        setCourseFormData({ courseId: '' });
                         setError('');
                       }}
                       className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold"

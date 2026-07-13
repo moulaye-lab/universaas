@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, set } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../hooks/useCurrency';
 import { CURRENCIES, getCurrencyByCode, formatAmount } from '../../utils/currencies';
 import { getAcademicYears, getCurrentAcademicYear } from '../../utils/academicYearHelper';
 import useDynamicFilterOptions from '../../hooks/useDynamicFilterOptions';
@@ -33,6 +34,7 @@ import {
 export default function CreatePaymentPlanPage() {
   const navigate = useNavigate();
   const { userProfile, currentUser } = useAuth();
+  const { symbol, formatAmount: formatCurrency } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -200,9 +202,54 @@ export default function CreatePaymentPlanPage() {
     setPreviewInstallments(installments);
   };
 
-  const handleSelectStudent = (student) => {
+  const handleSelectStudent = async (student) => {
     setSelectedStudent(student);
-    setFormData({ ...formData, studentId: student.id });
+
+    // Calculer le montant suggéré basé sur les tarifs configurés
+    const suggestedAmount = await calculateSuggestedTuition(student);
+
+    setFormData({
+      ...formData,
+      studentId: student.id,
+      totalAmount: suggestedAmount > 0 ? suggestedAmount : formData.totalAmount
+    });
+  };
+
+  const calculateSuggestedTuition = async (student) => {
+    if (!userProfile?.universityId || !student) return 0;
+
+    try {
+      // Charger les tarifs de l'année académique
+      const feesRef = ref(database, `universities/${userProfile.universityId}/tuition_fees/${formData.academicYear}`);
+      const feesSnap = await get(feesRef);
+
+      if (!feesSnap.exists()) return 0;
+
+      const fees = feesSnap.val();
+      let amount = 0;
+
+      // Base : tarif du niveau
+      if (fees.byLevel && student.level) {
+        amount = fees.byLevel[student.level] || fees.defaultFee || 0;
+      } else {
+        amount = fees.defaultFee || 0;
+      }
+
+      // Ajustement par filière
+      if (fees.byField && student.fieldOfStudy) {
+        const fieldKey = student.fieldOfStudy.toLowerCase().replace(/\s+/g, '-');
+        const fieldAdjustment = fees.byField[fieldKey] || 0;
+        amount += fieldAdjustment;
+      }
+
+      // Ajustements spéciaux (boursier, étranger, etc.)
+      // TODO: Ajouter champs dans profil étudiant pour déterminer ces statuts
+
+      return amount;
+    } catch (err) {
+      console.error('Error calculating suggested tuition:', err);
+      return 0;
+    }
   };
 
   const handleCurrencyChange = (newCurrency) => {
@@ -548,7 +595,7 @@ export default function CreatePaymentPlanPage() {
                 {/* Montant total */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Montant total ({currency.symbol}) *
+                    Montant total ({symbol}) *
                   </label>
                   <input
                     type="number"
@@ -664,7 +711,7 @@ export default function CreatePaymentPlanPage() {
                           <p className="text-sm text-gray-600">{inst.dueDateStr}</p>
                         </div>
                         <p className="text-lg font-bold text-purple-700">
-                          {inst.amount.toFixed(2)} {currency.symbol}
+                          {formatCurrency(inst.amount)}
                         </p>
                       </div>
                     ))}
@@ -673,7 +720,7 @@ export default function CreatePaymentPlanPage() {
                   <div className="mt-4 pt-4 border-t-2 border-purple-200 flex items-center justify-between">
                     <p className="font-bold text-purple-900">Total</p>
                     <p className="text-2xl font-bold text-purple-900">
-                      {parseFloat(formData.totalAmount).toFixed(2)} {currency.symbol}
+                      {formatCurrency(parseFloat(formData.totalAmount))}
                     </p>
                   </div>
                 </div>
@@ -693,7 +740,7 @@ export default function CreatePaymentPlanPage() {
                 <p className="text-green-800">
                   <span className="font-bold">Résumé:</span> Plan de {formData.installmentsCount}{' '}
                   paiement{formData.installmentsCount > 1 ? 's' : ''} pour un total de{' '}
-                  {parseFloat(formData.totalAmount).toFixed(2)} {currency.symbol}
+                  {formatCurrency(parseFloat(formData.totalAmount))}
                 </p>
               </div>
 

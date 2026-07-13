@@ -10,6 +10,53 @@ const { getAuth } = require('firebase-admin/auth');
 const db = getDatabase();
 
 /**
+ * POST /api/onboarding/check-email
+ * Vérifier si un email est déjà utilisé dans Firebase Auth
+ */
+router.post('/check-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({
+        error: 'Email invalide'
+      });
+    }
+
+    // Vérifier dans Firebase Auth via l'API REST
+    const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyC_qd1R-M4tL_5wkY0B_0dWxYGKS7YB5Zw';
+
+    // Utiliser l'endpoint getAccountInfo de Firebase Auth
+    const lookupResponse = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: [email]
+        })
+      }
+    );
+
+    const lookupData = await lookupResponse.json();
+
+    // Si users existe, l'email est pris
+    const emailExists = lookupData.users && lookupData.users.length > 0;
+
+    res.json({
+      available: !emailExists,
+      email
+    });
+
+  } catch (error) {
+    console.error('Error checking email:', error);
+    res.status(500).json({ error: 'Erreur lors de la vérification de l\'email' });
+  }
+});
+
+/**
  * POST /api/onboarding/check-slug
  * Vérifier si un slug est disponible
  */
@@ -120,8 +167,23 @@ router.post('/create-university', async (req, res) => {
 
     if (!signUpResponse.ok) {
       console.error('Firebase Auth Error:', authData);
+
+      // Message d'erreur personnalisé selon le code
+      let errorMessage = 'Erreur lors de la création du compte';
+
+      if (authData.error?.message === 'EMAIL_EXISTS') {
+        errorMessage = `L'email ${adminEmail} est déjà utilisé. Veuillez utiliser un autre email ou vous connecter si vous avez déjà un compte.`;
+      } else if (authData.error?.message === 'WEAK_PASSWORD') {
+        errorMessage = 'Le mot de passe doit contenir au moins 6 caractères.';
+      } else if (authData.error?.message === 'INVALID_EMAIL') {
+        errorMessage = 'Format d\'email invalide.';
+      } else if (authData.error?.message) {
+        errorMessage = authData.error.message;
+      }
+
       return res.status(400).json({
-        error: authData.error?.message || 'Erreur lors de la création du compte'
+        error: errorMessage,
+        code: authData.error?.message
       });
     }
 
@@ -131,6 +193,10 @@ router.post('/create-university', async (req, res) => {
     const universityId = `univ-${slug}-${Date.now()}`;
 
     // 3. Créer l'université dans Firebase
+    const now = Date.now();
+    const trialDays = 14;
+    const trialEndsAt = now + (trialDays * 24 * 60 * 60 * 1000); // 14 jours en millisecondes
+
     const universityData = {
       universityId,
       name: universityName,
@@ -141,8 +207,14 @@ router.post('/create-university', async (req, res) => {
       city: city || '',
       postalCode: postalCode || '',
       phone: phone || '',
-      createdAt: Date.now(),
+      createdAt: now,
       status: 'active',
+      // Subscription & Trial
+      subscriptionPlan: 'trial', // trial, standard, premium, enterprise
+      subscriptionStatus: 'trialing', // trialing, active, past_due, canceled, expired
+      trialStartedAt: now,
+      trialEndsAt: trialEndsAt,
+      trialDays: trialDays,
       settings: {
         currency: currency || 'EUR',
         timezone: timezone || 'Europe/Paris',

@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, set, push } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCurrency } from '../../hooks/useCurrency';
 import {
   ChevronLeft,
   DollarSign,
@@ -43,6 +44,7 @@ function getCurrentAcademicYear() {
 export default function PaymentsManagementPage() {
   const navigate = useNavigate();
   const { userProfile, currentUser } = useAuth();
+  const { symbol, formatAmount } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
@@ -253,7 +255,7 @@ export default function PaymentsManagementPage() {
       'carte': 'Carte bancaire'
     }[selectedMethod];
 
-    if (!confirm(`Confirmer le paiement de ${payment.amount}€ par ${methodLabel} ?`)) return;
+    if (!confirm(`Confirmer le paiement de ${formatAmount(payment.amount)} par ${methodLabel} ?`)) return;
 
     try {
       setLoading(true);
@@ -355,7 +357,7 @@ export default function PaymentsManagementPage() {
       'carte': 'Carte bancaire'
     }[freePaymentData.paymentMethod];
 
-    if (!confirm(`Confirmer le paiement libre de ${amount}€ par ${methodLabel} pour ${student.firstName} ${student.lastName} ?`)) {
+    if (!confirm(`Confirmer le paiement libre de ${formatAmount(amount)} par ${methodLabel} pour ${student.firstName} ${student.lastName} ?`)) {
       return;
     }
 
@@ -481,7 +483,7 @@ export default function PaymentsManagementPage() {
           adjustmentMessage = `\n\n🔄 ${adjustedCount} échéance(s) ajustée(s) automatiquement`;
 
           if (remainingAmount > 0) {
-            adjustmentMessage += `\n💰 Crédit restant: ${remainingAmount.toLocaleString()}€`;
+            adjustmentMessage += `\n💰 Crédit restant: ${formatAmount(remainingAmount)}`;
           }
         }
       }
@@ -653,7 +655,7 @@ export default function PaymentsManagementPage() {
 
       // Vérifier que le total ne dépasse pas
       if (totalPaid + manualPendingTotal > totalDue) {
-        alert(`Le montant total des échéances ne peut pas dépasser ${totalDue}€`);
+        alert(`Le montant total des échéances ne peut pas dépasser ${formatAmount(totalDue)}`);
         delete updated[index].manuallySet;
         updated[index].amount = editableInstallments[index].amount; // Restaurer l'ancien montant
         return;
@@ -729,13 +731,22 @@ export default function PaymentsManagementPage() {
                   Paiement Libre
                 </button>
                 {userProfile?.role === 'admin_universite' && (
-                  <button
-                    onClick={() => navigate('/admin/payments/create')}
-                    className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition flex items-center gap-2 font-semibold"
-                  >
-                    <Plus className="h-5 w-5" />
-                    Créer Plan de Paiement
-                  </button>
+                  <>
+                    <button
+                      onClick={() => navigate('/admin/payments/create-bulk')}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg transition flex items-center gap-2 font-semibold"
+                    >
+                      <Plus className="h-5 w-5" />
+                      ⚡ Création en Masse
+                    </button>
+                    <button
+                      onClick={() => navigate('/admin/payments/create')}
+                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-lg transition flex items-center gap-2 font-semibold"
+                    >
+                      <Plus className="h-5 w-5" />
+                      Plan Individuel
+                    </button>
+                  </>
                 )}
               </>
             )}
@@ -750,7 +761,7 @@ export default function PaymentsManagementPage() {
             <div className="flex items-center justify-between mb-2">
               <DollarSign className="h-8 w-8 text-green-500" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.totalRevenue.toFixed(2)}€</p>
+            <p className="text-3xl font-bold text-gray-900">{formatAmount(stats.totalRevenue)}</p>
             <p className="text-sm text-gray-600">Revenus perçus</p>
           </div>
 
@@ -988,7 +999,7 @@ export default function PaymentsManagementPage() {
                             {payment.studentLevel}
                           </span>
                         </td>
-                        <td className="text-center py-3 px-4 font-bold text-gray-900">{payment.amount}€</td>
+                        <td className="text-center py-3 px-4 font-bold text-gray-900">{formatAmount(payment.amount)}</td>
                         <td className="text-center py-3 px-4 text-gray-700 text-sm">
                           {new Date(payment.dueDate).toLocaleDateString('fr-FR')}
                         </td>
@@ -1073,7 +1084,7 @@ export default function PaymentsManagementPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Montant (€) *
+                  Montant ({symbol}) *
                 </label>
                 <input
                   type="number"
@@ -1217,7 +1228,7 @@ export default function PaymentsManagementPage() {
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Montant (€)
+                          Montant ({symbol})
                         </label>
                         <input
                           type="number"
@@ -1298,7 +1309,7 @@ export default function PaymentsManagementPage() {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Montant total</p>
                   <p className="text-2xl font-bold text-indigo-600">
-                    {editableInstallments.reduce((sum, inst) => sum + parseFloat(inst.amount || 0), 0).toLocaleString()}€
+                    {formatAmount(editableInstallments.reduce((sum, inst) => sum + parseFloat(inst.amount || 0), 0))}
                   </p>
                 </div>
                 <div>

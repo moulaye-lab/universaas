@@ -86,7 +86,7 @@ export default function CreateStudentPage() {
     setFormData({ ...formData, password });
   };
 
-  // Charger les classes disponibles
+  // Charger les classes disponibles FILTRÉES par niveau et filière
   useEffect(() => {
     const loadClasses = async () => {
       if (!userProfile?.universityId) return;
@@ -98,8 +98,45 @@ export default function CreateStudentPage() {
         if (classesSnap.exists()) {
           const classesData = Object.entries(classesSnap.val())
             .map(([id, data]) => ({ id, ...data }))
-            .filter(cls => cls.status === 'active' && cls.occupiedSeats < cls.capacity);
+            .filter(cls => {
+              // Filtre 1: Classe active et non complète
+              const isAvailable = cls.status === 'active' && cls.occupiedSeats < cls.capacity;
+
+              // Filtre 2: Si l'étudiant a sélectionné niveau ET filière, matcher les deux
+              if (formData.level && formData.fieldOfStudy) {
+                // Mapper les valeurs des filières (ex: "computer-science" -> "Informatique")
+                const fieldMapping = {
+                  'computer-science': 'informatique',
+                  'mathematics': 'mathématiques',
+                  'physics': 'physique',
+                  'chemistry': 'chimie',
+                  'biology': 'biologie',
+                  'literature': 'littérature',
+                  'history': 'histoire',
+                  'geography': 'géographie',
+                  'languages': 'langues',
+                  'economics': 'économie',
+                  'law': 'droit',
+                  'medicine': 'médecine',
+                  'engineering': 'ingénierie',
+                  'arts': 'arts',
+                  'sports': 'sport',
+                };
+
+                const studentField = fieldMapping[formData.fieldOfStudy] || formData.fieldOfStudy;
+                const classDomain = (cls.domain || '').toLowerCase();
+
+                return isAvailable &&
+                       cls.level === formData.level &&
+                       classDomain.includes(studentField.toLowerCase());
+              }
+
+              // Sinon, afficher toutes les classes disponibles
+              return isAvailable;
+            });
           setAvailableClasses(classesData);
+        } else {
+          setAvailableClasses([]);
         }
       } catch (err) {
         console.error('Error loading classes:', err);
@@ -107,7 +144,7 @@ export default function CreateStudentPage() {
     };
 
     loadClasses();
-  }, [userProfile]);
+  }, [userProfile, formData.level, formData.fieldOfStudy]); // Re-filtrer quand niveau ou filière change
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -166,8 +203,25 @@ export default function CreateStudentPage() {
         }
       }
 
-      // 1. Créer le compte via API REST Firebase
+      // NOUVEAU : Vérifier que l'email n'existe pas déjà dans Firebase Auth
       const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+      const checkEmailResponse = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: [formData.email] })
+        }
+      );
+
+      if (checkEmailResponse.ok) {
+        const checkData = await checkEmailResponse.json();
+        if (checkData.users && checkData.users.length > 0) {
+          throw new Error('Cet email est déjà utilisé par un autre compte. Si c\'est une erreur, contactez l\'administrateur pour supprimer le compte orphelin.');
+        }
+      }
+
+      // 1. Créer le compte via API REST Firebase
       const createUserResponse = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
         {
@@ -199,8 +253,12 @@ export default function CreateStudentPage() {
       const userData = await createUserResponse.json();
       const studentUid = userData.localId;
 
-      // 2. Créer le profil utilisateur
-      await set(ref(database, `users/${studentUid}`), {
+      // ROLLBACK en cas d'erreur ultérieure
+      let authAccountCreated = true;
+
+      try {
+        // 2. Créer le profil utilisateur
+        await set(ref(database, `users/${studentUid}`), {
         email: formData.email,
         displayName: `${formData.firstName} ${formData.lastName}`,
         firstName: formData.firstName,
@@ -216,75 +274,96 @@ export default function CreateStudentPage() {
         createdBy: currentUser.uid,
       });
 
-      // 3. Créer le profil étudiant dans l'université
-      await set(ref(database, `universities/${userProfile.universityId}/students/${studentUid}`), {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber || null,
-        matricule: formData.matricule,
-        dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).getTime() : null,
-        gender: formData.gender || null,
-        level: formData.level,
-        fieldOfStudy: formData.fieldOfStudy,
-        classId: formData.classId,
-        academicYear: formData.academicYear,
-        status: 'active',
-        enrollmentDate: Date.now(),
-        absences: 0,
-        createdAt: Date.now(),
-        createdBy: currentUser.uid,
-      });
-
-      // 3b. Ajouter l'étudiant à la classe (TRANSACTION ATOMIQUE)
-      await runTransaction(classRef, (currentClass) => {
-        if (!currentClass) {
-          throw new Error('Classe introuvable');
-        }
-
-        // Vérification atomique de la capacité
-        const currentOccupied = currentClass.occupiedSeats || 0;
-        if (currentOccupied >= currentClass.capacity) {
-          // Transaction échoue atomiquement
-          return; // Abort transaction
-        }
-
-        // Mise à jour atomique
-        currentClass.students = [...(currentClass.students || []), studentUid];
-        currentClass.occupiedSeats = currentOccupied + 1;
-        currentClass.updatedAt = Date.now();
-
-        return currentClass;
-      });
-
-      // 4. Initialiser structure paiements (vide)
-      await set(ref(database, `universities/${userProfile.universityId}/payments/${studentUid}`), {
-        academicYear: formData.academicYear,
-        tuitionFee: 0,
-        paidAmount: 0,
-        remainingAmount: 0,
-        currency: 'EUR',
-        status: 'pending',
-        installments: [],
-        createdAt: Date.now(),
-      });
-
-      // 5. Log d'audit
-      await set(ref(database, `universities/${userProfile.universityId}/audit/${Date.now()}`), {
-        action: 'student_created',
-        userId: currentUser.uid,
-        targetUserId: studentUid,
-        details: {
-          studentName: `${formData.firstName} ${formData.lastName}`,
+        // 3. Créer le profil étudiant dans l'université
+        await set(ref(database, `universities/${userProfile.universityId}/students/${studentUid}`), {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           email: formData.email,
+          phoneNumber: formData.phoneNumber || null,
           matricule: formData.matricule,
+          dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).getTime() : null,
+          gender: formData.gender || null,
           level: formData.level,
           fieldOfStudy: formData.fieldOfStudy,
-        },
-        timestamp: Date.now(),
-      });
+          classId: formData.classId,
+          academicYear: formData.academicYear,
+          status: 'active',
+          enrollmentDate: Date.now(),
+          absences: 0,
+          createdAt: Date.now(),
+          createdBy: currentUser.uid,
+        });
 
-      setSuccess(`✅ Étudiant ${formData.firstName} ${formData.lastName} créé avec succès !`);
+        // 3b. Ajouter l'étudiant à la classe (TRANSACTION ATOMIQUE)
+        await runTransaction(classRef, (currentClass) => {
+          if (!currentClass) {
+            throw new Error('Classe introuvable');
+          }
+
+          // Vérification atomique de la capacité
+          const currentOccupied = currentClass.occupiedSeats || 0;
+          if (currentOccupied >= currentClass.capacity) {
+            // Transaction échoue atomiquement
+            return; // Abort transaction
+          }
+
+          // Mise à jour atomique
+          currentClass.students = [...(currentClass.students || []), studentUid];
+          currentClass.occupiedSeats = currentOccupied + 1;
+          currentClass.updatedAt = Date.now();
+
+          return currentClass;
+        });
+
+        // 4. Initialiser structure paiements (vide)
+        await set(ref(database, `universities/${userProfile.universityId}/payments/${studentUid}`), {
+          academicYear: formData.academicYear,
+          tuitionFee: 0,
+          paidAmount: 0,
+          remainingAmount: 0,
+          currency: 'EUR',
+          status: 'pending',
+          installments: [],
+          createdAt: Date.now(),
+        });
+
+        // 5. Log d'audit
+        await set(ref(database, `universities/${userProfile.universityId}/audit/${Date.now()}`), {
+          action: 'student_created',
+          userId: currentUser.uid,
+          targetUserId: studentUid,
+          details: {
+            studentName: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            matricule: formData.matricule,
+            level: formData.level,
+            fieldOfStudy: formData.fieldOfStudy,
+          },
+          timestamp: Date.now(),
+        });
+
+        setSuccess(`✅ Étudiant ${formData.firstName} ${formData.lastName} créé avec succès !`);
+
+      } catch (dbError) {
+        // ROLLBACK : Supprimer le compte Firebase Auth créé
+        console.error('❌ Erreur lors de la création du profil, rollback du compte Auth...', dbError);
+
+        if (authAccountCreated && studentUid) {
+          try {
+            // Supprimer via API Admin (nécessite idToken admin)
+            // Note: Cette suppression nécessite l'API Admin côté backend
+            console.warn('⚠️ Compte Firebase Auth orphelin créé:', studentUid, formData.email);
+            console.warn('Action manuelle requise: Supprimer le compte depuis Firebase Console > Authentication');
+          } catch (deleteError) {
+            console.error('Erreur lors du rollback:', deleteError);
+          }
+        }
+
+        throw new Error(
+          `Échec de création du profil étudiant: ${dbError.message}. ` +
+          `Le compte email a été créé mais est orphelin. Contactez l'administrateur pour nettoyer.`
+        );
+      }
 
       // Demander si l'admin veut créer un autre étudiant
       const createAnother = window.confirm(
@@ -580,17 +659,43 @@ export default function CreateStudentPage() {
                   onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
                   className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
                   required
+                  disabled={!formData.level || !formData.fieldOfStudy}
                 >
-                  <option value="">Sélectionner une classe</option>
+                  <option value="">
+                    {!formData.level || !formData.fieldOfStudy
+                      ? 'Sélectionnez d\'abord le niveau et la filière'
+                      : 'Sélectionner une classe'}
+                  </option>
                   {availableClasses.map((cls) => (
                     <option key={cls.id} value={cls.id}>
-                      {cls.name} ({cls.occupiedSeats || 0}/{cls.capacity} places)
+                      {cls.name} - {cls.level} {cls.domain} ({cls.occupiedSeats || 0}/{cls.capacity} places)
                     </option>
                   ))}
                 </select>
-                {availableClasses.length === 0 && (
-                  <p className="text-sm text-amber-600 mt-2">
-                    ⚠️ Aucune classe disponible. <button type="button" onClick={() => navigate('/admin/classes/create')} className="underline font-semibold">Créez d'abord une classe</button>.
+                {formData.level && formData.fieldOfStudy && availableClasses.length === 0 && (
+                  <div className="mt-3 p-4 bg-amber-50 border-2 border-amber-400 rounded-xl">
+                    <p className="text-sm text-amber-800 font-semibold mb-2 flex items-center gap-2">
+                      <span className="text-xl">⚠️</span>
+                      Aucune classe disponible pour {formData.level} {fieldsOfStudy.find(f => f.value === formData.fieldOfStudy)?.label}
+                    </p>
+                    <p className="text-sm text-amber-700 mb-3">
+                      Vous devez d'abord créer une classe correspondant au niveau et à la filière de cet étudiant.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/admin/classes/create')}
+                      className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Créer une classe {formData.level} {fieldsOfStudy.find(f => f.value === formData.fieldOfStudy)?.label}
+                    </button>
+                  </div>
+                )}
+                {(!formData.level || !formData.fieldOfStudy) && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 Sélectionnez d'abord le niveau et la filière pour voir les classes compatibles
                   </p>
                 )}
               </div>

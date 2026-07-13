@@ -258,17 +258,17 @@ export default function TeacherSchedulePage() {
       setSelectedCourse(session);
       setModalOpen(true);
 
-      // Charger les étudiants du cours
-      const courseRef = ref(database, `universities/${userProfile.universityId}/courses/${session.courseId}`);
-      const courseSnap = await get(courseRef);
+      // CORRECTION : Charger les étudiants depuis la CLASSE, pas le cours
+      const classRef = ref(database, `universities/${userProfile.universityId}/classes/${session.classId}`);
+      const classSnap = await get(classRef);
 
-      if (!courseSnap.exists()) {
+      if (!classSnap.exists()) {
         setCourseStudents([]);
         return;
       }
 
-      const courseData = courseSnap.val();
-      const enrolledIds = courseData.enrolledStudents || [];
+      const classData = classSnap.val();
+      const enrolledIds = classData.students || [];
 
       if (enrolledIds.length === 0) {
         setCourseStudents([]);

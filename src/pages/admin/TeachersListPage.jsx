@@ -181,11 +181,10 @@ export default function TeachersListPage() {
 
       columns={columns}
 
-      filters={['academicYear', 'department', 'status']}
+      filters={['department', 'status']}
       availableOptions={availableOptions}
       defaultFilters={{
-        status: 'active',
-        academicYear: getCurrentAcademicYear()
+        status: 'active'
       }}
 
       searchFields={['firstName', 'lastName', 'email', 'specialization', 'department']}

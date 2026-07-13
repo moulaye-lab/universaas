@@ -13,14 +13,16 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get } from 'firebase/database';
 import { database } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { BookOpen, LogOut, User, Menu, X } from 'lucide-react';
+import { BookOpen, LogOut, User, Menu, X, Mail } from 'lucide-react';
 import NotificationBell from './NotificationBell';
+import { useMessages } from '../hooks/useMessages';
 
 export default function Header() {
   const navigate = useNavigate();
-  const { userProfile, signOut } = useAuth();
+  const { currentUser, userProfile, signOut } = useAuth();
   const [university, setUniversity] = useState(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const { unreadCount } = useMessages(userProfile?.universityId, currentUser?.uid);
 
   useEffect(() => {
     loadUniversity();
@@ -103,6 +105,20 @@ export default function Header() {
 
           {/* Desktop: Info utilisateur et déconnexion */}
           <div className="hidden md:flex items-center gap-4">
+            {userProfile && (
+              <button
+                onClick={() => navigate('/messages/inbox')}
+                className="relative p-2.5 rounded-xl hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 transition-all duration-300 hover:scale-110"
+                title="Messagerie"
+              >
+                <Mail className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            )}
             {userProfile && <NotificationBell />}
             {userProfile && <div className="h-10 w-px bg-gray-300"></div>}
             <div className="text-right">
@@ -146,7 +162,26 @@ export default function Header() {
                   <p className="text-xs text-gray-600">{userProfile?.email}</p>
                   <p className="text-xs text-indigo-600 font-medium mt-1">{getRoleName(userProfile?.role)}</p>
                 </div>
-                {userProfile && <NotificationBell />}
+                <div className="flex items-center gap-2">
+                  {userProfile && (
+                    <button
+                      onClick={() => {
+                        navigate('/messages/inbox');
+                        setShowMobileMenu(false);
+                      }}
+                      className="relative p-2 rounded-xl hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 transition"
+                      title="Messagerie"
+                    >
+                      <Mail className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                  {userProfile && <NotificationBell />}
+                </div>
               </div>
               <button
                 onClick={handleLogout}

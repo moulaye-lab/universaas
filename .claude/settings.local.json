@@ -49,7 +49,18 @@
       "Bash(npm start *)",
       "Bash(awk '{print $9, \"\\(\"$5\"\\)\"}')",
       "Bash(/tmp/fix_timeouts.sh)",
-      "Bash(kill 13128 12902)"
+      "Bash(kill 13128 12902)",
+      "Bash(kill -9 38229)",
+      "Bash(kill %1)",
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(echo \"Backend redémarré avec PID: $!\")",
+      "Bash(echo \"Backend redémarré PID: $!\")",
+      "Bash(killall -9 node)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(kill 40077)",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(xargs kill *)",
+      "Bash(git reset *)"
     ]
   }
 }

@@ -32,6 +32,8 @@ export default function ParentGradesPage() {
   const [selectedCourse, setSelectedCourse] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [academicPeriod, setAcademicPeriod] = useState(null);
+  const [isPeriodClosed, setIsPeriodClosed] = useState(false);
 
   // Charger les enfants du parent
   useEffect(() => {
@@ -128,6 +130,34 @@ export default function ParentGradesPage() {
     }
   }, [selectedChild, selectedChildId]);
 
+  // Charger la période académique courante
+  useEffect(() => {
+    const loadAcademicPeriod = async () => {
+      if (!selectedChild?.universityId) return;
+
+      try {
+        const periodsRef = ref(database, `universities/${selectedChild.universityId}/academic_periods`);
+        const periodsSnap = await get(periodsRef);
+
+        if (periodsSnap.exists()) {
+          const periods = Object.entries(periodsSnap.val()).map(([id, data]) => ({ id, ...data }));
+          // Trouver la période en cours ou la plus récente
+          const currentPeriod = periods.find(p => p.status === 'en_cours') ||
+                                periods.find(p => p.status === 'cloture');
+
+          if (currentPeriod) {
+            setAcademicPeriod(currentPeriod);
+            setIsPeriodClosed(currentPeriod.status === 'cloture');
+          }
+        }
+      } catch (err) {
+        console.error('Error loading academic period:', err);
+      }
+    };
+
+    loadAcademicPeriod();
+  }, [selectedChild]);
+
   // Changer d'enfant
   const handleChildChange = (childId) => {
     const child = children.find(c => c.id === childId);
@@ -221,6 +251,11 @@ export default function ParentGradesPage() {
   const handleExportPDF = () => {
     if (grades.length === 0) {
       alert('Aucune note à exporter');
+      return;
+    }
+
+    if (!isPeriodClosed) {
+      alert('Le bulletin ne sera disponible qu\'après la clôture du semestre par l\'administration.');
       return;
     }
 
@@ -423,13 +458,23 @@ export default function ParentGradesPage() {
           {/* Boutons export */}
           {grades.length > 0 && (
             <div className="glass rounded-2xl p-4 flex gap-3">
-              <button
-                onClick={handleExportPDF}
-                className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition font-semibold"
-              >
-                <FileText className="w-5 h-5" />
-                Bulletin PDF
-              </button>
+              {isPeriodClosed ? (
+                <button
+                  onClick={handleExportPDF}
+                  className="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition font-semibold"
+                >
+                  <FileText className="w-5 h-5" />
+                  Bulletin PDF
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-500 rounded-xl font-semibold cursor-not-allowed" title="Bulletin disponible après clôture du semestre">
+                  <FileText className="w-5 h-5" />
+                  <div>
+                    <p className="text-sm">Bulletin disponible après</p>
+                    <p className="text-xs">clôture du semestre</p>
+                  </div>
+                </div>
+              )}
               <button
                 onClick={handleExportCSV}
                 className="flex items-center gap-2 px-6 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-semibold"

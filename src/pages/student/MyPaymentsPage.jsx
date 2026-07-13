@@ -1,20 +1,9 @@
-/**
- * MyPaymentsPage.jsx - Mes paiements (Étudiant)
- *
- * Fonctionnalités:
- * - Voir échéancier complet
- * - Historique paiements
- * - Télécharger reçus PDF
- * - Alertes paiements en retard
- */
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, get } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { ChevronLeft, DollarSign, AlertCircle, CheckCircle, Clock, Download, FilePlus } from 'lucide-react';
-import { generateReceiptPDF, generatePaymentPlanPDF } from '../../utils/receiptPDFGenerator';
+import { ChevronLeft, DollarSign, AlertCircle, CheckCircle, Clock, Download } from 'lucide-react';
 
 export default function MyPaymentsPage() {
   const navigate = useNavigate();
@@ -29,7 +18,10 @@ export default function MyPaymentsPage() {
   }, [userProfile, currentUser]);
 
   const loadPayments = async () => {
-    if (!userProfile?.universityId || !currentUser?.uid) return;
+    if (!userProfile?.universityId || !currentUser?.uid) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -57,14 +49,17 @@ export default function MyPaymentsPage() {
     }
   };
 
-  const handleDownloadReceipt = (installment, index) => {
+  const handleDownloadReceipt = async (installment, index) => {
     if (installment.status !== 'paid') {
       alert('Ce paiement n\'a pas encore été effectué');
       return;
     }
 
     try {
-      generateReceiptPDF({
+      // Import dynamique pour éviter les erreurs au chargement
+      const module = await import('../../utils/receiptPDFGenerator');
+
+      module.generateReceiptPDF({
         student: {
           firstName: studentData?.firstName || 'Prénom',
           lastName: studentData?.lastName || 'Nom',
@@ -83,15 +78,30 @@ export default function MyPaymentsPage() {
         academicYear: paymentPlan?.academicYear || '2025/2026'
       });
     } catch (err) {
+      console.error('Error generating receipt:', err);
       alert('Erreur lors de la génération du reçu: ' + err.message);
     }
   };
 
-  const handleDownloadFullPlan = () => {
-    if (!paymentPlan || !studentData) return;
+  const handleDownloadFullPlan = async () => {
+    console.log('PaymentPlan:', paymentPlan);
+    console.log('StudentData:', studentData);
+
+    if (!paymentPlan || !studentData) {
+      alert('Données manquantes pour générer l\'échéancier');
+      return;
+    }
+
+    if (!paymentPlan.installments || !Array.isArray(paymentPlan.installments) || paymentPlan.installments.length === 0) {
+      alert('Aucune échéance trouvée dans votre plan de paiement. Structure: ' + JSON.stringify(Object.keys(paymentPlan)));
+      return;
+    }
 
     try {
-      generatePaymentPlanPDF({
+      // Import dynamique pour éviter les erreurs au chargement
+      const module = await import('../../utils/receiptPDFGenerator');
+
+      module.generatePaymentPlanPDF({
         student: {
           firstName: studentData.firstName,
           lastName: studentData.lastName,
@@ -103,7 +113,8 @@ export default function MyPaymentsPage() {
         academicYear: paymentPlan.academicYear
       });
     } catch (err) {
-      alert('Erreur: ' + err.message);
+      console.error('Error generating payment plan:', err);
+      alert('Erreur lors de la génération de l\'échéancier: ' + err.message);
     }
   };
 
@@ -151,45 +162,53 @@ export default function MyPaymentsPage() {
         </div>
 
         {!paymentPlan ? (
-          <div className="glass rounded-2xl p-12 text-center">
+          <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
             <DollarSign className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-gray-900 mb-2">Aucun plan de paiement</h2>
             <p className="text-gray-600">
               Votre plan de paiement n'a pas encore été configuré. Contactez l'administration.
             </p>
           </div>
+        ) : !paymentPlan.installments || paymentPlan.installments.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
+            <AlertCircle className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Plan de paiement incomplet</h2>
+            <p className="text-gray-600 mb-4">
+              Votre plan de paiement existe mais ne contient pas d'échéances détaillées.
+            </p>
+            <div className="bg-blue-50 rounded-xl p-4 mb-4">
+              <p className="text-sm text-gray-700"><strong>Montant total :</strong> {paymentPlan.tuitionFee || paymentPlan.totalAmount}€</p>
+              <p className="text-sm text-gray-700"><strong>Année :</strong> {paymentPlan.academicYear}</p>
+              <p className="text-sm text-gray-700"><strong>Statut :</strong> {paymentPlan.status}</p>
+            </div>
+            <p className="text-sm text-gray-500">
+              Contactez l'administration pour mettre à jour votre échéancier.
+            </p>
+          </div>
         ) : (
           <>
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="glass rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <DollarSign className="h-8 w-8 text-blue-500" />
-                </div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <DollarSign className="h-8 w-8 text-blue-500 mb-2" />
                 <p className="text-3xl font-bold text-gray-900">{paymentPlan.totalAmount}€</p>
                 <p className="text-sm text-gray-600">Montant total</p>
               </div>
 
-              <div className="glass rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <CheckCircle className="h-8 w-8 text-green-500" />
-                </div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
                 <p className="text-3xl font-bold text-gray-900">{paidAmount.toFixed(2)}€</p>
                 <p className="text-sm text-gray-600">Déjà payé</p>
               </div>
 
-              <div className="glass rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <Clock className="h-8 w-8 text-orange-500" />
-                </div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <Clock className="h-8 w-8 text-orange-500 mb-2" />
                 <p className="text-3xl font-bold text-gray-900">{remainingAmount.toFixed(2)}€</p>
                 <p className="text-sm text-gray-600">Restant</p>
               </div>
 
-              <div className="glass rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <AlertCircle className="h-8 w-8 text-red-500" />
-                </div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
                 <p className="text-3xl font-bold text-gray-900">{overdueCount}</p>
                 <p className="text-sm text-gray-600">En retard</p>
               </div>
@@ -204,20 +223,20 @@ export default function MyPaymentsPage() {
                     ⚠️ {overdueCount} paiement{overdueCount > 1 ? 's' : ''} en retard
                   </p>
                   <p className="text-sm text-red-700">
-                    Veuillez régulariser votre situation au plus vite. Contactez l'administration pour plus d'informations.
+                    Veuillez régulariser votre situation au plus vite.
                   </p>
                 </div>
               </div>
             )}
 
             {/* Échéancier */}
-            <div className="glass rounded-2xl p-6">
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 📅 Échéancier de Paiement ({paidCount}/{totalInstallments})
               </h2>
 
               <div className="space-y-3">
-                {paymentPlan.installments.map((installment, index) => {
+                {paymentPlan.installments && paymentPlan.installments.map((installment, index) => {
                   const isOverdue = installment.status === 'pending' && installment.dueDate < Date.now();
                   const isPaid = installment.status === 'paid';
 
@@ -232,9 +251,9 @@ export default function MyPaymentsPage() {
                           : 'bg-orange-50 border-orange-200'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="flex-1 min-w-[200px]">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <span className="text-lg font-bold text-gray-900">
                               Échéance {index + 1}/{totalInstallments}
                             </span>
@@ -275,7 +294,7 @@ export default function MyPaymentsPage() {
                         {isPaid && (
                           <button
                             onClick={() => handleDownloadReceipt(installment, index)}
-                            className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition flex items-center gap-2 font-semibold text-sm"
+                            className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition flex items-center gap-2 font-semibold text-sm"
                           >
                             <Download className="h-4 w-4" />
                             Reçu PDF
@@ -289,7 +308,7 @@ export default function MyPaymentsPage() {
             </div>
 
             {/* Info */}
-            <div className="glass rounded-2xl p-6 mt-6">
+            <div className="bg-white rounded-2xl p-6 mt-6 shadow-lg">
               <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-blue-500" />
                 💡 Informations importantes
@@ -298,7 +317,7 @@ export default function MyPaymentsPage() {
                 <li>Les paiements doivent être effectués avant la date d'échéance</li>
                 <li>Conservez vos reçus de paiement en cas de contestation</li>
                 <li>En cas de difficulté financière, contactez rapidement l'administration</li>
-                <li>Un retard de paiement peut entraîner des pénalités ou le blocage de votre inscription</li>
+                <li>Un retard de paiement peut entraîner des pénalités</li>
               </ul>
             </div>
           </>

@@ -35,6 +35,7 @@ export default function SignupPage() {
     adminFirstName: '',
     adminLastName: '',
     adminEmail: '',
+    adminEmailAvailable: null,
     adminPassword: '',
     adminPasswordConfirm: '',
 
@@ -92,6 +93,7 @@ export default function SignupPage() {
         return formData.adminFirstName.trim() &&
                formData.adminLastName.trim() &&
                formData.adminEmail.includes('@') &&
+               formData.adminEmailAvailable === true &&
                formData.adminPassword.length >= 6 &&
                formData.adminPassword === formData.adminPasswordConfirm;
       case 4:
@@ -152,6 +154,10 @@ export default function SignupPage() {
     } catch (err) {
       console.error('Signup error:', err);
       setError(err.message || 'Une erreur est survenue. Veuillez réessayer.');
+      // Revenir à l'étape 3 (compte admin) si erreur d'email
+      if (err.message?.includes('email') || err.message?.includes('EMAIL_EXISTS')) {
+        setCurrentStep(3);
+      }
     } finally {
       setLoading(false);
     }

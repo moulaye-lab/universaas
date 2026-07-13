@@ -25,6 +25,8 @@ export default function MyGradesPage() {
   const [selectedCourse, setSelectedCourse] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [academicPeriod, setAcademicPeriod] = useState(null);
+  const [isPeriodClosed, setIsPeriodClosed] = useState(false);
 
   useEffect(() => {
     const loadGrades = async () => {
@@ -64,6 +66,34 @@ export default function MyGradesPage() {
 
     loadGrades();
   }, [userProfile, currentUser]);
+
+  // Charger la période académique courante
+  useEffect(() => {
+    const loadAcademicPeriod = async () => {
+      if (!userProfile?.universityId) return;
+
+      try {
+        const periodsRef = ref(database, `universities/${userProfile.universityId}/academic_periods`);
+        const periodsSnap = await get(periodsRef);
+
+        if (periodsSnap.exists()) {
+          const periods = Object.entries(periodsSnap.val()).map(([id, data]) => ({ id, ...data }));
+          // Trouver la période en cours ou la plus récente
+          const currentPeriod = periods.find(p => p.status === 'en_cours') ||
+                                periods.find(p => p.status === 'cloture');
+
+          if (currentPeriod) {
+            setAcademicPeriod(currentPeriod);
+            setIsPeriodClosed(currentPeriod.status === 'cloture');
+          }
+        }
+      } catch (err) {
+        console.error('Error loading academic period:', err);
+      }
+    };
+
+    loadAcademicPeriod();
+  }, [userProfile]);
 
   // Filtrer les notes par cours
   const filteredGrades = selectedCourse === 'all'
@@ -142,6 +172,11 @@ export default function MyGradesPage() {
       return;
     }
 
+    if (!isPeriodClosed) {
+      alert('Le bulletin ne sera disponible qu\'après la clôture du semestre par l\'administration.');
+      return;
+    }
+
     const averagesData = {
       overall: generalAverage,
       successRate: getSuccessRate(grades),
@@ -191,13 +226,25 @@ export default function MyGradesPage() {
           </div>
           <div className="flex gap-3">
             {grades.length > 0 && (
-              <button
-                onClick={handleExportPDF}
-                className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-semibold shadow"
-              >
-                <Download className="w-5 h-5" />
-                Télécharger bulletin PDF
-              </button>
+              <>
+                {isPeriodClosed ? (
+                  <button
+                    onClick={handleExportPDF}
+                    className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-semibold shadow"
+                  >
+                    <Download className="w-5 h-5" />
+                    Télécharger bulletin PDF
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-500 rounded-xl font-semibold shadow cursor-not-allowed" title="Bulletin disponible après clôture du semestre">
+                    <Download className="w-5 h-5" />
+                    <div>
+                      <p className="text-sm">Bulletin disponible après</p>
+                      <p className="text-xs">clôture du semestre</p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             <button
               onClick={() => navigate('/dashboard/student')}
@@ -290,6 +337,13 @@ export default function MyGradesPage() {
                         <span>📅 {new Date(grade.date).toLocaleDateString('fr-FR')}</span>
                         <span>⚖️ Coef. {grade.coefficient}</span>
                       </div>
+                      {grade.observation && (
+                        <div className="mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                          <p className="text-sm text-gray-700">
+                            <span className="font-semibold text-blue-700">💬 Observation :</span> {grade.observation}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Note */}

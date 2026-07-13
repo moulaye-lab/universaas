@@ -28,11 +28,18 @@ export async function sendMessage(universityId, messageData) {
     toName,
     toRole,
     subject,
-    body
+    body,
+    threadId,
+    replyToId,
+    batchId // ID du batch si envoi groupé
   } = messageData;
 
   if (!universityId || !from || !to || !subject || !body) {
     throw new Error('Données de message incomplètes');
+  }
+
+  if (!toName || !toRole) {
+    throw new Error('Destinataire incomplet (toName ou toRole manquant)');
   }
 
   if (from === to) {
@@ -56,10 +63,22 @@ export async function sendMessage(universityId, messageData) {
     starred: false,
     archived: false,
     createdAt: Date.now(),
-    readAt: null
+    readAt: null,
+    // Thread management
+    threadId: threadId || newMessageRef.key, // Si pas de thread, ce message crée un nouveau thread
+    replyToId: replyToId || null, // ID du message auquel on répond (null si premier message)
+    isReply: !!replyToId, // Flag pour savoir si c'est une réponse
+    // Batch management
+    batchId: batchId || null, // ID du batch si envoi groupé
+    isBatch: !!batchId // Flag pour savoir si fait partie d'un envoi groupé
   };
 
-  await set(newMessageRef, message);
+  try {
+    await set(newMessageRef, message);
+  } catch (error) {
+    console.error('Erreur lors de la création du message:', error);
+    throw error;
+  }
 
   return newMessageRef.key;
 }
@@ -323,4 +342,188 @@ export async function searchMessages(universityId, userId, searchQuery) {
       message.toName.toLowerCase().includes(query)
     );
   });
+}
+
+/**
+ * Récupérer tous les messages d'un thread (conversation)
+ * @param {string} universityId - ID de l'université
+ * @param {string} threadId - ID du thread
+ * @returns {Promise<Array>} - Messages du thread triés chronologiquement
+ */
+export async function getThreadMessages(universityId, threadId) {
+  if (!universityId || !threadId) {
+    throw new Error('universityId et threadId requis');
+  }
+
+  const messagesRef = ref(database, `universities/${universityId}/messages`);
+  const snapshot = await get(messagesRef);
+
+  if (!snapshot.exists()) {
+    return [];
+  }
+
+  const messages = snapshot.val();
+  const threadMessages = [];
+
+  Object.keys(messages).forEach(messageId => {
+    const message = messages[messageId];
+    // Tous les messages du même thread
+    if (message.threadId === threadId) {
+      threadMessages.push(message);
+    }
+  });
+
+  // Trier par date croissante (plus ancien en premier pour afficher la conversation dans l'ordre)
+  threadMessages.sort((a, b) => a.createdAt - b.createdAt);
+
+  return threadMessages;
+}
+
+/**
+ * Créer un batch (campagne) d'envoi groupé
+ * @param {string} universityId - ID de l'université
+ * @param {Object} batchData - Données du batch
+ * @returns {Promise<string>} - ID du batch créé
+ */
+export async function createMessageBatch(universityId, batchData) {
+  const {
+    from,
+    fromName,
+    fromRole,
+    subject,
+    body,
+    recipientCount,
+    recipientType // 'multiple' ou 'broadcast'
+  } = batchData;
+
+  if (!universityId || !from || !subject || !body || !recipientCount) {
+    throw new Error('Données de batch incomplètes');
+  }
+
+  const batchesRef = ref(database, `universities/${universityId}/messageBatches`);
+  const newBatchRef = push(batchesRef);
+
+  const batch = {
+    id: newBatchRef.key,
+    from,
+    fromName,
+    fromRole,
+    subject,
+    body,
+    recipientCount,
+    recipientType,
+    sentCount: 0,
+    readCount: 0,
+    createdAt: Date.now(),
+    status: 'sending' // sending, sent, failed
+  };
+
+  await set(newBatchRef, batch);
+
+  return newBatchRef.key;
+}
+
+/**
+ * Mettre à jour les statistiques d'un batch
+ * @param {string} universityId - ID de l'université
+ * @param {string} batchId - ID du batch
+ * @param {Object} updates - Mises à jour
+ * @returns {Promise<void>}
+ */
+export async function updateBatchStats(universityId, batchId, updates) {
+  if (!universityId || !batchId) {
+    throw new Error('universityId et batchId requis');
+  }
+
+  const batchRef = ref(database, `universities/${universityId}/messageBatches/${batchId}`);
+  await update(batchRef, updates);
+}
+
+/**
+ * Récupérer tous les batches d'un utilisateur
+ * @param {string} universityId - ID de l'université
+ * @param {string} userId - ID de l'utilisateur
+ * @returns {Promise<Array>} - Liste des batches
+ */
+export async function getUserBatches(universityId, userId) {
+  if (!universityId || !userId) {
+    throw new Error('universityId et userId requis');
+  }
+
+  const batchesRef = ref(database, `universities/${universityId}/messageBatches`);
+  const snapshot = await get(batchesRef);
+
+  if (!snapshot.exists()) {
+    return [];
+  }
+
+  const batches = snapshot.val();
+  const userBatches = [];
+
+  Object.keys(batches).forEach(batchId => {
+    const batch = batches[batchId];
+    if (batch.from === userId) {
+      userBatches.push(batch);
+    }
+  });
+
+  // Trier par date décroissante
+  userBatches.sort((a, b) => b.createdAt - a.createdAt);
+
+  return userBatches;
+}
+
+/**
+ * Récupérer un batch spécifique
+ * @param {string} universityId - ID de l'université
+ * @param {string} batchId - ID du batch
+ * @returns {Promise<Object>} - Batch
+ */
+export async function getBatch(universityId, batchId) {
+  if (!universityId || !batchId) {
+    throw new Error('universityId et batchId requis');
+  }
+
+  const batchRef = ref(database, `universities/${universityId}/messageBatches/${batchId}`);
+  const snapshot = await get(batchRef);
+
+  if (!snapshot.exists()) {
+    throw new Error('Batch introuvable');
+  }
+
+  return snapshot.val();
+}
+
+/**
+ * Récupérer tous les messages d'un batch
+ * @param {string} universityId - ID de l'université
+ * @param {string} batchId - ID du batch
+ * @returns {Promise<Array>} - Messages du batch
+ */
+export async function getBatchMessages(universityId, batchId) {
+  if (!universityId || !batchId) {
+    throw new Error('universityId et batchId requis');
+  }
+
+  const messagesRef = ref(database, `universities/${universityId}/messages`);
+  const snapshot = await get(messagesRef);
+
+  if (!snapshot.exists()) {
+    return [];
+  }
+
+  const messages = snapshot.val();
+  const batchMessages = [];
+
+  Object.keys(messages).forEach(messageId => {
+    const message = messages[messageId];
+    if (message.batchId === batchId) {
+      batchMessages.push(message);
+    }
+  });
+
+  // Trier par nom du destinataire
+  batchMessages.sort((a, b) => a.toName.localeCompare(b.toName));
+
+  return batchMessages;
 }

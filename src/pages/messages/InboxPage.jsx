@@ -10,7 +10,7 @@
  * - Navigation vers détail message
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Mail,
@@ -23,10 +23,12 @@ import {
   PenSquare,
   Send,
   Star,
-  StarOff
+  StarOff,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMessages } from '../../hooks/useMessages';
+import { getUserBatches } from '../../services/messageService';
 
 export default function InboxPage() {
   const navigate = useNavigate();
@@ -36,6 +38,7 @@ export default function InboxPage() {
 
   const {
     inbox,
+    sentMessages,
     unreadCount,
     loading,
     markAsRead,
@@ -44,11 +47,37 @@ export default function InboxPage() {
     toggleStarred
   } = useMessages(universityId, userId);
 
+  const [view, setView] = useState('inbox'); // inbox, sent
   const [filter, setFilter] = useState('all'); // all, unread, read, starred
   const [deleting, setDeleting] = useState(null);
+  const [batches, setBatches] = useState([]);
+  const [batchesLoading, setBatchesLoading] = useState(false);
+
+  // Charger les batches quand on passe en vue "sent"
+  useEffect(() => {
+    if (view === 'sent' && universityId && userId) {
+      loadBatches();
+    }
+  }, [view, universityId, userId]);
+
+  const loadBatches = async () => {
+    try {
+      setBatchesLoading(true);
+      const userBatches = await getUserBatches(universityId, userId);
+      setBatches(userBatches);
+      setBatchesLoading(false);
+    } catch (error) {
+      console.error('Error loading batches:', error);
+      setBatchesLoading(false);
+    }
+  };
+
+  // Sélectionner la liste selon la vue
+  // En vue "sent", exclure les messages qui font partie d'un batch
+  const messagesList = view === 'inbox' ? inbox : sentMessages.filter(msg => !msg.batchId);
 
   // Filtrer messages
-  const filteredMessages = inbox.filter(message => {
+  const filteredMessages = messagesList.filter(message => {
     if (filter === 'unread' && message.read) return false;
     if (filter === 'read' && !message.read) return false;
     if (filter === 'starred' && !message.starred) return false;
@@ -178,14 +207,20 @@ export default function InboxPage() {
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                 <Mail className="h-8 w-8 text-indigo-600" />
-                Boîte de Réception
+                Messagerie
               </h1>
               <p className="text-gray-600 mt-1">
-                {inbox.length} message{inbox.length > 1 ? 's' : ''}
-                {unreadCount > 0 && (
-                  <span className="ml-2 text-indigo-600 font-semibold">
-                    ({unreadCount} non {unreadCount > 1 ? 'lus' : 'lu'})
-                  </span>
+                {view === 'inbox' ? (
+                  <>
+                    {inbox.length} message{inbox.length > 1 ? 's' : ''} reçu{inbox.length > 1 ? 's' : ''}
+                    {unreadCount > 0 && (
+                      <span className="ml-2 text-indigo-600 font-semibold">
+                        ({unreadCount} non {unreadCount > 1 ? 'lus' : 'lu'})
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>{sentMessages.length} message{sentMessages.length > 1 ? 's' : ''} envoyé{sentMessages.length > 1 ? 's' : ''}</>
                 )}
               </p>
             </div>
@@ -198,8 +233,39 @@ export default function InboxPage() {
             </button>
           </div>
 
+          {/* Onglets Inbox / Sent */}
+          <div className="flex gap-2 bg-white rounded-xl p-1 shadow-sm mb-6">
+            <button
+              onClick={() => setView('inbox')}
+              className={`flex-1 px-6 py-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition ${
+                view === 'inbox'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Mail className="h-5 w-5" />
+              Boîte de réception
+              {unreadCount > 0 && view !== 'inbox' && (
+                <span className="ml-1 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full font-bold">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setView('sent')}
+              className={`flex-1 px-6 py-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition ${
+                view === 'sent'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Send className="h-5 w-5" />
+              Messages envoyés
+            </button>
+          </div>
+
           {/* Actions rapides */}
-          {inbox.length > 0 && (
+          {view === 'inbox' && inbox.length > 0 && (
             <div className="flex flex-wrap gap-3 mb-6">
               <button
                 onClick={handleMarkAllRead}
@@ -208,13 +274,6 @@ export default function InboxPage() {
               >
                 <CheckCheck className="h-4 w-4" />
                 Tout marquer comme lu
-              </button>
-              <button
-                onClick={() => navigate('/messages/sent')}
-                className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition flex items-center gap-2 text-sm font-medium"
-              >
-                <Send className="h-4 w-4" />
-                Messages envoyés
               </button>
             </div>
           )}
@@ -235,28 +294,32 @@ export default function InboxPage() {
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              Tous ({inbox.length})
+              Tous ({messagesList.length})
             </button>
-            <button
-              onClick={() => setFilter('unread')}
-              className={`px-4 py-2 rounded-xl border-2 transition ${
-                filter === 'unread'
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              Non lus ({unreadCount})
-            </button>
-            <button
-              onClick={() => setFilter('read')}
-              className={`px-4 py-2 rounded-xl border-2 transition ${
-                filter === 'read'
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              Lus ({inbox.length - unreadCount})
-            </button>
+            {view === 'inbox' && (
+              <>
+                <button
+                  onClick={() => setFilter('unread')}
+                  className={`px-4 py-2 rounded-xl border-2 transition ${
+                    filter === 'unread'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Non lus ({unreadCount})
+                </button>
+                <button
+                  onClick={() => setFilter('read')}
+                  className={`px-4 py-2 rounded-xl border-2 transition ${
+                    filter === 'read'
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Lus ({inbox.length - unreadCount})
+                </button>
+              </>
+            )}
             <button
               onClick={() => setFilter('starred')}
               className={`px-4 py-2 rounded-xl border-2 transition ${
@@ -266,14 +329,75 @@ export default function InboxPage() {
               }`}
             >
               <Star className="h-4 w-4 inline mr-1" />
-              Favoris ({inbox.filter(m => m.starred).length})
+              Favoris ({messagesList.filter(m => m.starred).length})
             </button>
           </div>
         </div>
 
-        {/* Liste des messages */}
+        {/* Liste des batches (campagnes) - seulement en vue "sent" */}
+        {view === 'sent' && batches.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Users className="h-5 w-5 text-indigo-600" />
+              Messages groupés ({batches.length})
+            </h3>
+            <div className="space-y-3">
+              {batches.map((batch) => (
+                <div
+                  key={batch.id}
+                  onClick={() => navigate(`/messages/batch/${batch.id}`)}
+                  className="glass rounded-2xl p-5 transition-all hover:shadow-lg cursor-pointer border-l-4 border-purple-500"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-purple-100">
+                      <Users className="h-6 w-6 text-purple-600" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {batch.subject}
+                            </h3>
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-semibold">
+                              {batch.recipientType === 'broadcast' ? 'Diffusion' : 'Groupé'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 line-clamp-1 mb-2">
+                            {batch.body}
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <Send className="h-4 w-4" />
+                              {batch.recipientCount} destinataire{batch.recipientCount > 1 ? 's' : ''}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <CheckCheck className="h-4 w-4 text-green-600" />
+                              {batch.readCount || 0} lu{(batch.readCount || 0) > 1 ? 's' : ''} ({Math.round(((batch.readCount || 0) / batch.recipientCount) * 100)}%)
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {formatTimestamp(batch.createdAt)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Liste des messages individuels */}
         <div className="space-y-3">
-          {filteredMessages.length === 0 ? (
+          {view === 'sent' && filteredMessages.length > 0 && (
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Messages individuels ({filteredMessages.length})
+            </h3>
+          )}
+          {filteredMessages.length === 0 && (view === 'inbox' || batches.length === 0) ? (
             <div className="glass rounded-2xl p-12 text-center">
               <Mail className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 text-lg font-medium mb-2">
@@ -312,12 +436,24 @@ export default function InboxPage() {
                           <h3 className={`text-lg font-semibold ${
                             !message.read ? 'text-gray-900' : 'text-gray-700'
                           }`}>
-                            {message.fromName}
+                            {view === 'inbox' ? (
+                              <>
+                                {message.fromName}
+                                <span className={`text-xs px-2 py-1 rounded-full ${getRoleBadgeColor(message.fromRole)}`}>
+                                  {getRoleLabel(message.fromRole)}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-gray-500 text-sm font-normal mr-2">À:</span>
+                                {message.toName}
+                                <span className={`text-xs px-2 py-1 rounded-full ${getRoleBadgeColor(message.toRole)}`}>
+                                  {getRoleLabel(message.toRole)}
+                                </span>
+                              </>
+                            )}
                           </h3>
-                          <span className={`text-xs px-2 py-1 rounded-full ${getRoleBadgeColor(message.fromRole)}`}>
-                            {getRoleLabel(message.fromRole)}
-                          </span>
-                          {!message.read && (
+                          {!message.read && view === 'inbox' && (
                             <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
                           )}
                         </div>

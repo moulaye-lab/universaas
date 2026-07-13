@@ -322,7 +322,9 @@ export default function CreateParentPage() {
             // Ajouter le parent si pas déjà présent
             const parentAlreadyAdded = currentParents.some(p => p.id === existingParent.uid);
             if (!parentAlreadyAdded && currentParents.length < 2) {
-              await update(studentRef, {
+              // IMPORTANT: Utiliser set() au lieu de update() pour éviter les problèmes de validation Firebase
+              await set(studentRef, {
+                ...studentData,
                 parents: [
                   ...currentParents,
                   {
@@ -331,7 +333,8 @@ export default function CreateParentPage() {
                     phone: existingParent.phone,
                     email: existingParent.email || 'Non disponible'
                   }
-                ]
+                ],
+                updatedAt: Date.now()
               });
             }
           }
@@ -473,8 +476,11 @@ export default function CreateParentPage() {
               };
               // console.log('  → Ajout du parent:', newParent);
 
-              await update(studentRef, {
-                parents: [...currentParents, newParent]
+              // IMPORTANT: Utiliser set() au lieu de update() pour éviter les problèmes de validation Firebase
+              await set(studentRef, {
+                ...studentData,
+                parents: [...currentParents, newParent],
+                updatedAt: Date.now()
               });
               // console.log('  ✅ Parent ajouté');
             } else {

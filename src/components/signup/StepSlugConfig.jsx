@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, CheckCircle, XCircle, Loader, AlertCircle } from 'lucide-react';
+import { ref, query, orderByChild, equalTo, get } from 'firebase/database';
+import { database } from '../../config/firebase';
 
 export default function StepSlugConfig({ formData, updateFormData }) {
   const [checking, setChecking] = useState(false);
@@ -40,22 +42,51 @@ export default function StepSlugConfig({ formData, updateFormData }) {
     setCheckMessage('Vérification de la disponibilité...');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_AI_API_URL || 'http://localhost:3001'}/api/onboarding/check-slug`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ slug })
-      });
+      // Option 1: Essayer via le backend API
+      try {
+        const response = await fetch(`${import.meta.env.VITE_AI_API_URL || 'http://localhost:3001'}/api/onboarding/check-slug`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ slug })
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (result.available) {
+        if (result.available) {
+          updateFormData('slugAvailable', true);
+          setCheckMessage('✓ Ce slug est disponible!');
+        } else {
+          updateFormData('slugAvailable', false);
+          setCheckMessage('✗ Ce slug est déjà utilisé');
+        }
+        return;
+      } catch (apiError) {
+        console.warn('Backend API non disponible, utilisation Firebase directement:', apiError);
+      }
+
+      // Option 2: Fallback - vérifier dans Firebase directement (sans index)
+      const universitiesRef = ref(database, 'universities');
+      const snapshot = await get(universitiesRef);
+
+      if (snapshot.exists()) {
+        const universities = snapshot.val();
+        const slugExists = Object.values(universities).some(
+          univ => univ.slug === slug
+        );
+
+        if (slugExists) {
+          updateFormData('slugAvailable', false);
+          setCheckMessage('✗ Ce slug est déjà utilisé');
+        } else {
+          updateFormData('slugAvailable', true);
+          setCheckMessage('✓ Ce slug est disponible!');
+        }
+      } else {
+        // Aucune université n'existe encore
         updateFormData('slugAvailable', true);
         setCheckMessage('✓ Ce slug est disponible!');
-      } else {
-        updateFormData('slugAvailable', false);
-        setCheckMessage('✗ Ce slug est déjà utilisé');
       }
     } catch (err) {
       console.error('Error checking slug:', err);

@@ -23,6 +23,7 @@ export default function ManageAcademicDataPage() {
   // Départements
   const [departments, setDepartments] = useState([]);
   const [showDeptModal, setShowDeptModal] = useState(false);
+  const [editingDept, setEditingDept] = useState(null);
   const [deptFormData, setDeptFormData] = useState({
     name: '',
     code: '',
@@ -32,6 +33,7 @@ export default function ManageAcademicDataPage() {
   // Modèles de cours
   const [courseTemplates, setCourseTemplates] = useState([]);
   const [showCourseModal, setShowCourseModal] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(null);
   const [courseFormData, setCourseFormData] = useState({
     name: '',
     code: '',
@@ -83,6 +85,23 @@ export default function ManageAcademicDataPage() {
 
   // === DÉPARTEMENTS ===
 
+  const handleOpenDeptModal = (dept = null) => {
+    if (dept) {
+      setEditingDept(dept);
+      setDeptFormData({
+        name: dept.name,
+        code: dept.code,
+        description: dept.description || ''
+      });
+    } else {
+      setEditingDept(null);
+      setDeptFormData({ name: '', code: '', description: '' });
+    }
+    setShowDeptModal(true);
+    setError('');
+    setSuccess('');
+  };
+
   const handleDeptSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -93,27 +112,49 @@ export default function ManageAcademicDataPage() {
         throw new Error('Le nom du département est requis');
       }
 
-      // Vérifier unicité du nom
-      const exists = departments.some(d => d.name.toLowerCase() === deptFormData.name.trim().toLowerCase());
+      // Vérifier unicité du nom (sauf si modification du même département)
+      const exists = departments.some(d =>
+        d.name.toLowerCase() === deptFormData.name.trim().toLowerCase() &&
+        (!editingDept || d.id !== editingDept.id)
+      );
       if (exists) {
         throw new Error('Ce département existe déjà');
       }
 
-      const deptRef = push(ref(database, 'departments'));
-      const deptData = {
-        id: deptRef.key,
-        name: deptFormData.name.trim(),
-        code: deptFormData.code.trim().toUpperCase() || deptFormData.name.substring(0, 3).toUpperCase(),
-        description: deptFormData.description.trim(),
-        createdAt: Date.now(),
-        createdBy: currentUser.uid
-      };
+      if (editingDept) {
+        // Modification
+        const deptRef = ref(database, `departments/${editingDept.id}`);
+        const updatedData = {
+          ...editingDept,
+          name: deptFormData.name.trim(),
+          code: deptFormData.code.trim().toUpperCase() || deptFormData.name.substring(0, 3).toUpperCase(),
+          description: deptFormData.description.trim(),
+          updatedAt: Date.now(),
+          updatedBy: currentUser.uid
+        };
 
-      await set(deptRef, deptData);
-      setDepartments(prev => [...prev, deptData]);
-      setSuccess('Département créé avec succès !');
+        await set(deptRef, updatedData);
+        setDepartments(prev => prev.map(d => d.id === editingDept.id ? updatedData : d));
+        setSuccess('Département modifié avec succès !');
+      } else {
+        // Création
+        const deptRef = push(ref(database, 'departments'));
+        const deptData = {
+          id: deptRef.key,
+          name: deptFormData.name.trim(),
+          code: deptFormData.code.trim().toUpperCase() || deptFormData.name.substring(0, 3).toUpperCase(),
+          description: deptFormData.description.trim(),
+          createdAt: Date.now(),
+          createdBy: currentUser.uid
+        };
+
+        await set(deptRef, deptData);
+        setDepartments(prev => [...prev, deptData]);
+        setSuccess('Département créé avec succès !');
+      }
+
       setDeptFormData({ name: '', code: '', description: '' });
-      setTimeout(() => { setShowDeptModal(false); setSuccess(''); }, 1500);
+      setTimeout(() => { setShowDeptModal(false); setSuccess(''); setEditingDept(null); }, 1500);
     } catch (err) {
       setError(err.message);
     }
@@ -144,6 +185,25 @@ export default function ManageAcademicDataPage() {
 
   // === MODÈLES DE COURS ===
 
+  const handleOpenCourseModal = (course = null) => {
+    if (course) {
+      setEditingCourse(course);
+      setCourseFormData({
+        name: course.name,
+        code: course.code,
+        department: course.department,
+        credits: course.credits.toString(),
+        description: course.description || ''
+      });
+    } else {
+      setEditingCourse(null);
+      setCourseFormData({ name: '', code: '', department: '', credits: '3', description: '' });
+    }
+    setShowCourseModal(true);
+    setError('');
+    setSuccess('');
+  };
+
   const handleCourseTemplateSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -157,31 +217,55 @@ export default function ManageAcademicDataPage() {
         throw new Error('Le département est requis');
       }
 
-      // Vérifier unicité du code
+      // Vérifier unicité du code (sauf si modification du même cours)
       if (courseFormData.code.trim()) {
-        const exists = courseTemplates.some(c => c.code.toLowerCase() === courseFormData.code.trim().toLowerCase());
+        const exists = courseTemplates.some(c =>
+          c.code.toLowerCase() === courseFormData.code.trim().toLowerCase() &&
+          (!editingCourse || c.id !== editingCourse.id)
+        );
         if (exists) {
           throw new Error('Ce code de cours existe déjà');
         }
       }
 
-      const templateRef = push(ref(database, 'courseTemplates'));
-      const templateData = {
-        id: templateRef.key,
-        name: courseFormData.name.trim(),
-        code: courseFormData.code.trim().toUpperCase(),
-        department: courseFormData.department,
-        credits: parseInt(courseFormData.credits),
-        description: courseFormData.description.trim(),
-        createdAt: Date.now(),
-        createdBy: currentUser.uid
-      };
+      if (editingCourse) {
+        // Modification
+        const templateRef = ref(database, `courseTemplates/${editingCourse.id}`);
+        const updatedData = {
+          ...editingCourse,
+          name: courseFormData.name.trim(),
+          code: courseFormData.code.trim().toUpperCase(),
+          department: courseFormData.department,
+          credits: parseInt(courseFormData.credits),
+          description: courseFormData.description.trim(),
+          updatedAt: Date.now(),
+          updatedBy: currentUser.uid
+        };
 
-      await set(templateRef, templateData);
-      setCourseTemplates(prev => [...prev, templateData]);
-      setSuccess('Modèle de cours créé avec succès !');
+        await set(templateRef, updatedData);
+        setCourseTemplates(prev => prev.map(c => c.id === editingCourse.id ? updatedData : c));
+        setSuccess('Modèle modifié avec succès !');
+      } else {
+        // Création
+        const templateRef = push(ref(database, 'courseTemplates'));
+        const templateData = {
+          id: templateRef.key,
+          name: courseFormData.name.trim(),
+          code: courseFormData.code.trim().toUpperCase(),
+          department: courseFormData.department,
+          credits: parseInt(courseFormData.credits),
+          description: courseFormData.description.trim(),
+          createdAt: Date.now(),
+          createdBy: currentUser.uid
+        };
+
+        await set(templateRef, templateData);
+        setCourseTemplates(prev => [...prev, templateData]);
+        setSuccess('Modèle de cours créé avec succès !');
+      }
+
       setCourseFormData({ name: '', code: '', department: '', credits: '3', description: '' });
-      setTimeout(() => { setShowCourseModal(false); setSuccess(''); }, 1500);
+      setTimeout(() => { setShowCourseModal(false); setSuccess(''); setEditingCourse(null); }, 1500);
     } catch (err) {
       setError(err.message);
     }
@@ -276,7 +360,7 @@ export default function ManageAcademicDataPage() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Départements</h2>
               <button
-                onClick={() => setShowDeptModal(true)}
+                onClick={() => handleOpenDeptModal()}
                 className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold"
               >
                 + Nouveau Département
@@ -290,7 +374,7 @@ export default function ManageAcademicDataPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Aucun département</h3>
                 <p className="text-gray-600 mb-6">Créez votre premier département</p>
                 <button
-                  onClick={() => setShowDeptModal(true)}
+                  onClick={() => handleOpenDeptModal()}
                   className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold"
                 >
                   + Créer un département
@@ -305,12 +389,22 @@ export default function ManageAcademicDataPage() {
                         <h3 className="text-xl font-bold text-gray-900">{dept.name}</h3>
                         <p className="text-sm font-mono text-blue-600 font-semibold">{dept.code}</p>
                       </div>
-                      <button
-                        onClick={() => handleDeleteDept(dept.id, dept.name)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                      >
-                        🗑️
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleOpenDeptModal(dept)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                          title="Modifier"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDept(dept.id, dept.name)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                          title="Supprimer"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                     {dept.description && (
                       <p className="text-sm text-gray-600">{dept.description}</p>
@@ -326,7 +420,7 @@ export default function ManageAcademicDataPage() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Modèles de Cours</h2>
               <button
-                onClick={() => setShowCourseModal(true)}
+                onClick={() => handleOpenCourseModal()}
                 className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold"
               >
                 + Nouveau Modèle
@@ -340,7 +434,7 @@ export default function ManageAcademicDataPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Aucun modèle de cours</h3>
                 <p className="text-gray-600 mb-6">Créez votre premier modèle de cours</p>
                 <button
-                  onClick={() => setShowCourseModal(true)}
+                  onClick={() => handleOpenCourseModal()}
                   className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold"
                 >
                   + Créer un modèle
@@ -355,12 +449,22 @@ export default function ManageAcademicDataPage() {
                         <h3 className="text-xl font-bold text-gray-900">{template.name}</h3>
                         <p className="text-sm font-mono text-blue-600 font-semibold">{template.code}</p>
                       </div>
-                      <button
-                        onClick={() => handleDeleteCourseTemplate(template.id, template.name)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                      >
-                        🗑️
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleOpenCourseModal(template)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                          title="Modifier"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCourseTemplate(template.id, template.name)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                          title="Supprimer"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold">
@@ -386,8 +490,10 @@ export default function ManageAcademicDataPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-gray-900">🏛️ Nouveau Département</h2>
-              <button onClick={() => { setShowDeptModal(false); setError(''); }} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+              <h2 className="text-2xl font-black text-gray-900">
+                🏛️ {editingDept ? 'Modifier le Département' : 'Nouveau Département'}
+              </h2>
+              <button onClick={() => { setShowDeptModal(false); setError(''); setEditingDept(null); }} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
 
             <form onSubmit={handleDeptSubmit} className="space-y-4">
@@ -438,8 +544,10 @@ export default function ManageAcademicDataPage() {
               )}
 
               <div className="flex gap-4">
-                <button type="button" onClick={() => { setShowDeptModal(false); setError(''); }} className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold">Annuler</button>
-                <button type="submit" className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold">Créer</button>
+                <button type="button" onClick={() => { setShowDeptModal(false); setError(''); setEditingDept(null); }} className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold">Annuler</button>
+                <button type="submit" className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold">
+                  {editingDept ? 'Modifier' : 'Créer'}
+                </button>
               </div>
             </form>
           </div>
@@ -451,8 +559,10 @@ export default function ManageAcademicDataPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-gray-900">📚 Nouveau Modèle</h2>
-              <button onClick={() => { setShowCourseModal(false); setError(''); }} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+              <h2 className="text-2xl font-black text-gray-900">
+                📚 {editingCourse ? 'Modifier le Modèle' : 'Nouveau Modèle'}
+              </h2>
+              <button onClick={() => { setShowCourseModal(false); setError(''); setEditingCourse(null); }} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
             </div>
 
             <form onSubmit={handleCourseTemplateSubmit} className="space-y-4">
@@ -533,8 +643,10 @@ export default function ManageAcademicDataPage() {
               )}
 
               <div className="flex gap-4">
-                <button type="button" onClick={() => { setShowCourseModal(false); setError(''); }} className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold">Annuler</button>
-                <button type="submit" disabled={departments.length === 0} className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed">Créer</button>
+                <button type="button" onClick={() => { setShowCourseModal(false); setError(''); setEditingCourse(null); }} className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold">Annuler</button>
+                <button type="submit" disabled={departments.length === 0} className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                  {editingCourse ? 'Modifier' : 'Créer'}
+                </button>
               </div>
             </form>
           </div>

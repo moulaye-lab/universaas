@@ -103,10 +103,16 @@ export default function TeacherDashboard() {
 
       setLiveSessions(sessionsData);
 
+      // Calculer le nombre de devoirs en attente (notes à corriger)
+      // Note: Pour l'instant on met 0 car il n'y a pas de système de "devoirs à rendre"
+      // Si vous voulez implémenter un système de devoirs rendus par les étudiants,
+      // il faudra créer une collection "assignments" dans Firebase
+      const pendingGrades = 0; // TODO: Implémenter système de devoirs rendus
+
       setStats({
         totalCourses: coursesData.length,
         totalStudents,
-        pendingGrades: 12, // À implémenter: compter les devoirs non corrigés
+        pendingGrades: pendingGrades,
         nextLiveSession: sessionsData[0] || null,
       });
 
