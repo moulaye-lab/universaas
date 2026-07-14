@@ -114,78 +114,113 @@ export default function CreateTeacherPage() {
 
       const userData = await createUserResponse.json();
       const teacherUid = userData.localId;
+      let authAccountCreated = true;
 
       // 2. Créer le profil utilisateur
-      await set(ref(database, `users/${teacherUid}`), {
-        email: formData.email,
-        displayName: `${formData.firstName} ${formData.lastName}`,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNumber: formData.phoneNumber || null,
-        role: 'teacher',
-        universityId: userProfile.universityId,
-        profileId: teacherUid,
-        loginMethod: 'email',
-        mustChangePassword: true,
-        temporaryPassword: formData.password,
-        createdAt: Date.now(),
-        createdBy: currentUser.uid,
-      });
-
-      // 3. Créer le profil enseignant dans l'université
-      await set(ref(database, `universities/${userProfile.universityId}/teachers/${teacherUid}`), {
-        uid: teacherUid,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber || null,
-        department: formData.department,
-        specialization: formData.specialization || null,
-        assignedCourses: formData.assignedCourses,
-        status: 'active',
-        createdAt: Date.now(),
-        createdBy: currentUser.uid,
-      });
-
-      // 4. Log d'audit
-      await set(ref(database, `universities/${userProfile.universityId}/audit/${Date.now()}`), {
-        action: 'teacher_created',
-        userId: currentUser.uid,
-        targetUserId: teacherUid,
-        details: {
-          teacherName: `${formData.firstName} ${formData.lastName}`,
+      try {
+        await set(ref(database, `users/${teacherUid}`), {
           email: formData.email,
-          department: formData.department,
-        },
-        timestamp: Date.now(),
-      });
-
-      setSuccess(`✅ Enseignant ${formData.firstName} ${formData.lastName} créé avec succès !`);
-
-      // Demander si l'admin veut créer un autre enseignant
-      const createAnother = window.confirm(
-        `✅ L'enseignant ${formData.firstName} ${formData.lastName} a été créé avec succès !\n\n` +
-        `Voulez-vous créer un autre enseignant ?\n\n` +
-        `• OUI → Rester sur cette page\n` +
-        `• NON → Retour au dashboard`
-      );
-
-      if (createAnother) {
-        // Reset formulaire (garder département pour faciliter la saisie)
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phoneNumber: '',
-          department: formData.department,
-          specialization: '',
-          assignedCourses: [],
-          password: '12345678',
+          displayName: `${formData.firstName} ${formData.lastName}`,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phoneNumber: formData.phoneNumber || null,
+          role: 'teacher',
+          universityId: userProfile.universityId,
+          profileId: teacherUid,
+          loginMethod: 'email',
+          mustChangePassword: true,
+          temporaryPassword: formData.password,
+          createdAt: Date.now(),
+          createdBy: currentUser.uid,
         });
-        setSuccess('');
-        setError('');
-      } else {
-        navigate('/dashboard/admin');
+
+        // 3. Créer le profil enseignant dans l'université
+        await set(ref(database, `universities/${userProfile.universityId}/teachers/${teacherUid}`), {
+          uid: teacherUid,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phoneNumber: formData.phoneNumber || null,
+          department: formData.department,
+          specialization: formData.specialization || null,
+          assignedCourses: formData.assignedCourses,
+          status: 'active',
+          createdAt: Date.now(),
+          createdBy: currentUser.uid,
+        });
+
+        // 4. Log d'audit
+        await set(ref(database, `universities/${userProfile.universityId}/audit/${Date.now()}`), {
+          action: 'teacher_created',
+          userId: currentUser.uid,
+          targetUserId: teacherUid,
+          details: {
+            teacherName: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            department: formData.department,
+          },
+          timestamp: Date.now(),
+        });
+
+        setSuccess(`✅ Enseignant ${formData.firstName} ${formData.lastName} créé avec succès !`);
+
+        // Demander si l'admin veut créer un autre enseignant
+        const createAnother = window.confirm(
+          `✅ L'enseignant ${formData.firstName} ${formData.lastName} a été créé avec succès !\n\n` +
+          `Voulez-vous créer un autre enseignant ?\n\n` +
+          `• OUI → Rester sur cette page\n` +
+          `• NON → Retour au dashboard`
+        );
+
+        if (createAnother) {
+          // Reset formulaire (garder département pour faciliter la saisie)
+          setFormData({
+            firstName: '',
+            lastName: '',
+            email: '',
+            phoneNumber: '',
+            department: formData.department,
+            specialization: '',
+            assignedCourses: [],
+            password: '12345678',
+          });
+          setSuccess('');
+          setError('');
+        } else {
+          navigate('/dashboard/admin');
+        }
+
+      } catch (dbError) {
+        console.error('❌ Erreur lors de la création du profil, rollback du compte Auth...', dbError);
+
+        if (authAccountCreated && teacherUid) {
+          try {
+            const currentUserToken = await currentUser.getIdToken();
+            const deleteResponse = await fetch(
+              `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${apiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  idToken: currentUserToken,
+                  localId: teacherUid
+                })
+              }
+            );
+
+            if (deleteResponse.ok) {
+              console.log('✅ Compte orphelin supprimé avec succès:', teacherUid);
+            } else {
+              console.warn('⚠️ Impossible de supprimer le compte orphelin:', teacherUid, formData.email);
+              console.warn('Action manuelle requise: Firebase Console > Authentication');
+            }
+          } catch (deleteError) {
+            console.error('Erreur lors du rollback:', deleteError);
+            console.warn('⚠️ Compte orphelin créé:', teacherUid, formData.email);
+          }
+        }
+
+        throw new Error(`Échec de création: ${dbError.message}`);
       }
 
     } catch (error) {

@@ -350,18 +350,42 @@ export default function CreateStudentPage() {
 
         if (authAccountCreated && studentUid) {
           try {
-            // Supprimer via API Admin (nécessite idToken admin)
-            // Note: Cette suppression nécessite l'API Admin côté backend
-            console.warn('⚠️ Compte Firebase Auth orphelin créé:', studentUid, formData.email);
-            console.warn('Action manuelle requise: Supprimer le compte depuis Firebase Console > Authentication');
+            // Obtenir idToken du super admin actuel pour supprimer le compte
+            const currentUserToken = await currentUser.getIdToken();
+
+            // Supprimer le compte via API REST Firebase Auth
+            const deleteResponse = await fetch(
+              `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${apiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  idToken: currentUserToken,
+                  localId: studentUid
+                })
+              }
+            );
+
+            if (deleteResponse.ok) {
+              console.log('✅ Compte orphelin supprimé avec succès:', studentUid);
+            } else {
+              // Si la suppression échoue, log pour action manuelle
+              console.warn('⚠️ Impossible de supprimer le compte orphelin:', studentUid, formData.email);
+              console.warn('Action manuelle requise: Firebase Console > Authentication');
+            }
           } catch (deleteError) {
             console.error('Erreur lors du rollback:', deleteError);
+            console.warn('⚠️ Compte orphelin créé:', studentUid, formData.email);
+            console.warn('Action manuelle requise: Firebase Console > Authentication');
           }
         }
 
         throw new Error(
-          `Échec de création du profil étudiant: ${dbError.message}. ` +
-          `Le compte email a été créé mais est orphelin. Contactez l'administrateur pour nettoyer.`
+          `Échec de création: ${dbError.message}. ${
+            authAccountCreated
+              ? 'Tentative de nettoyage automatique en cours...'
+              : ''
+          }`
         );
       }
 

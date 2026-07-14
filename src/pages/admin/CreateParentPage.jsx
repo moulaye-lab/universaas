@@ -428,6 +428,7 @@ export default function CreateParentPage() {
         }
 
         const uid = authData.localId;
+        let authAccountCreated = true;
 
         // Construire childrenAccess
         const childrenAccess = {
@@ -439,93 +440,127 @@ export default function CreateParentPage() {
         });
 
         // Créer le profil utilisateur parent
-        const userRef = ref(database, `users/${uid}`);
-        const userData = {
-          uid,
-          email: formData.email,
-          displayName: formData.displayName,
-          phone: formData.phone,
-          role: 'parent',
-          universityId: userProfile.universityId,
-          childrenAccess,
-          createdAt: Date.now(),
-          createdBy: currentUser.uid
-        };
+        try {
+          const userRef = ref(database, `users/${uid}`);
+          const userData = {
+            uid,
+            email: formData.email,
+            displayName: formData.displayName,
+            phone: formData.phone,
+            role: 'parent',
+            universityId: userProfile.universityId,
+            childrenAccess,
+            createdAt: Date.now(),
+            createdBy: currentUser.uid
+          };
 
-        await set(userRef, userData);
+          await set(userRef, userData);
 
-        // Mettre à jour chaque étudiant pour ajouter les infos de ce parent
-        // console.log('🔍 Mise à jour des étudiants, count:', formData.selectedStudents.length);
-        for (const student of formData.selectedStudents) {
-          // console.log('📝 Traitement étudiant:', student.id, student.firstName, student.lastName);
-          const studentRef = ref(database, `universities/${userProfile.universityId}/students/${student.id}`);
-          const studentSnap = await get(studentRef);
+          // Mettre à jour chaque étudiant pour ajouter les infos de ce parent
+          // console.log('🔍 Mise à jour des étudiants, count:', formData.selectedStudents.length);
+          for (const student of formData.selectedStudents) {
+            // console.log('📝 Traitement étudiant:', student.id, student.firstName, student.lastName);
+            const studentRef = ref(database, `universities/${userProfile.universityId}/students/${student.id}`);
+            const studentSnap = await get(studentRef);
 
-          if (studentSnap.exists()) {
-            const studentData = studentSnap.val();
-            const currentParents = studentData.parents || [];
-            // console.log('  → Parents actuels:', currentParents.length);
+            if (studentSnap.exists()) {
+              const studentData = studentSnap.val();
+              const currentParents = studentData.parents || [];
+              // console.log('  → Parents actuels:', currentParents.length);
 
-            // Ajouter le parent (max 2)
-            if (currentParents.length < 2) {
-              const newParent = {
-                id: uid,
-                displayName: formData.displayName,
-                phone: formData.phone,
-                email: formData.email
-              };
-              // console.log('  → Ajout du parent:', newParent);
+              // Ajouter le parent (max 2)
+              if (currentParents.length < 2) {
+                const newParent = {
+                  id: uid,
+                  displayName: formData.displayName,
+                  phone: formData.phone,
+                  email: formData.email
+                };
+                // console.log('  → Ajout du parent:', newParent);
 
-              // IMPORTANT: Utiliser set() au lieu de update() pour éviter les problèmes de validation Firebase
-              await set(studentRef, {
-                ...studentData,
-                parents: [...currentParents, newParent],
-                updatedAt: Date.now()
-              });
-              // console.log('  ✅ Parent ajouté');
+                // IMPORTANT: Utiliser set() au lieu de update() pour éviter les problèmes de validation Firebase
+                await set(studentRef, {
+                  ...studentData,
+                  parents: [...currentParents, newParent],
+                  updatedAt: Date.now()
+                });
+                // console.log('  ✅ Parent ajouté');
+              } else {
+                // console.log('  ⚠️ Limite 2 parents atteinte');
+              }
             } else {
-              // console.log('  ⚠️ Limite 2 parents atteinte');
+              // console.log('  ❌ Étudiant non trouvé dans Firebase');
             }
-          } else {
-            // console.log('  ❌ Étudiant non trouvé dans Firebase');
           }
+
+          // Log d'audit
+          const auditRef = push(ref(database, `universities/${userProfile.universityId}/audit`));
+          await set(auditRef, {
+            action: 'CREATE_PARENT',
+            performedBy: currentUser.uid,
+            targetUid: uid,
+            targetEmail: formData.email,
+            childrenCount: formData.selectedStudents.length,
+            timestamp: Date.now()
+          });
+
+          setSuccess(`✅ Compte parent créé pour ${formData.displayName} (${formData.selectedStudents.length} enfant(s))`);
+
+          setTimeout(() => {
+            const createAnother = window.confirm(
+              `✅ Le parent ${formData.displayName} a été créé avec succès !\n\n` +
+              `Voulez-vous créer un autre parent ?\n\n` +
+              `• OUI → Rester sur cette page\n` +
+              `• NON → Retour à la liste des étudiants`
+            );
+
+            if (createAnother) {
+              setFormData({
+                displayName: '',
+                phone: '',
+                email: '',
+                password: '123456',
+                selectedStudents: []
+              });
+              setSuccess('');
+              setError('');
+            } else {
+              navigate('/admin/students');
+            }
+          }, 500);
+
+        } catch (dbError) {
+          console.error('❌ Erreur lors de la création du profil, rollback du compte Auth...', dbError);
+
+          if (authAccountCreated && uid) {
+            try {
+              const currentUserToken = await currentUser.getIdToken();
+              const deleteResponse = await fetch(
+                `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${API_KEY}`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    idToken: currentUserToken,
+                    localId: uid
+                  })
+                }
+              );
+
+              if (deleteResponse.ok) {
+                console.log('✅ Compte orphelin supprimé avec succès:', uid);
+              } else {
+                console.warn('⚠️ Impossible de supprimer le compte orphelin:', uid, formData.email);
+                console.warn('Action manuelle requise: Firebase Console > Authentication');
+              }
+            } catch (deleteError) {
+              console.error('Erreur lors du rollback:', deleteError);
+              console.warn('⚠️ Compte orphelin créé:', uid, formData.email);
+            }
+          }
+
+          throw new Error(`Échec de création: ${dbError.message}`);
         }
-
-        // Log d'audit
-        const auditRef = push(ref(database, `universities/${userProfile.universityId}/audit`));
-        await set(auditRef, {
-          action: 'CREATE_PARENT',
-          performedBy: currentUser.uid,
-          targetUid: uid,
-          targetEmail: formData.email,
-          childrenCount: formData.selectedStudents.length,
-          timestamp: Date.now()
-        });
-
-        setSuccess(`✅ Compte parent créé pour ${formData.displayName} (${formData.selectedStudents.length} enfant(s))`);
-
-        setTimeout(() => {
-          const createAnother = window.confirm(
-            `✅ Le parent ${formData.displayName} a été créé avec succès !\n\n` +
-            `Voulez-vous créer un autre parent ?\n\n` +
-            `• OUI → Rester sur cette page\n` +
-            `• NON → Retour à la liste des étudiants`
-          );
-
-          if (createAnother) {
-            setFormData({
-              displayName: '',
-              phone: '',
-              email: '',
-              password: '123456',
-              selectedStudents: []
-            });
-            setSuccess('');
-            setError('');
-          } else {
-            navigate('/admin/students');
-          }
-        }, 500);
       }
 
     } catch (err) {
