@@ -131,7 +131,7 @@ export default function TeacherDashboard() {
 
   const handleCourseClick = (courseId) => {
     // Navigation vers la page de détails du cours
-    navigate(`/course/${courseId}`);
+    navigate(`/admin/courses/${courseId}`);
   };
 
   const handleCourseChange = async (courseId) => {

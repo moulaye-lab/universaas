@@ -651,7 +651,7 @@
               ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
             },
             "totalAmount": {
-              ".validate": "(newData.isNumber() && newData.val() > 0 && newData.val() <= 10000000) || !newData.exists()"
+              ".validate": "(newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000) || !newData.exists()"
             },
             "paidAmount": {
               ".validate": "(newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000) || !newData.exists()"
