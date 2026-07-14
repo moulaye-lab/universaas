@@ -248,7 +248,7 @@ function App() {
           <Route
             path="/admin/courses/:courseId"
             element={
-              <ProtectedRoute allowedRoles={['admin_universite']}>
+              <ProtectedRoute allowedRoles={['admin_universite', 'teacher']}>
                 <CourseDetailsPage />
               </ProtectedRoute>
             }
