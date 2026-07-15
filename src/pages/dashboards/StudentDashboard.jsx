@@ -318,7 +318,7 @@ const StudentDashboard = () => {
 
         {/* Moyennes en Temps Réel */}
         {userProfile?.universityId && (studentData?.id || userProfile.uid) && (
-          <div className="mb-8 animate-slide-up">
+          <div className="mb-8 animate-slide-up" data-tour="grades-section">
             <LiveAverageDisplay
               universityId={userProfile.universityId}
               studentId={studentData?.id || userProfile.uid}
@@ -430,6 +430,7 @@ const StudentDashboard = () => {
           <button
             onClick={() => navigate('/student/payments')}
             className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+            data-tour="payments-section"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
@@ -490,7 +491,7 @@ const StudentDashboard = () => {
 
         {/* Class Schedule Section */}
         {classSchedule.length > 0 && (
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-blue-100 shadow-lg mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-blue-100 shadow-lg mb-8 animate-slide-up" style={{ animationDelay: '0.4s' }} data-tour="courses-section">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
               <Clock className="w-6 h-6 mr-2 text-blue-600" />
               Mon Emploi du Temps {className && `- ${className}`}

@@ -458,6 +458,7 @@ export default function TeacherDashboard() {
           <button
             onClick={() => navigate('/teacher/grades/input')}
             className="glass p-6 rounded-2xl hover-lift group"
+            data-tour="grades-input"
           >
             <div className="flex items-center gap-4">
               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl">
@@ -533,6 +534,7 @@ export default function TeacherDashboard() {
           <button
             onClick={() => navigate('/teacher/schedule')}
             className="glass p-6 rounded-2xl hover-lift group"
+            data-tour="schedule"
           >
             <div className="flex items-center gap-4">
               <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 rounded-xl">
@@ -547,7 +549,7 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Mes Cours Section */}
-        <div className="glass p-8 rounded-3xl mb-8">
+        <div className="glass p-8 rounded-3xl mb-8" data-tour="students-list">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-2xl font-black text-gray-900 mb-1">Mes Cours</h3>

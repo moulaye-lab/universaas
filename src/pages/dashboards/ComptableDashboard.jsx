@@ -245,7 +245,7 @@ export default function ComptableDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-tour="treasury-dashboard">
           {statCards.map((stat, index) => (
             <div
               key={index}
@@ -270,7 +270,7 @@ export default function ComptableDashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" data-tour="payments-management">
           <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600">
@@ -307,7 +307,7 @@ export default function ComptableDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div>
+        <div data-tour="accounting-reports">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Actions Rapides</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quickActions.map((action, index) => (

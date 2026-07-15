@@ -531,7 +531,7 @@ const AdminUniversityDashboard = () => {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in" data-tour="stats-dashboard">
           {statCards.map((stat, index) => (
             <div
               key={index}
@@ -670,7 +670,7 @@ const AdminUniversityDashboard = () => {
         </div>
 
         {/* Inscriptions en Attente */}
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 mb-8 animate-fade-in">
+        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 mb-8 animate-fade-in" data-tour="students-management">
           <div className="flex items-center gap-3 mb-6">
             <AlertCircle className="w-6 h-6 text-yellow-400" />
             <h2 className="text-2xl font-bold text-white">Inscriptions en Attente</h2>
@@ -756,7 +756,7 @@ const AdminUniversityDashboard = () => {
         </div>
 
         {/* Paiements en Retard */}
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 mb-8 animate-fade-in">
+        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 mb-8 animate-fade-in" data-tour="accounting">
           <div className="flex items-center gap-3 mb-6">
             <DollarSign className="w-6 h-6 text-red-400" />
             <h2 className="text-2xl font-bold text-white">Paiements en Retard</h2>

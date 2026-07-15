@@ -371,6 +371,7 @@ const ParentDashboard = () => {
               <button
                 onClick={() => navigate('/parent/absences')}
                 className="bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all text-left w-full group"
+                data-tour="children-absences"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 shadow-lg">
@@ -439,7 +440,7 @@ const ParentDashboard = () => {
             </div>
 
             {/* Notes par Cours */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl">
+            <div className="bg-white rounded-2xl p-6 shadow-xl" data-tour="children-grades">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                   <Award className="w-7 h-7 text-green-600" />
@@ -711,7 +712,7 @@ const ParentDashboard = () => {
             </div>
 
             {/* Paiements */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl">
+            <div className="bg-white rounded-2xl p-6 shadow-xl" data-tour="children-payments">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                 <CreditCard className="w-7 h-7 text-emerald-600" />
                 Paiements
