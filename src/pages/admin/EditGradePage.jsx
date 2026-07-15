@@ -14,6 +14,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ref, get, update } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { logAudit, AUDIT_ACTIONS } from '../../services/auditLogService';
 
 export default function EditGradePage() {
   const navigate = useNavigate();
@@ -142,6 +143,26 @@ export default function EditGradePage() {
       };
 
       await update(gradeRef, updates);
+
+      // Log d'audit
+      await logAudit(userProfile.universityId, AUDIT_ACTIONS.GRADE_UPDATE, currentUser.uid, {
+        targetType: 'grade',
+        targetId: gradeId,
+        targetName: `${grade.studentName} - ${formData.title}`,
+        oldValue: {
+          grade: grade.grade,
+          maxGrade: grade.maxGrade,
+          coefficient: grade.coefficient,
+          date: grade.date
+        },
+        newValue: {
+          grade: gradeValue,
+          maxGrade: maxGradeValue,
+          coefficient: coefficientValue,
+          date: new Date(formData.date).getTime()
+        },
+        additionalInfo: `Note modifiée de ${grade.grade}/${grade.maxGrade} à ${gradeValue}/${maxGradeValue}`
+      });
 
       setSuccess('✅ Note modifiée avec succès');
 

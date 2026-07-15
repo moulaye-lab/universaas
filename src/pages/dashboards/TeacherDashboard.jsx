@@ -454,7 +454,7 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Actions Rapides */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
           <button
             onClick={() => navigate('/teacher/grades/input')}
             className="glass p-6 rounded-2xl hover-lift group"
@@ -471,6 +471,21 @@ export default function TeacherDashboard() {
           </button>
 
           <button
+            onClick={() => navigate('/teacher/students-averages')}
+            className="glass p-6 rounded-2xl hover-lift group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-3 rounded-xl">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900">Moyennes Étudiants</p>
+                <p className="text-sm text-gray-600">Suivi en temps réel</p>
+              </div>
+            </div>
+          </button>
+
+          <button
             onClick={() => navigate('/teacher/attendance')}
             className="glass p-6 rounded-2xl hover-lift group"
           >
@@ -481,6 +496,36 @@ export default function TeacherDashboard() {
               <div className="text-left">
                 <p className="font-bold text-gray-900">Prendre les Présences</p>
                 <p className="text-sm text-gray-600">Enregistrer les absences</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/teacher/grades/history')}
+            className="glass p-6 rounded-2xl hover-lift group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-orange-500 to-red-600 p-3 rounded-xl">
+                <BarChart2 className="h-6 w-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900">Historique des Notes</p>
+                <p className="text-sm text-gray-600">Consulter et modifier</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/admin/library/resources')}
+            className="glass p-6 rounded-2xl hover-lift group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900">Mes Ressources</p>
+                <p className="text-sm text-gray-600">Gérer mes supports</p>
               </div>
             </div>
           </button>

@@ -16,9 +16,10 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, ChevronLeft } from 'lucide-react';
 import { exportToCSV } from '../../utils/gradesCalculator';
 import { generateReportCard, getMention, getSuccessRate } from '../../utils/pdfExporter';
+import LiveAverageDisplay from '../../components/LiveAverageDisplay';
 
 export default function ParentGradesPage() {
   const navigate = useNavigate();
@@ -370,9 +371,20 @@ export default function ParentGradesPage() {
           </div>
         )}
 
+        {/* Moyennes en Temps Réel */}
+        {selectedChild && (
+          <div className="mb-8">
+            <LiveAverageDisplay
+              universityId={selectedChild.universityId}
+              studentId={selectedChild.id}
+              showDetails={true}
+            />
+          </div>
+        )}
+
         {/* Statistiques */}
         {grades.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 hidden">
             {/* Moyenne générale */}
             <div className="glass rounded-2xl p-6">
               <p className="text-sm font-semibold text-gray-600 mb-2">Moyenne Générale</p>

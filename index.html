@@ -1,9 +1,21 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#4F46E5" />
+    <meta name="description" content="Plateforme de gestion universitaire multi-tenant" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="UniSaaS" />
+
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self';
                    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseio.com;
@@ -12,7 +24,7 @@
                    font-src 'self' data:;
                    frame-src https://*.firebaseio.com;
                    connect-src 'self' http://localhost:3001 https://identitytoolkit.googleapis.com https://*.firebaseio.com https://firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://*.cloudfunctions.net">
-    <title>university-saas</title>
+    <title>University SaaS - Gestion Universitaire</title>
   </head>
   <body>
     <div id="root"></div>

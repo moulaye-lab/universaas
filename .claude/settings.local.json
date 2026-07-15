@@ -60,7 +60,11 @@
       "Bash(kill 40077)",
       "Bash(echo \"Backend PID: $!\")",
       "Bash(xargs kill *)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(firebase projects:list)",
+      "Bash(gcloud services *)",
+      "Bash(pkill -f \"vite preview\")",
+      "Bash(bash /tmp/create-grades.sh)"
     ]
   }
 }

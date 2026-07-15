@@ -1,0 +1,43 @@
+rules_version = '2';
+
+/**
+ * Firebase Storage Security Rules
+ *
+ * IMPORTANT: Cette app utilise Realtime Database, pas Firestore.
+ * Les Storage Rules ne peuvent pas accéder au Realtime Database.
+ * Donc on valide uniquement l'authentification ici, et les rôles côté app.
+ */
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Justificatifs d'absence
+    match /justificatifs/{universityId}/{absenceId}/{filename} {
+      // WRITE: Utilisateur authentifié, validation du rôle côté app
+      allow write: if request.auth != null &&
+                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
+                      (request.resource.contentType.matches('image/.*') ||
+                       request.resource.contentType == 'application/pdf');
+
+      // READ: Utilisateur authentifié
+      allow read: if request.auth != null;
+    }
+
+    // Ressources pédagogiques de la bibliothèque (PDFs)
+    match /universities/{universityId}/library/{allPaths=**} {
+      // WRITE: Utilisateur authentifié, taille et type validés
+      allow write: if request.auth != null &&
+                      request.resource.size < 50 * 1024 * 1024 && // Max 50MB
+                      (request.resource.contentType == 'application/pdf' ||
+                       request.resource.contentType.matches('image/.*'));
+
+      // READ: Utilisateur authentifié
+      allow read: if request.auth != null;
+    }
+
+    // Règle par défaut : bloquer tout
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

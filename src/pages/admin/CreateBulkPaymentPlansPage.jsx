@@ -165,25 +165,95 @@ export default function CreateBulkPaymentPlansPage() {
   };
 
   const calculateTuitionForStudent = (student) => {
-    if (!tuitionFees) return 5000; // Valeur par défaut
+    if (!tuitionFees) {
+      console.warn('⚠️ Pas de tarifs configurés');
+      return 5000;
+    }
 
+    console.log('💰 Calcul tarif pour:', {
+      studentName: `${student.firstName} ${student.lastName}`,
+      fieldOfStudy: student.fieldOfStudy,
+      level: student.level,
+      tuitionFeesStructure: Object.keys(tuitionFees),
+      availableFields: tuitionFees.byFieldAndLevel ? Object.keys(tuitionFees.byFieldAndLevel) : []
+    });
+
+    // Nouveau format: byFieldAndLevel[filière][niveau]
+    if (tuitionFees.byFieldAndLevel && student.fieldOfStudy && student.level) {
+      // Normaliser le nom de la filière pour correspondre aux IDs
+      const fieldKey = student.fieldOfStudy.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Retirer accents
+        .replace(/\s+/g, '_'); // Remplacer espaces par underscores
+
+      // Mapper les variations possibles (anglais -> français)
+      const fieldMapping = {
+        // Français
+        'informatique': 'informatique',
+        'mathematiques': 'mathematiques',
+        'mathématiques': 'mathematiques',
+        'physique': 'physique',
+        'chimie': 'chimie',
+        'biologie': 'biologie',
+        'economie': 'economie',
+        'économie': 'economie',
+        'gestion': 'gestion',
+        'droit': 'droit',
+        'medecine': 'medecine',
+        'médecine': 'medecine',
+        'ingenerie': 'ingenerie',
+        'ingenierie': 'ingenerie',
+        'ingénierie': 'ingenerie',
+        'lettres': 'lettres',
+        'sciences_sociales': 'sciences_sociales',
+        // Anglais -> Français
+        'computer_science': 'informatique',
+        'mathematics': 'mathematiques',
+        'physics': 'physique',
+        'chemistry': 'chimie',
+        'biology': 'biologie',
+        'economics': 'economie',
+        'management': 'gestion',
+        'law': 'droit',
+        'medicine': 'medecine',
+        'engineering': 'ingenerie',
+        'literature': 'lettres',
+        'social_sciences': 'sciences_sociales'
+      };
+
+      const normalizedFieldKey = fieldMapping[fieldKey] || fieldKey;
+
+      console.log('🔍 Normalisation filière:', {
+        original: student.fieldOfStudy,
+        fieldKey,
+        normalizedFieldKey,
+        found: !!tuitionFees.byFieldAndLevel[normalizedFieldKey],
+        tarif: tuitionFees.byFieldAndLevel[normalizedFieldKey]?.[student.level]
+      });
+
+      if (tuitionFees.byFieldAndLevel[normalizedFieldKey]?.[student.level]) {
+        const amount = tuitionFees.byFieldAndLevel[normalizedFieldKey][student.level];
+        console.log('✅ Tarif trouvé:', amount);
+        return amount;
+      } else {
+        console.warn('⚠️ Pas de tarif pour', normalizedFieldKey, student.level);
+      }
+    }
+
+    // Fallback: ancien format (pour compatibilité)
     let amount = 0;
-
-    // Base : tarif du niveau
     if (tuitionFees.byLevel && student.level) {
       amount = tuitionFees.byLevel[student.level] || tuitionFees.defaultFee || 5000;
-    } else {
-      amount = tuitionFees.defaultFee || 5000;
+
+      // Ajustement par filière (ancien format)
+      if (tuitionFees.byField && student.fieldOfStudy) {
+        const fieldKey = student.fieldOfStudy.toLowerCase().replace(/\s+/g, '-');
+        const fieldAdjustment = tuitionFees.byField[fieldKey] || 0;
+        amount += fieldAdjustment;
+      }
+      return amount;
     }
 
-    // Ajustement par filière
-    if (tuitionFees.byField && student.fieldOfStudy) {
-      const fieldKey = student.fieldOfStudy.toLowerCase().replace(/\s+/g, '-');
-      const fieldAdjustment = tuitionFees.byField[fieldKey] || 0;
-      amount += fieldAdjustment;
-    }
-
-    return amount;
+    return tuitionFees.defaultFee || 5000;
   };
 
   const handlePreview = () => {

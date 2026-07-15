@@ -76,8 +76,16 @@ export default function ComposeMessagePage() {
       );
     }
 
+    // Si un destinataire est pré-sélectionné (réponse), toujours l'inclure
+    if (formData.to && !filtered.find(u => u.uid === formData.to)) {
+      const preselectedUser = users.find(u => u.uid === formData.to);
+      if (preselectedUser) {
+        filtered = [preselectedUser, ...filtered];
+      }
+    }
+
     setFilteredUsers(filtered);
-  }, [users, searchQuery, roleFilter]);
+  }, [users, searchQuery, roleFilter, formData.to]);
 
   const loadUsers = async () => {
     if (!universityId) return;
@@ -179,6 +187,17 @@ export default function ComposeMessagePage() {
         }
       }
 
+      // Dédupliquer par UID (garder la première occurrence)
+      const uniqueUsers = [];
+      const seenUIDs = new Set();
+
+      usersList.forEach(user => {
+        if (!seenUIDs.has(user.uid)) {
+          seenUIDs.add(user.uid);
+          uniqueUsers.push(user);
+        }
+      });
+
       // Trier par rôle puis par nom
       const roleOrder = {
         'admin_universite': 1,
@@ -188,13 +207,13 @@ export default function ComposeMessagePage() {
         'parent': 5
       };
 
-      usersList.sort((a, b) => {
+      uniqueUsers.sort((a, b) => {
         const roleCompare = roleOrder[a.role] - roleOrder[b.role];
         if (roleCompare !== 0) return roleCompare;
         return a.displayName.localeCompare(b.displayName);
       });
 
-      setUsers(usersList);
+      setUsers(uniqueUsers);
     } catch (error) {
       console.error('Erreur lors du chargement des utilisateurs:', error);
     }

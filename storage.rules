@@ -1,50 +1,26 @@
 rules_version = '2';
 
-/**
- * Firebase Storage Security Rules
- *
- * Règles de sécurité pour les fichiers uploadés (justificatifs d'absence)
- */
-
 service firebase.storage {
   match /b/{bucket}/o {
-
     // Justificatifs d'absence
     match /justificatifs/{universityId}/{absenceId}/{filename} {
-
-      // Fonction helper pour vérifier le rôle depuis Realtime Database
-      function isAdmin() {
-        return request.auth != null &&
-               firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin_universite' &&
-               firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.universityId == universityId;
-      }
-
-      function isStudent() {
-        return request.auth != null &&
-               firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'student';
-      }
-
-      function isStudentOwner() {
-        // Vérifier que l'étudiant est le propriétaire de cette absence
-        // Note: Nécessite d'avoir accès à Realtime Database depuis Storage Rules
-        // Alternative: utiliser metadata custom
-        return request.auth != null &&
-               resource.metadata.studentId == request.auth.uid;
-      }
-
-      // WRITE: Seul l'étudiant concerné peut uploader
-      // L'étudiant doit ajouter son UID dans les metadata lors de l'upload
       allow write: if request.auth != null &&
-                      isStudent() &&
-                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
-                      request.resource.contentType.matches('image/.*') ||
-                      request.resource.contentType == 'application/pdf';
-
-      // READ: Admin ou étudiant concerné
+                      request.resource.size < 5 * 1024 * 1024 &&
+                      (request.resource.contentType.matches('image/.*') ||
+                       request.resource.contentType == 'application/pdf');
       allow read: if request.auth != null;
     }
 
-    // Règle par défaut : bloquer tout
+    // Bibliothèque (PDFs et images)
+    match /universities/{universityId}/library/{allPaths=**} {
+      allow write: if request.auth != null &&
+                      request.resource.size < 50 * 1024 * 1024 &&
+                      (request.resource.contentType == 'application/pdf' ||
+                       request.resource.contentType.matches('image/.*'));
+      allow read: if request.auth != null;
+    }
+
+    // Bloquer tout le reste
     match /{allPaths=**} {
       allow read, write: if false;
     }

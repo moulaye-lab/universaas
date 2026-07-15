@@ -11,36 +11,39 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, get, set } from 'firebase/database';
+import { ref, get, set, update } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../hooks/useCurrency';
-import { ChevronLeft, DollarSign, Edit2, Save, X, Plus, TrendingUp } from 'lucide-react';
+import { ChevronLeft, DollarSign, Edit2, Save, X, Plus, TrendingUp, Users } from 'lucide-react';
 
 export default function TuitionFeesManagementPage() {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
-  const { symbol, formatAmount } = useCurrency();
+  const { currency, symbol, formatAmount } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
   const [tuitionFees, setTuitionFees] = useState(null);
-  const [editingLevel, setEditingLevel] = useState(null);
-  const [editingField, setEditingField] = useState(null);
+  const [editingCell, setEditingCell] = useState(null);
   const [editingSpecial, setEditingSpecial] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [applying, setApplying] = useState(false);
 
   const levels = ['L1', 'L2', 'L3', 'M1', 'M2'];
   const fields = [
-    { id: 'informatique', name: 'Informatique' },
-    { id: 'mathematiques', name: 'Mathématiques' },
-    { id: 'physique', name: 'Physique' },
-    { id: 'chimie', name: 'Chimie' },
-    { id: 'biologie', name: 'Biologie' },
-    { id: 'economie', name: 'Économie' },
-    { id: 'gestion', name: 'Gestion' },
-    { id: 'droit', name: 'Droit' },
-    { id: 'medecine', name: 'Médecine' }
+    { id: 'informatique', name: 'Informatique', icon: '💻' },
+    { id: 'mathematiques', name: 'Mathématiques', icon: '📐' },
+    { id: 'physique', name: 'Physique', icon: '⚛️' },
+    { id: 'chimie', name: 'Chimie', icon: '🧪' },
+    { id: 'biologie', name: 'Biologie', icon: '🧬' },
+    { id: 'economie', name: 'Économie', icon: '📊' },
+    { id: 'gestion', name: 'Gestion', icon: '💼' },
+    { id: 'droit', name: 'Droit', icon: '⚖️' },
+    { id: 'medecine', name: 'Médecine', icon: '🏥' },
+    { id: 'ingenerie', name: 'Ingénierie', icon: '⚙️' },
+    { id: 'lettres', name: 'Lettres', icon: '📚' },
+    { id: 'sciences_sociales', name: 'Sciences Sociales', icon: '🌍' }
   ];
 
   const specialTypes = [
@@ -73,24 +76,53 @@ export default function TuitionFeesManagementPage() {
       const feesSnap = await get(feesRef);
 
       if (feesSnap.exists()) {
-        setTuitionFees(feesSnap.val());
+        const data = feesSnap.val();
+
+        // Migration: convertir ancien format vers nouveau format
+        if (data.byLevel && !data.byFieldAndLevel) {
+          const migrated = {
+            byFieldAndLevel: {},
+            special: data.special || {},
+            currency: data.currency || symbol || 'EUR',
+            createdAt: data.createdAt || Date.now(),
+            createdBy: data.createdBy || userProfile.uid
+          };
+
+          // Créer la matrice filière x niveau
+          fields.forEach(field => {
+            migrated.byFieldAndLevel[field.id] = {};
+            levels.forEach(level => {
+              const baseFee = data.byLevel[level] || 0;
+              const fieldAdjustment = data.byField?.[field.id] || 0;
+              migrated.byFieldAndLevel[field.id][level] = baseFee + fieldAdjustment;
+            });
+          });
+
+          setTuitionFees(migrated);
+        } else {
+          setTuitionFees(data);
+        }
       } else {
         // Initialiser avec valeurs par défaut
         const defaultFees = {
-          defaultFee: 5000,
-          byLevel: {
-            L1: 4500,
-            L2: 5000,
-            L3: 5500,
-            M1: 7000,
-            M2: 8000
-          },
-          byField: {},
+          byFieldAndLevel: {},
           special: {},
           currency: symbol || 'EUR',
           createdAt: Date.now(),
           createdBy: userProfile.uid
         };
+
+        // Initialiser toutes les filières avec des valeurs par défaut
+        fields.forEach(field => {
+          defaultFees.byFieldAndLevel[field.id] = {
+            L1: 4500,
+            L2: 5000,
+            L3: 5500,
+            M1: 7000,
+            M2: 8000
+          };
+        });
+
         setTuitionFees(defaultFees);
       }
 
@@ -124,33 +156,29 @@ export default function TuitionFeesManagementPage() {
     }
   };
 
-  const updateLevelFee = (level, value) => {
+  const updateFee = (fieldId, level, value) => {
     setTuitionFees({
       ...tuitionFees,
-      byLevel: {
-        ...tuitionFees.byLevel,
-        [level]: parseFloat(value) || 0
+      byFieldAndLevel: {
+        ...tuitionFees.byFieldAndLevel,
+        [fieldId]: {
+          ...tuitionFees.byFieldAndLevel[fieldId],
+          [level]: parseFloat(value) || 0
+        }
       }
     });
   };
 
-  const updateFieldAdjustment = (fieldId, value) => {
-    setTuitionFees({
-      ...tuitionFees,
-      byField: {
-        ...tuitionFees.byField,
-        [fieldId]: parseFloat(value) || 0
+  const copyFeesToLevel = (sourceLevel, targetLevel) => {
+    const updated = { ...tuitionFees };
+    fields.forEach(field => {
+      const sourceFee = updated.byFieldAndLevel[field.id]?.[sourceLevel] || 0;
+      if (!updated.byFieldAndLevel[field.id]) {
+        updated.byFieldAndLevel[field.id] = {};
       }
+      updated.byFieldAndLevel[field.id][targetLevel] = sourceFee;
     });
-  };
-
-  const removeFieldAdjustment = (fieldId) => {
-    const newByField = { ...tuitionFees.byField };
-    delete newByField[fieldId];
-    setTuitionFees({
-      ...tuitionFees,
-      byField: newByField
-    });
+    setTuitionFees(updated);
   };
 
   const updateSpecialRate = (specialId, value, type = 'percentage') => {
@@ -179,12 +207,7 @@ export default function TuitionFeesManagementPage() {
     if (!tuitionFees) return 0;
 
     // Exemple: L1 Informatique Boursier
-    let fee = tuitionFees.byLevel?.L1 || 0;
-
-    // Ajout filière
-    if (tuitionFees.byField?.informatique) {
-      fee += tuitionFees.byField.informatique;
-    }
+    let fee = tuitionFees.byFieldAndLevel?.informatique?.L1 || 0;
 
     // Ajustement boursier
     if (tuitionFees.special?.boursier) {
@@ -197,6 +220,147 @@ export default function TuitionFeesManagementPage() {
     }
 
     return fee.toFixed(2);
+  };
+
+  const applyToAllStudents = async () => {
+    if (!confirm('Appliquer ces tarifs à TOUS les étudiants selon leur filière et niveau ?\n\nCela va mettre à jour tous les plans de paiement automatiquement.')) {
+      return;
+    }
+
+    setApplying(true);
+
+    try {
+      // Charger tous les étudiants
+      const studentsRef = ref(database, `universities/${userProfile.universityId}/students`);
+      const studentsSnap = await get(studentsRef);
+
+      if (!studentsSnap.exists()) {
+        alert('Aucun étudiant trouvé');
+        setApplying(false);
+        return;
+      }
+
+      const students = Object.entries(studentsSnap.val()).map(([id, data]) => ({ id, ...data }));
+      let updated = 0;
+      let errors = 0;
+
+      for (const student of students) {
+        try {
+          // Calculer le montant selon filière et niveau
+          let totalAmount = 0;
+
+          if (tuitionFees.byFieldAndLevel && student.fieldOfStudy && student.level) {
+            const fieldKey = student.fieldOfStudy.toLowerCase()
+              .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+              .replace(/\s+/g, '_');
+
+            const fieldMapping = {
+              'computer-science': 'informatique',
+              'computer_science': 'informatique',
+              'mathematics': 'mathematiques',
+              'physics': 'physique',
+              'chemistry': 'chimie',
+              'biology': 'biologie',
+              'literature': 'lettres',
+              'history': 'lettres',
+              'geography': 'sciences_sociales',
+              'languages': 'lettres',
+              'economics': 'economie',
+              'management': 'gestion',
+              'law': 'droit',
+              'medicine': 'medecine',
+              'engineering': 'ingenerie',
+              'informatique': 'informatique',
+              'mathematiques': 'mathematiques',
+              'physique': 'physique',
+              'chimie': 'chimie',
+              'biologie': 'biologie',
+              'economie': 'economie',
+              'gestion': 'gestion',
+              'droit': 'droit',
+              'medecine': 'medecine',
+              'ingenerie': 'ingenerie',
+              'lettres': 'lettres',
+              'sciences_sociales': 'sciences_sociales'
+            };
+
+            const normalizedFieldKey = fieldMapping[fieldKey] || fieldKey;
+
+            if (tuitionFees.byFieldAndLevel[normalizedFieldKey]?.[student.level]) {
+              totalAmount = tuitionFees.byFieldAndLevel[normalizedFieldKey][student.level];
+            }
+          }
+
+          if (totalAmount === 0) {
+            console.warn(`Pas de tarif pour ${student.firstName} ${student.lastName} (${student.fieldOfStudy} ${student.level})`);
+            continue;
+          }
+
+          // Générer les échéances (3 échéances tous les 3 mois)
+          const installmentAmount = Math.floor(totalAmount / 3);
+          const remainder = totalAmount - (installmentAmount * 3);
+          const startDate = new Date();
+          const installments = {};
+
+          for (let i = 0; i < 3; i++) {
+            const dueDate = new Date(startDate);
+            dueDate.setMonth(dueDate.getMonth() + (i * 3));
+
+            installments[i] = {
+              amount: i === 0 ? installmentAmount + remainder : installmentAmount,
+              dueDate: dueDate.getTime(),
+              status: 'pending',
+              installmentNumber: i + 1
+            };
+          }
+
+          // Charger le plan existant pour garder paidAmount et autres champs
+          const paymentRef = ref(database, `universities/${userProfile.universityId}/payments/${student.id}`);
+          const paymentSnap = await get(paymentRef);
+
+          const existingPlan = paymentSnap.exists() ? paymentSnap.val() : {};
+          const existingPaidAmount = existingPlan.paidAmount || 0;
+
+          // Construire l'objet de mise à jour
+          const updateData = {
+            studentId: student.id,
+            totalAmount,
+            paidAmount: existingPaidAmount,
+            installments,
+            currency: currency || 'EUR',
+            academicYear,
+            status: existingPaidAmount >= totalAmount ? 'completed' : 'active',
+            updatedAt: Date.now(),
+            updatedBy: userProfile.uid
+          };
+
+          // Si createdAt n'existe pas, l'ajouter
+          if (!existingPlan.createdAt) {
+            updateData.createdAt = Date.now();
+          }
+
+          // Si createdBy n'existe pas, l'ajouter
+          if (!existingPlan.createdBy) {
+            updateData.createdBy = userProfile.uid;
+          }
+
+          // Utiliser set() pour garantir tous les champs
+          await set(paymentRef, updateData);
+
+          updated++;
+        } catch (err) {
+          console.error(`Erreur pour ${student.firstName} ${student.lastName}:`, err);
+          errors++;
+        }
+      }
+
+      alert(`✅ Application terminée !\n\n${updated} plan(s) mis à jour\n${errors} erreur(s)`);
+      setApplying(false);
+    } catch (err) {
+      console.error('Erreur application tarifs:', err);
+      alert('Erreur: ' + err.message);
+      setApplying(false);
+    }
   };
 
   if (loading) {
@@ -227,14 +391,24 @@ export default function TuitionFeesManagementPage() {
               <p className="text-gray-600 mt-1">Configuration des tarifs par année académique</p>
             </div>
           </div>
-          <button
-            onClick={saveTuitionFees}
-            disabled={saving}
-            className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition flex items-center gap-2 font-semibold disabled:bg-gray-300"
-          >
-            <Save className="h-5 w-5" />
-            {saving ? 'Enregistrement...' : 'Enregistrer'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={saveTuitionFees}
+              disabled={saving}
+              className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition flex items-center gap-2 font-semibold disabled:bg-gray-300"
+            >
+              <Save className="h-5 w-5" />
+              {saving ? 'Enregistrement...' : 'Enregistrer'}
+            </button>
+            <button
+              onClick={applyToAllStudents}
+              disabled={applying || !tuitionFees}
+              className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition flex items-center gap-2 font-semibold disabled:bg-gray-300"
+            >
+              <Users className="h-5 w-5" />
+              {applying ? 'Application en cours...' : 'Appliquer aux étudiants'}
+            </button>
+          </div>
         </div>
 
         {/* Academic Year Selector */}
@@ -254,145 +428,127 @@ export default function TuitionFeesManagementPage() {
           </select>
         </div>
 
-        {/* Tarifs par Niveau */}
+        {/* Tableau Filière x Niveau */}
         <div className="bg-white rounded-2xl p-6 shadow-lg mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-blue-600" />
-            📊 Tarifs par Niveau
+            <DollarSign className="h-6 w-6 text-blue-600" />
+            📊 Frais de Scolarité par Filière et Niveau
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {levels.map(level => (
-              <div key={level} className="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-lg font-bold text-gray-900">{level}</span>
-                  {editingLevel === level ? (
-                    <button
-                      onClick={() => setEditingLevel(null)}
-                      className="text-green-600 hover:text-green-700"
-                    >
-                      <Save className="h-5 w-5" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setEditingLevel(level)}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      <Edit2 className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-                {editingLevel === level ? (
-                  <input
-                    type="number"
-                    value={tuitionFees.byLevel?.[level] || 0}
-                    onChange={(e) => updateLevelFee(level, e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border-2 border-blue-300 focus:border-blue-500"
-                    step="100"
-                  />
-                ) : (
-                  <p className="text-3xl font-black text-blue-600">
-                    {tuitionFees.byLevel?.[level] || 0} {symbol}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Supplément par Filière */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <DollarSign className="h-6 w-6 text-green-600" />
-              📚 Supplément par Filière (Optionnel)
-            </h2>
-            <button
-              onClick={() => setEditingField('new')}
-              className="px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition flex items-center gap-2 font-semibold text-sm"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter
-            </button>
-          </div>
-
           <p className="text-sm text-gray-600 mb-4">
-            💡 Montant à ajouter (+) ou soustraire (-) au tarif de base selon la filière. Ex: Informatique +500€, Médecine +2000€
+            💡 Cliquez sur un montant pour le modifier. Chaque filière peut avoir des tarifs différents selon le niveau.
           </p>
 
-          <div className="space-y-3">
-            {Object.entries(tuitionFees.byField || {}).map(([fieldId, value]) => {
-              const field = fields.find(f => f.id === fieldId);
-              return (
-                <div key={fieldId} className="p-4 bg-green-50 rounded-xl border border-green-200 flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900">{field?.name || fieldId}</p>
-                    {editingField === fieldId ? (
-                      <input
-                        type="number"
-                        value={value}
-                        onChange={(e) => updateFieldAdjustment(fieldId, e.target.value)}
-                        className="w-32 px-3 py-1 rounded-lg border-2 border-green-300 focus:border-green-500 mt-2"
-                        step="50"
-                      />
-                    ) : (
-                      <p className="text-2xl font-bold text-green-600">
-                        {value >= 0 ? '+' : ''}{value} {symbol}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {editingField === fieldId ? (
-                      <button
-                        onClick={() => setEditingField(null)}
-                        className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
-                      >
-                        <Save className="h-5 w-5" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setEditingField(fieldId)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
-                      >
-                        <Edit2 className="h-5 w-5" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => removeFieldAdjustment(fieldId)}
-                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {editingField === 'new' && (
-              <div className="p-4 bg-gray-50 rounded-xl border-2 border-gray-300">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Filière</label>
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      updateFieldAdjustment(e.target.value, 0);
-                      setEditingField(e.target.value);
-                    }
-                  }}
-                  className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  {fields.filter(f => !tuitionFees.byField?.[f.id]).map(field => (
-                    <option key={field.id} value={field.id}>{field.name}</option>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gradient-to-r from-blue-50 to-purple-50">
+                  <th className="p-3 text-left font-bold text-gray-900 border-b-2 border-gray-300 sticky left-0 bg-blue-50 z-10">
+                    Filière
+                  </th>
+                  {levels.map(level => (
+                    <th key={level} className="p-3 text-center font-bold text-gray-900 border-b-2 border-gray-300 min-w-[120px]">
+                      {level}
+                    </th>
                   ))}
-                </select>
-                <button
-                  onClick={() => setEditingField(null)}
-                  className="mt-2 text-sm text-gray-600 hover:text-gray-800"
-                >
-                  Annuler
-                </button>
-              </div>
-            )}
+                </tr>
+              </thead>
+              <tbody>
+                {fields.map((field, fieldIndex) => (
+                  <tr key={field.id} className={`hover:bg-blue-50 transition ${fieldIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                    <td className="p-3 font-semibold text-gray-900 border-b border-gray-200 sticky left-0 bg-inherit z-10">
+                      <span className="flex items-center gap-2">
+                        <span className="text-xl">{field.icon}</span>
+                        {field.name}
+                      </span>
+                    </td>
+                    {levels.map(level => {
+                      const cellKey = `${field.id}-${level}`;
+                      const value = tuitionFees.byFieldAndLevel?.[field.id]?.[level] || 0;
+                      const isEditing = editingCell === cellKey;
+
+                      return (
+                        <td key={level} className="p-3 text-center border-b border-gray-200">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                value={value}
+                                onChange={(e) => updateFee(field.id, level, e.target.value)}
+                                className="w-full px-2 py-1 rounded-lg border-2 border-blue-400 focus:border-blue-600 text-center font-semibold"
+                                step="100"
+                                autoFocus
+                                onBlur={() => setEditingCell(null)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') setEditingCell(null);
+                                  if (e.key === 'Escape') setEditingCell(null);
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setEditingCell(cellKey)}
+                              className="w-full px-3 py-2 rounded-lg hover:bg-blue-100 transition text-center group"
+                            >
+                              <span className="font-bold text-blue-600 text-lg block">
+                                {value.toLocaleString()} {symbol}
+                              </span>
+                              <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition">
+                                Cliquer pour modifier
+                              </span>
+                            </button>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <p className="text-sm text-gray-700 font-semibold mb-2">🎯 Raccourcis</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  if (confirm('Appliquer les mêmes tarifs à tous les niveaux pour toutes les filières ?')) {
+                    const baseFee = tuitionFees.byFieldAndLevel?.informatique?.L1 || 5000;
+                    const updated = { ...tuitionFees };
+                    fields.forEach(field => {
+                      updated.byFieldAndLevel[field.id] = {};
+                      levels.forEach(level => {
+                        updated.byFieldAndLevel[field.id][level] = baseFee;
+                      });
+                    });
+                    setTuitionFees(updated);
+                  }
+                }}
+                className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition"
+              >
+                Uniformiser tous les tarifs
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('Augmenter tous les tarifs de 10% ?')) {
+                    const updated = { ...tuitionFees };
+                    fields.forEach(field => {
+                      levels.forEach(level => {
+                        const current = updated.byFieldAndLevel[field.id]?.[level] || 0;
+                        if (!updated.byFieldAndLevel[field.id]) {
+                          updated.byFieldAndLevel[field.id] = {};
+                        }
+                        updated.byFieldAndLevel[field.id][level] = Math.round(current * 1.1);
+                      });
+                    });
+                    setTuitionFees(updated);
+                  }
+                }}
+                className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition"
+              >
+                +10% sur tous
+              </button>
+            </div>
           </div>
         </div>
 
@@ -473,17 +629,9 @@ export default function TuitionFeesManagementPage() {
           </p>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-700">Tarif de base L1 :</span>
-              <span className="font-semibold">{tuitionFees.byLevel?.L1 || 0} {symbol}</span>
+              <span className="text-gray-700">Tarif L1 Informatique :</span>
+              <span className="font-semibold">{tuitionFees.byFieldAndLevel?.informatique?.L1 || 0} {symbol}</span>
             </div>
-            {tuitionFees.byField?.informatique && (
-              <div className="flex justify-between">
-                <span className="text-gray-700">Supplément Informatique :</span>
-                <span className="font-semibold text-green-600">
-                  {tuitionFees.byField.informatique >= 0 ? '+' : ''}{tuitionFees.byField.informatique} {symbol}
-                </span>
-              </div>
-            )}
             {tuitionFees.special?.boursier && (
               <div className="flex justify-between">
                 <span className="text-gray-700">Réduction Boursier :</span>

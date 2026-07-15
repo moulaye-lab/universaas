@@ -43,6 +43,7 @@ import ManageStudentsPage from './pages/admin/ManageStudentsPage';
 import ManageTeachersPage from './pages/admin/ManageTeachersPage';
 import ManageCoursesPage from './pages/admin/ManageCoursesPage';
 import GradesInputPage from './pages/teacher/GradesInputPage';
+import GradesHistoryPage from './pages/teacher/GradesHistoryPage';
 import TeacherSchedulePage from './pages/teacher/TeacherSchedulePage';
 import AttendancePage from './pages/teacher/AttendancePage';
 import MyGradesPage from './pages/student/MyGradesPage';
@@ -60,6 +61,7 @@ import MigratePaymentsPage from './pages/admin/MigratePaymentsPage';
 import MigrateCurrencyPage from './pages/admin/MigrateCurrencyPage';
 import TuitionFeesManagementPage from './pages/admin/TuitionFeesManagementPage';
 import CreateBulkPaymentPlansPage from './pages/admin/CreateBulkPaymentPlansPage';
+import MigratePaymentPlansPage from './pages/admin/MigratePaymentPlansPage';
 import CreatePaymentPlanPage from './pages/admin/CreatePaymentPlanPage';
 import AccountingDashboardPage from './pages/admin/AccountingDashboardPage';
 import TransactionJournalPage from './pages/admin/TransactionJournalPage';
@@ -81,6 +83,19 @@ import MessageBatchDetailPage from './pages/messages/MessageBatchDetailPage';
 import StudentSchedulePage from './pages/student/StudentSchedulePage';
 import SubscriptionPlansPage from './pages/admin/SubscriptionPlansPage';
 import AcademicPeriodsManagementPage from './pages/admin/AcademicPeriodsManagementPage';
+import LibraryResourcesPage from './pages/admin/LibraryResourcesPage';
+import LibraryBooksPage from './pages/admin/LibraryBooksPage';
+import LibraryLoansPage from './pages/admin/LibraryLoansPage';
+import LibraryManagementPage from './pages/admin/LibraryManagementPage';
+import StudentLibraryPage from './pages/student/StudentLibraryPage';
+import StudentCalendarPage from './pages/student/StudentCalendarPage';
+import CalendarManagementPage from './pages/admin/CalendarManagementPage';
+import AcademicPromotionPage from './pages/admin/AcademicPromotionPage';
+import AcademicMenuPage from './pages/admin/AcademicMenuPage';
+import FinancesMenuPage from './pages/admin/FinancesMenuPage';
+import AcademicYearConfigPage from './pages/admin/AcademicYearConfigPage';
+import TeacherStudentsAveragesPage from './pages/teacher/TeacherStudentsAveragesPage';
+import AuditLogsPage from './pages/admin/AuditLogsPage';
 import './App.css';
 
 function App() {
@@ -366,6 +381,14 @@ function App() {
             }
           />
           <Route
+            path="/admin/payments/migrate"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <MigratePaymentPlansPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/payments/create"
             element={
               <ProtectedRoute allowedRoles={['admin_universite']}>
@@ -453,6 +476,48 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Library Routes */}
+          <Route
+            path="/admin/library/management"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <LibraryManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/library/resources"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite', 'teacher']}>
+                <LibraryResourcesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/library/books"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <LibraryBooksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/library/loans"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <LibraryLoansPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/library"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <StudentLibraryPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/import"
             element={
@@ -474,6 +539,54 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin_universite']}>
                 <AcademicPeriodsManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/calendar"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <CalendarManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/academic-promotion"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <AcademicPromotionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/academic-menu"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <AcademicMenuPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/finances-menu"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <FinancesMenuPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/academic-year-config"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <AcademicYearConfigPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/audit-logs"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <AuditLogsPage />
               </ProtectedRoute>
             }
           />
@@ -502,6 +615,14 @@ function App() {
             }
           />
           <Route
+            path="/teacher/grades/history"
+            element={
+              <ProtectedRoute allowedRoles={['teacher']}>
+                <GradesHistoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/teacher/schedule"
             element={
               <ProtectedRoute allowedRoles={['teacher']}>
@@ -514,6 +635,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['teacher']}>
                 <AttendancePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/students-averages"
+            element={
+              <ProtectedRoute allowedRoles={['teacher']}>
+                <TeacherStudentsAveragesPage />
               </ProtectedRoute>
             }
           />
@@ -554,6 +683,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['student']}>
                 <StudentSchedulePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/calendar"
+            element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <StudentCalendarPage />
               </ProtectedRoute>
             }
           />

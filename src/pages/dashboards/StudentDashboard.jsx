@@ -5,6 +5,7 @@ import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOverallAverage, getMention, getAverageColor, exportToCSV } from '../../utils/gradesCalculator';
 import { generateBulletinPDF } from '../../utils/bulletinPDFGenerator';
+import LiveAverageDisplay from '../../components/LiveAverageDisplay';
 import {
   TrendingUp,
   BookOpen,
@@ -17,7 +18,8 @@ import {
   LogOut,
   Eye,
   Sparkles,
-  FilePlus
+  FilePlus,
+  Calendar
 } from 'lucide-react';
 
 const StudentDashboard = () => {
@@ -308,6 +310,17 @@ const StudentDashboard = () => {
           <p className="text-gray-600">Voici un apercu de votre progression academique</p>
         </div>
 
+        {/* Moyennes en Temps Réel */}
+        {userProfile?.universityId && (studentData?.id || userProfile.uid) && (
+          <div className="mb-8 animate-slide-up">
+            <LiveAverageDisplay
+              universityId={userProfile.universityId}
+              studentId={studentData?.id || userProfile.uid}
+              showDetails={false}
+            />
+          </div>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Average Grade */}
@@ -419,6 +432,36 @@ const StudentDashboard = () => {
               <div className="text-left">
                 <p className="font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">Mes Paiements</p>
                 <p className="text-sm text-gray-600">Frais de scolarité</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/student/library')}
+            className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">Bibliothèque</p>
+                <p className="text-sm text-gray-600">Ressources & Livres</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/student/calendar')}
+            className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">Calendrier</p>
+                <p className="text-sm text-gray-600">Événements & Dates</p>
               </div>
             </div>
           </button>

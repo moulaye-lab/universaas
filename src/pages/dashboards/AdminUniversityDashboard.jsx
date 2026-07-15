@@ -17,12 +17,15 @@ import {
   List,
   Building2,
   Settings,
-  UsersIcon
+  UsersIcon,
+  GraduationCap,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { database } from '../../config/firebase';
 import { ref, get, onValue, update } from 'firebase/database';
 import CreateParentModal from '../../components/CreateParentModal';
+import { getAuditStats } from '../../services/auditLogService';
 
 const AdminUniversityDashboard = () => {
   const navigate = useNavigate();
@@ -47,6 +50,7 @@ const AdminUniversityDashboard = () => {
   const [latePayments, setLatePayments] = useState([]);
   const [showParentModal, setShowParentModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [auditStats, setAuditStats] = useState(null);
 
   useEffect(() => {
     // console.log('📊 AdminDashboard useEffect:', { universityId: userProfile?.universityId });
@@ -75,6 +79,9 @@ const AdminUniversityDashboard = () => {
         // console.log('🔄 AdminDashboard: Lancement loadDashboardData...');
         cleanup = loadDashboardData(userProfile.universityId);
         // console.log('✅ AdminDashboard: loadDashboardData terminé');
+
+        // Charger stats audit
+        loadAuditStats(userProfile.universityId);
 
         // Loading terminé
         setLoading(false);
@@ -263,6 +270,15 @@ const AdminUniversityDashboard = () => {
     }
   };
 
+  const loadAuditStats = async (universityId) => {
+    try {
+      const stats = await getAuditStats(universityId, 'week');
+      setAuditStats(stats);
+    } catch (error) {
+      console.error('Erreur chargement stats audit:', error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -288,6 +304,21 @@ const AdminUniversityDashboard = () => {
         break;
       case 'parents-list':
         navigate('/admin/parents');
+        break;
+      case 'library-management':
+        navigate('/admin/library/management');
+        break;
+      case 'calendar-management':
+        navigate('/admin/calendar');
+        break;
+      case 'academic-promotion':
+        navigate('/admin/academic-promotion');
+        break;
+      case 'academic-menu':
+        navigate('/admin/academic-menu');
+        break;
+      case 'finances-menu':
+        navigate('/admin/finances-menu');
         break;
       case 'rooms-management':
         navigate('/admin/rooms');
@@ -315,6 +346,9 @@ const AdminUniversityDashboard = () => {
         break;
       case 'settings':
         navigate('/admin/settings');
+        break;
+      case 'audit-logs':
+        navigate('/admin/audit-logs');
         break;
       case 'close-year':
         if (confirm('Êtes-vous sûr de vouloir clôturer l\'année académique ?')) {
@@ -368,81 +402,32 @@ const AdminUniversityDashboard = () => {
 
   const quickActions = [
     {
-      title: 'Gestion Classes',
-      icon: Users,
-      action: 'manage-classes',
-      gradient: 'from-orange-500 to-orange-600',
-      description: 'Créer et gérer les classes'
-    },
-    {
-      title: 'Gestion Étudiants',
-      icon: Users,
-      action: 'manage-students',
-      gradient: 'from-blue-500 to-blue-600',
-      description: 'Créer et gérer les étudiants'
-    },
-    {
-      title: 'Gestion Parents',
-      icon: UsersIcon,
-      action: 'parents-list',
-      gradient: 'from-cyan-500 to-cyan-600',
-      description: 'Gérer les comptes parents'
-    },
-    {
-      title: 'Gestion Enseignants',
-      icon: UserCheck,
-      action: 'manage-teachers',
-      gradient: 'from-green-500 to-green-600',
-      description: 'Créer et gérer les enseignants'
-    },
-    {
-      title: 'Gestion des Cours',
+      title: '🎓 Gestion Académique',
       icon: BookOpen,
-      action: 'manage-courses',
-      gradient: 'from-purple-500 to-purple-600',
-      description: 'Créer et gérer les cours'
+      action: 'academic-menu',
+      gradient: 'from-blue-500 to-indigo-600',
+      description: 'Étudiants, enseignants, classes, notes, calendrier'
     },
     {
-      title: 'Gestion des Salles',
-      icon: Building2,
-      action: 'rooms-management',
-      gradient: 'from-pink-500 to-pink-600',
-      description: 'Gérer les salles de cours'
-    },
-    {
-      title: 'Emplois du Temps',
-      icon: Calendar,
-      action: 'schedules-management',
-      gradient: 'from-violet-500 to-violet-600',
-      description: 'Configurer les emplois du temps'
-    },
-    {
-      title: 'Données Académiques',
-      icon: Settings,
-      action: 'academic-data',
-      gradient: 'from-indigo-500 to-indigo-600',
-      description: 'Gérer les niveaux et semestres'
-    },
-    {
-      title: 'Absences & Retards',
-      icon: AlertCircle,
-      action: 'absences-management',
-      gradient: 'from-red-500 to-orange-600',
-      description: 'Gérer et valider les justificatifs'
-    },
-    {
-      title: 'Paiements Étudiants',
+      title: '💰 Gestion Financière',
       icon: DollarSign,
-      action: 'payments-management',
-      gradient: 'from-emerald-500 to-emerald-600',
-      description: 'Gérer les plans de paiement'
+      action: 'finances-menu',
+      gradient: 'from-green-500 to-emerald-600',
+      description: 'Comptabilité, paiements, recettes, dépenses'
     },
     {
-      title: 'Tarifs de Scolarité',
-      icon: DollarSign,
-      action: 'tuition-fees',
-      gradient: 'from-teal-500 to-teal-600',
-      description: 'Configurer les frais par niveau'
+      title: 'Messagerie',
+      icon: FileText,
+      action: 'messages',
+      gradient: 'from-purple-500 to-pink-600',
+      description: 'Communication interne'
+    },
+    {
+      title: 'Bibliothèque',
+      icon: BookOpen,
+      action: 'library-management',
+      gradient: 'from-indigo-500 to-purple-600',
+      description: 'Livres, ressources et emprunts'
     },
     {
       title: 'Tableau de Bord Financier',
@@ -463,7 +448,7 @@ const AdminUniversityDashboard = () => {
       icon: Settings,
       action: 'settings',
       gradient: 'from-gray-500 to-slate-600',
-      description: 'Devise et configuration'
+      description: 'Configuration de l\'université'
     }
   ];
 
@@ -502,6 +487,49 @@ const AdminUniversityDashboard = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Carte Logs d'Audit */}
+        {auditStats && (
+          <button
+            onClick={() => navigate('/admin/audit-logs')}
+            className="w-full backdrop-blur-xl bg-gradient-to-r from-red-500/20 to-pink-500/20 border-2 border-red-400/30 rounded-3xl p-6 mb-8 hover:from-red-500/30 hover:to-pink-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 shadow-lg group-hover:scale-110 transition-transform">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-2xl font-bold text-white mb-1">🛡️ Logs d'Audit - Traçabilité</h3>
+                  <p className="text-red-200">Historique immuable des actions critiques (7 derniers jours)</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-4xl font-black text-white">{auditStats.total}</p>
+                <p className="text-sm text-red-200">actions tracées</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 mt-6">
+              <div className="bg-white/10 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-white">{Object.keys(auditStats.byAction).length}</p>
+                <p className="text-xs text-red-200">types d'actions</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-white">{Object.keys(auditStats.byUser).length}</p>
+                <p className="text-xs text-red-200">utilisateurs actifs</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 text-center">
+                <p className="text-2xl font-bold text-white">
+                  {Object.keys(auditStats.byDay).length > 0
+                    ? Math.round(auditStats.total / Object.keys(auditStats.byDay).length)
+                    : 0
+                  }
+                </p>
+                <p className="text-xs text-red-200">actions / jour</p>
+              </div>
+            </div>
+          </button>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in">
           {statCards.map((stat, index) => (

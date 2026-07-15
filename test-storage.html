@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Firebase Storage Upload</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Firebase Storage Upload</h1>
+
+    <div>
+        <input type="file" id="fileInput">
+        <button onclick="testUpload()">Upload Test</button>
+    </div>
+
+    <div id="logs"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvQF_W8vY9xGxqHkKx5Kx5Kx5Kx5Kx5Kx",
+            authDomain: "university-saas-7b31e.firebaseapp.com",
+            databaseURL: "https://university-saas-7b31e-default-rtdb.firebaseio.com",
+            projectId: "university-saas-7b31e",
+            storageBucket: "university-saas-7b31e.firebasestorage.app",
+            messagingSenderId: "965564251051",
+            appId: "1:965564251051:web:abc123"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const auth = getAuth(app);
+
+        function log(message, type = 'log') {
+            const div = document.createElement('div');
+            div.className = 'log ' + type;
+            div.innerText = new Date().toLocaleTimeString() + ' - ' + message;
+            document.getElementById('logs').appendChild(div);
+            console.log(message);
+        }
+
+        window.testUpload = async function() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                log('❌ Aucun fichier sélectionné', 'error');
+                return;
+            }
+
+            log('📁 Fichier: ' + file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)');
+            log('👤 Auth: ' + (auth.currentUser ? auth.currentUser.uid : 'NON AUTHENTIFIÉ'));
+
+            if (!auth.currentUser) {
+                log('⚠️ Non authentifié - upload peut échouer', 'error');
+            }
+
+            try {
+                const storageRef = ref(storage, `test/${Date.now()}_${file.name}`);
+                log('📤 Upload vers: ' + storageRef.fullPath);
+
+                const uploadTask = uploadBytesResumable(storageRef, file);
+
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        log('📊 Progression: ' + Math.round(progress) + '%');
+                    },
+                    (error) => {
+                        log('❌ ERREUR: ' + error.code + ' - ' + error.message, 'error');
+                        log('Détails: ' + JSON.stringify(error), 'error');
+                    },
+                    async () => {
+                        try {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            log('✅ SUCCÈS! URL: ' + downloadURL, 'success');
+                        } catch (error) {
+                            log('❌ Erreur getDownloadURL: ' + error.message, 'error');
+                        }
+                    }
+                );
+            } catch (error) {
+                log('❌ Exception: ' + error.message, 'error');
+            }
+        }
+
+        log('✅ Firebase initialisé');
+        log('Storage bucket: ' + storage.app.options.storageBucket);
+    </script>
+</body>
+</html>

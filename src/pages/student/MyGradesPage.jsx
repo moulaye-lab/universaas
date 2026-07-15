@@ -13,8 +13,9 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Download } from 'lucide-react';
+import { Download, ChevronLeft } from 'lucide-react';
 import { generateReportCard, getMention, getSuccessRate } from '../../utils/pdfExporter';
+import LiveAverageDisplay from '../../components/LiveAverageDisplay';
 
 export default function MyGradesPage() {
   const navigate = useNavigate();
@@ -261,31 +262,14 @@ export default function MyGradesPage() {
           </div>
         )}
 
-        {/* Moyennes */}
-        {grades.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Moyenne générale */}
-            <div className="glass rounded-2xl p-6">
-              <p className="text-sm font-semibold text-gray-600 mb-2">Moyenne Générale</p>
-              <p className={`text-4xl font-black ${getGradeColor(parseFloat(generalAverage), 20)}`}>
-                {generalAverage}/20
-              </p>
-            </div>
-
-            {/* Moyennes par cours */}
-            {Object.entries(courses).slice(0, 3).map(([courseId, courseName]) => {
-              const average = calculateCourseAverage(courseId);
-              return (
-                <div key={courseId} className="glass rounded-2xl p-6">
-                  <p className="text-sm font-semibold text-gray-600 mb-2 truncate">
-                    {courseName}
-                  </p>
-                  <p className={`text-4xl font-black ${getGradeColor(parseFloat(average), 20)}`}>
-                    {average}/20
-                  </p>
-                </div>
-              );
-            })}
+        {/* Moyennes en Temps Réel */}
+        {userProfile?.universityId && (userProfile.profileId || userProfile.uid) && (
+          <div className="mb-8">
+            <LiveAverageDisplay
+              universityId={userProfile.universityId}
+              studentId={userProfile.profileId || userProfile.uid}
+              showDetails={true}
+            />
           </div>
         )}
 
