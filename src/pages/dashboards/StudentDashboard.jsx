@@ -4,6 +4,7 @@ import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { calculateOverallAverage, getMention, getAverageColor, exportToCSV } from '../../utils/gradesCalculator';
+import { calculateYearAverage } from '../../utils/promotionHelpers';
 import { generateBulletinPDF } from '../../utils/bulletinPDFGenerator';
 import LiveAverageDisplay from '../../components/LiveAverageDisplay';
 import {
@@ -82,10 +83,15 @@ const StudentDashboard = () => {
           .sort((a, b) => (b.date || 0) - (a.date || 0));
 
         setGrades(gradesData);
-        // Calculer les moyennes
-        const { overall, byCourse } = calculateOverallAverage(gradesData);
-        console.log('🎯 StudentDashboard - calculateOverallAverage:', overall);
-        setAverageOverall(overall);
+
+        // Calculer les moyennes avec la MÊME méthode que LiveAverageDisplay
+        const studentInfo = studentSnap.exists() ? { id: studentId, ...studentSnap.val() } : { id: studentId };
+        const { yearAvg } = calculateYearAverage(studentInfo, gradesData);
+        console.log('🎯 StudentDashboard - yearAvg:', yearAvg);
+        setAverageOverall(yearAvg);
+
+        // Calculer aussi par cours pour l'affichage détaillé
+        const { byCourse } = calculateOverallAverage(gradesData);
         setCourseAverages(byCourse);
       } else {
         // No grades found
