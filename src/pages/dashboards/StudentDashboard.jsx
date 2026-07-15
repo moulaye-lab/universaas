@@ -87,7 +87,6 @@ const StudentDashboard = () => {
         // Calculer les moyennes avec la MÊME méthode que LiveAverageDisplay
         const studentInfo = studentSnap.exists() ? { id: studentId, ...studentSnap.val() } : { id: studentId };
         const { yearAvg } = calculateYearAverage(studentInfo, gradesData);
-        console.log('🎯 StudentDashboard - yearAvg:', yearAvg);
         setAverageOverall(yearAvg);
 
         // Calculer aussi par cours pour l'affichage détaillé

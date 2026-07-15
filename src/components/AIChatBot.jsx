@@ -263,6 +263,7 @@ Que souhaitez-vous savoir exactement?`;
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
+          data-tour="ai-chatbot"
           className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center group"
           title={`Ouvrir ${assistantName}`}
         >
