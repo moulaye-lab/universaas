@@ -64,7 +64,13 @@ export function calculateYearAverage(student, allGrades) {
       if (grades.length === 0) return;
 
       // Calculer moyenne du cours (toutes les notes)
-      const courseAvg = grades.reduce((sum, g) => sum + g.value, 0) / grades.length;
+      const courseAvg = grades.reduce((sum, g) => {
+        const val = g.value ?? 0;
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0) / grades.length;
+
+      // Vérifier que courseAvg est valide
+      if (isNaN(courseAvg)) return;
 
       // Pondérer par coefficient de la matière
       totalWeightedScore += courseAvg * coefficient;
@@ -74,7 +80,8 @@ export function calculateYearAverage(student, allGrades) {
     if (totalCoefficient === 0) return null;
 
     // Moyenne pondérée = somme(note × coef) / somme(coef)
-    return parseFloat((totalWeightedScore / totalCoefficient).toFixed(2));
+    const avg = totalWeightedScore / totalCoefficient;
+    return isNaN(avg) ? null : parseFloat(avg.toFixed(2));
   };
 
   const semester1Avg = calculateSemesterAvg(gradesBySemester[1]);
@@ -82,18 +89,18 @@ export function calculateYearAverage(student, allGrades) {
 
   // MGA (Moyenne Générale Annuelle) = (S1 + S2) / 2
   let yearAvg = null;
-  if (semester1Avg !== null && semester2Avg !== null) {
+  if (semester1Avg !== null && semester2Avg !== null && !isNaN(semester1Avg) && !isNaN(semester2Avg)) {
     yearAvg = parseFloat(((semester1Avg + semester2Avg) / 2).toFixed(2));
-  } else if (semester1Avg !== null) {
+  } else if (semester1Avg !== null && !isNaN(semester1Avg)) {
     yearAvg = semester1Avg;
-  } else if (semester2Avg !== null) {
+  } else if (semester2Avg !== null && !isNaN(semester2Avg)) {
     yearAvg = semester2Avg;
   }
 
   return {
-    semester1Avg,
-    semester2Avg,
-    yearAvg // MGA
+    semester1Avg: isNaN(semester1Avg) ? null : semester1Avg,
+    semester2Avg: isNaN(semester2Avg) ? null : semester2Avg,
+    yearAvg: isNaN(yearAvg) ? null : yearAvg
   };
 }
 
