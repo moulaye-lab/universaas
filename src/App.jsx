@@ -96,14 +96,14 @@ import FinancesMenuPage from './pages/admin/FinancesMenuPage';
 import AcademicYearConfigPage from './pages/admin/AcademicYearConfigPage';
 import TeacherStudentsAveragesPage from './pages/teacher/TeacherStudentsAveragesPage';
 import AuditLogsPage from './pages/admin/AuditLogsPage';
-import OnboardingTour from './components/OnboardingTour';
+// import OnboardingTour from './components/OnboardingTour';
 import './App.css';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <OnboardingTour />
+        {/* <OnboardingTour /> */}
         <Routes>
           {/* Pages publiques (accessible par tous) */}
           <Route path="/" element={<LandingPage />} />
