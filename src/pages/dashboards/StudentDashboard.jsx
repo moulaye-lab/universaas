@@ -644,7 +644,12 @@ const StudentDashboard = () => {
               </thead>
               <tbody>
                 {grades.map((gradeItem, index) => {
-                  const badge = getGradeBadge(parseFloat(gradeItem.grade || 0));
+                  // Support double structure: grade (nouveau) ou value (seed)
+                  const gradeValue = gradeItem.grade ?? gradeItem.value ?? 0;
+                  const maxValue = gradeItem.maxGrade ?? 20;
+                  const normalizedGrade = (gradeValue / maxValue) * 20;
+
+                  const badge = getGradeBadge(parseFloat(normalizedGrade));
 
                   return (
                     <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
@@ -653,7 +658,7 @@ const StudentDashboard = () => {
                         <p className="text-xs text-gray-500">{gradeItem.courseId}</p>
                       </td>
                       <td className="text-center py-4 px-4">
-                        <span className="font-bold text-gray-900">{gradeItem.grade || 0}/20</span>
+                        <span className="font-bold text-gray-900">{gradeValue}/{maxValue}</span>
                       </td>
                       <td className="text-center py-4 px-4 text-gray-700">{gradeItem.coefficient || 1}</td>
                       <td className="text-center py-4 px-4">
