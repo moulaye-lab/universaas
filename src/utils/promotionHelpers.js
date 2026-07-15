@@ -42,9 +42,12 @@ export function calculateYearAverage(student, allGrades) {
       };
     }
 
+    // Normaliser la note sur /20
+    const normalizedValue = (grade.grade / grade.maxGrade) * 20;
+
     gradesBySemester[semester][courseId].grades.push({
-      value: grade.value,
-      type: grade.type || 'exam' // exam, homework, project, participation
+      value: normalizedValue,
+      type: grade.gradeType || 'exam' // exam, homework, project, participation
     });
   });
 
@@ -125,9 +128,12 @@ export function calculateDetailedAverages(student, allGrades) {
       };
     }
 
+    // Normaliser la note sur /20
+    const normalizedValue = (grade.grade / grade.maxGrade) * 20;
+
     gradesBySemester[semester][courseId].grades.push({
-      value: grade.value,
-      type: grade.type || 'exam',
+      value: normalizedValue,
+      type: grade.gradeType || 'exam',
       date: grade.date,
       createdAt: grade.createdAt
     });
