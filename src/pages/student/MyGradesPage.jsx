@@ -301,7 +301,12 @@ export default function MyGradesPage() {
         {filteredGrades.length > 0 ? (
           <div className="space-y-4">
             {filteredGrades.map(grade => {
-              const typeBadge = getGradeTypeBadge(grade.gradeType);
+              // Support double structure: grade.grade (nouveau) ou grade.value (seed)
+              const gradeValue = grade.grade ?? grade.value ?? 0;
+              const maxValue = grade.maxGrade ?? 20;
+              const gradeType = grade.gradeType || grade.type || 'exam';
+
+              const typeBadge = getGradeTypeBadge(gradeType);
               return (
                 <div key={grade.id} className="glass rounded-2xl p-6 hover:shadow-xl transition">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -332,12 +337,12 @@ export default function MyGradesPage() {
 
                     {/* Note */}
                     <div className="text-center bg-white rounded-xl p-4 min-w-[120px]">
-                      <p className={`text-4xl font-black ${getGradeColor(grade.grade, grade.maxGrade)}`}>
-                        {grade.grade}/{grade.maxGrade}
+                      <p className={`text-4xl font-black ${getGradeColor(gradeValue, maxValue)}`}>
+                        {gradeValue}/{maxValue}
                       </p>
-                      {grade.maxGrade !== 20 && (
+                      {maxValue !== 20 && (
                         <p className="text-sm text-gray-500 mt-1">
-                          = {((grade.grade / grade.maxGrade) * 20).toFixed(2)}/20
+                          = {((gradeValue / maxValue) * 20).toFixed(2)}/20
                         </p>
                       )}
                     </div>
