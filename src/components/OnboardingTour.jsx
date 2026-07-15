@@ -17,18 +17,31 @@ export default function OnboardingTour() {
 
   // Vérifier si l'utilisateur a déjà vu le tour
   useEffect(() => {
-    if (!userProfile?.uid || !userProfile?.role) return;
+    try {
+      if (!userProfile?.uid || !userProfile?.role) return;
 
-    const tourKey = `onboarding_tour_completed_${userProfile.uid}`;
-    const tourCompleted = localStorage.getItem(tourKey);
+      const tourKey = `onboarding_tour_completed_${userProfile.uid}`;
+      const tourCompleted = localStorage.getItem(tourKey);
 
-    if (!tourCompleted) {
-      // Définir les étapes selon le rôle
-      const roleSteps = getStepsByRole(userProfile.role);
-      setSteps(roleSteps);
+      if (!tourCompleted) {
+        // Définir les étapes selon le rôle
+        const roleSteps = getStepsByRole(userProfile.role);
 
-      // Démarrer le tour après un court délai (pour laisser la page se charger)
-      setTimeout(() => setRun(true), 1000);
+        // Filtrer les étapes dont les targets existent
+        const validSteps = roleSteps.filter(step => {
+          if (step.target === 'body') return true;
+          const element = document.querySelector(step.target);
+          return element !== null;
+        });
+
+        if (validSteps.length > 0) {
+          setSteps(validSteps);
+          // Démarrer le tour après un court délai (pour laisser la page se charger)
+          setTimeout(() => setRun(true), 2000);
+        }
+      }
+    } catch (error) {
+      console.error('OnboardingTour error:', error);
     }
   }, [userProfile]);
 
