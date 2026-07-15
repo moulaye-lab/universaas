@@ -68,17 +68,24 @@ export function calculateOverallAverage(allGrades) {
     courseAverages[courseId] = {
       courseName: data.courseName,
       average: calculateCourseAverage(data.grades),
-      gradesCount: data.grades.length
+      gradesCount: data.grades.length,
+      coefficient: data.grades[0]?.coefficient || 1 // Récupérer coefficient
     };
   });
 
-  // Moyenne générale (moyenne des moyennes de cours)
-  const validAverages = Object.values(courseAverages)
-    .map(c => c.average)
-    .filter(a => a !== null);
+  // Moyenne générale PONDÉRÉE (tenir compte des coefficients)
+  let totalWeighted = 0;
+  let totalCoefficient = 0;
 
-  const overall = validAverages.length > 0
-    ? validAverages.reduce((sum, avg) => sum + avg, 0) / validAverages.length
+  Object.values(courseAverages).forEach(course => {
+    if (course.average !== null && !isNaN(course.average)) {
+      totalWeighted += course.average * course.coefficient;
+      totalCoefficient += course.coefficient;
+    }
+  });
+
+  const overall = totalCoefficient > 0
+    ? totalWeighted / totalCoefficient
     : null;
 
   return { overall, byCourse: courseAverages };

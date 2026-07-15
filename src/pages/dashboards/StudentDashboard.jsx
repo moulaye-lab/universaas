@@ -84,6 +84,7 @@ const StudentDashboard = () => {
         setGrades(gradesData);
         // Calculer les moyennes
         const { overall, byCourse } = calculateOverallAverage(gradesData);
+        console.log('🎯 StudentDashboard - calculateOverallAverage:', overall);
         setAverageOverall(overall);
         setCourseAverages(byCourse);
       } else {
