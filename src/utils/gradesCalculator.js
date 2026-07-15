@@ -22,13 +22,22 @@ export function calculateCourseAverage(grades) {
   let totalCoefficient = 0;
 
   grades.forEach(g => {
+    // Support des deux structures: ancienne (value) et nouvelle (grade, maxGrade)
+    const gradeValue = g.grade ?? g.value ?? 0;
+    const maxValue = g.maxGrade ?? 20;
+
     // Normaliser à /20
-    const normalizedGrade = (g.grade / g.maxGrade) * 20;
-    totalWeighted += normalizedGrade * g.coefficient;
-    totalCoefficient += g.coefficient;
+    const normalizedGrade = (gradeValue / maxValue) * 20;
+
+    if (!isNaN(normalizedGrade)) {
+      totalWeighted += normalizedGrade * g.coefficient;
+      totalCoefficient += g.coefficient;
+    }
   });
 
-  return totalCoefficient > 0 ? totalWeighted / totalCoefficient : null;
+  if (totalCoefficient === 0) return null;
+  const avg = totalWeighted / totalCoefficient;
+  return isNaN(avg) ? null : avg;
 }
 
 /**

@@ -571,9 +571,9 @@ const StudentDashboard = () => {
               <div className="bg-white rounded-xl p-6 text-center shadow-md">
                 <p className="text-sm text-gray-600 mb-2">Moyenne Générale</p>
                 <p className={`text-5xl font-black mb-2 ${getAverageColor(averageOverall)}`}>
-                  {averageOverall ? averageOverall.toFixed(2) : 'N/A'}
+                  {averageOverall && !isNaN(averageOverall) ? averageOverall.toFixed(2) : 'N/A'}
                 </p>
-                {averageOverall && (
+                {averageOverall && !isNaN(averageOverall) && (
                   <p className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full inline-block">
                     {getMention(averageOverall)}
                   </p>
