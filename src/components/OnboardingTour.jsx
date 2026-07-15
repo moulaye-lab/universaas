@@ -7,13 +7,14 @@
  */
 
 import { useState, useEffect } from 'react';
-import Joyride, { ACTIONS, EVENTS, STATUS } from 'react-joyride';
+import Joyride, { STATUS } from 'react-joyride';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function OnboardingTour() {
   const { userProfile } = useAuth();
   const [run, setRun] = useState(false);
   const [steps, setSteps] = useState([]);
+  const [ready, setReady] = useState(false);
 
   // Vérifier si l'utilisateur a déjà vu le tour
   useEffect(() => {
@@ -26,19 +27,11 @@ export default function OnboardingTour() {
       if (!tourCompleted) {
         // Définir les étapes selon le rôle
         const roleSteps = getStepsByRole(userProfile.role);
+        setSteps(roleSteps);
+        setReady(true);
 
-        // Filtrer les étapes dont les targets existent
-        const validSteps = roleSteps.filter(step => {
-          if (step.target === 'body') return true;
-          const element = document.querySelector(step.target);
-          return element !== null;
-        });
-
-        if (validSteps.length > 0) {
-          setSteps(validSteps);
-          // Démarrer le tour après un court délai (pour laisser la page se charger)
-          setTimeout(() => setRun(true), 2000);
-        }
+        // Démarrer le tour après un délai
+        setTimeout(() => setRun(true), 2500);
       }
     } catch (error) {
       console.error('OnboardingTour error:', error);
@@ -47,14 +40,19 @@ export default function OnboardingTour() {
 
   // Callback quand le tour se termine
   const handleJoyrideCallback = (data) => {
-    const { status, type, action } = data;
+    try {
+      const { status } = data;
 
-    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+      const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
 
-    if (finishedStatuses.includes(status) || action === ACTIONS.CLOSE) {
-      // Marquer le tour comme complété
-      const tourKey = `onboarding_tour_completed_${userProfile.uid}`;
-      localStorage.setItem(tourKey, 'true');
+      if (finishedStatuses.includes(status)) {
+        // Marquer le tour comme complété
+        const tourKey = `onboarding_tour_completed_${userProfile.uid}`;
+        localStorage.setItem(tourKey, 'true');
+        setRun(false);
+      }
+    } catch (error) {
+      console.error('Joyride callback error:', error);
       setRun(false);
     }
   };
@@ -380,7 +378,7 @@ export default function OnboardingTour() {
     },
   };
 
-  if (!run || steps.length === 0) return null;
+  if (!ready || !run || steps.length === 0) return null;
 
   return (
     <Joyride
