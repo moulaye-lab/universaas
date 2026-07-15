@@ -48,6 +48,7 @@ export default function LiveAverageDisplay({ universityId, studentId, showDetail
           ? Object.values(snapshot.val())
           : [];
 
+
         // Calculer moyennes
         const avg = calculateYearAverage(studentData, allGrades);
         setAverages(avg);

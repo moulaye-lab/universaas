@@ -42,14 +42,14 @@ export function calculateYearAverage(student, allGrades) {
       };
     }
 
-    // Normaliser la note sur /20
-    const gradeValue = grade.grade ?? 0;
+    // Support des deux structures: ancienne (value, type) et nouvelle (grade, maxGrade, gradeType)
+    const gradeValue = grade.grade ?? grade.value ?? 0;
     const maxValue = grade.maxGrade ?? 20;
     const normalizedValue = (gradeValue / maxValue) * 20;
 
     gradesBySemester[semester][courseId].grades.push({
       value: normalizedValue,
-      type: grade.gradeType || 'exam' // exam, homework, project, participation
+      type: grade.gradeType || grade.type || 'exam'
     });
   });
 
@@ -130,14 +130,14 @@ export function calculateDetailedAverages(student, allGrades) {
       };
     }
 
-    // Normaliser la note sur /20
-    const gradeValue = grade.grade ?? 0;
+    // Support des deux structures: ancienne (value, type) et nouvelle (grade, maxGrade, gradeType)
+    const gradeValue = grade.grade ?? grade.value ?? 0;
     const maxValue = grade.maxGrade ?? 20;
     const normalizedValue = (gradeValue / maxValue) * 20;
 
     gradesBySemester[semester][courseId].grades.push({
       value: normalizedValue,
-      type: grade.gradeType || 'exam',
+      type: grade.gradeType || grade.type || 'exam',
       date: grade.date,
       createdAt: grade.createdAt
     });

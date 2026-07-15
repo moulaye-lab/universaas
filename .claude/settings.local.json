@@ -64,7 +64,8 @@
       "Bash(firebase projects:list)",
       "Bash(gcloud services *)",
       "Bash(pkill -f \"vite preview\")",
-      "Bash(bash /tmp/create-grades.sh)"
+      "Bash(bash /tmp/create-grades.sh)",
+      "Bash(git checkout *)"
     ]
   }
 }
