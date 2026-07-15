@@ -43,7 +43,9 @@ export function calculateYearAverage(student, allGrades) {
     }
 
     // Normaliser la note sur /20
-    const normalizedValue = (grade.grade / grade.maxGrade) * 20;
+    const gradeValue = grade.grade || 0;
+    const maxValue = grade.maxGrade || 20;
+    const normalizedValue = (gradeValue / maxValue) * 20;
 
     gradesBySemester[semester][courseId].grades.push({
       value: normalizedValue,
@@ -129,7 +131,9 @@ export function calculateDetailedAverages(student, allGrades) {
     }
 
     // Normaliser la note sur /20
-    const normalizedValue = (grade.grade / grade.maxGrade) * 20;
+    const gradeValue = grade.grade || 0;
+    const maxValue = grade.maxGrade || 20;
+    const normalizedValue = (gradeValue / maxValue) * 20;
 
     gradesBySemester[semester][courseId].grades.push({
       value: normalizedValue,
