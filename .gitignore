@@ -67,14 +67,52 @@ scripts/deleteParent1.cjs
 scripts/deleteSpecificParent.cjs
 scripts/cleanDuplicateParents.cjs
 
-# Documentation technique interne (optionnel - à garder si public)
-# AUDIT_*.md
-# VERIFICATION_*.md
-# PLAN_*.md
-# PROCESS_*.md
-# ETAT_*.md
-# PROGRESS_*.md
-# ROADMAP_*.md
+# Documentation technique interne
+AUDIT_*.md
+VERIFICATION_*.md
+PLAN_*.md
+PROCESS_*.md
+ETAT_*.md
+PROGRESS_*.md
+ROADMAP_*.md
+SESSION_*.md
+PROMPT_*.md
+WORKFLOW_*.md
+METHODOLOGY.md
+CHECKLIST_*.md
+STRATEGIE_*.md
+GUIDE_*.md
+CRUD_*.md
+RAPPEL_*.md
+MODULES_*.md
+PROGRAMME_*.md
+ANALYSE_*.md
+AMELIORATIONS_*.md
+TESTS_*.md
+REPONSE_*.md
+MIGRATION_*.md
+DEPLOIEMENT_*.md
+ACTIONS_*.md
+ADMIN_*.md
+AI_*.md
+BUG_*.md
+CALCUL_*.md
+COMPTES_*.md
+COURS_*.json
+DECISIONS.md
+ETAT_*.md
+FINAL_*.md
+FIREBASE_*.md
+IMPORT_*.md
+JOUR_*.md
+LIBRARY_*.md
+PARENT_*.md
+PROMPTS.md
+SECURITY_*.md
+SEED_DATA.json
+SKILLS_*.md
+TIMEZONE_*.md
+TODO-*.md
 
 # Fichiers de test/debug
 test-firebase-rules.mjs
@@ -88,3 +126,4 @@ fix-*.mjs
 clean-*.mjs
 deploy-rules.sh
 TODO-*.md
+.vercel

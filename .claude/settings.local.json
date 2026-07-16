@@ -65,7 +65,16 @@
       "Bash(gcloud services *)",
       "Bash(pkill -f \"vite preview\")",
       "Bash(bash /tmp/create-grades.sh)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(open *)",
+      "Bash(kill 90939 90368 82898)",
+      "Bash(firebase database:get /universities/univ-universite-moulaye-1783994167732/library/loans/-Ox_WdOkB_aqCvcb2kGL)",
+      "Bash(firebase database:get *)",
+      "Bash(awk '{print $2}')",
+      "Bash(/tmp/create-png-icons.sh)",
+      "Bash(sudo npm *)",
+      "Bash(vercel whoami *)",
+      "Bash(vercel *)"
     ]
   }
 }

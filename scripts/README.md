@@ -1,124 +1,33 @@
-# 📚 Script de Seed - Données Académiques
+# Scripts de Maintenance
 
-Ce script peuple automatiquement une université avec des départements et des modèles de cours.
+Scripts utilitaires pour la gestion de la base de données et le déploiement.
 
-## 📊 Données incluses
+## Scripts disponibles
 
-### Départements (30)
-- **Sciences** : Mathématiques, Informatique, Physique, Chimie, Biologie, Environnement
-- **Santé** : Médecine, Pharmacie
-- **Droit & Économie** : Droit, Économie, Gestion, Sciences Politiques
-- **Lettres & Sciences Humaines** : Lettres, Histoire, Géographie, Philosophie, Psychologie, Sociologie
-- **Langues** : Langues Étrangères (Anglais, Espagnol, Allemand, Arabe, Chinois)
-- **Arts** : Arts, Musique, Cinéma, Architecture
-- **Ingénierie** : Mécanique, Électrique, Civile
-- **Communication** : Communication, Journalisme
-- **Éducation & Sport** : Éducation, STAPS
+### Initialisation
+- `createTestAccounts.mjs` - Créer des comptes de test pour chaque rôle
+- `create10Universities.mjs` - Créer 10 universités de test
 
-### Modèles de Cours (80+)
-Cours prédéfinis pour chaque département avec :
-- Nom du cours
-- Code unique (ex: MATH101, INFO202)
-- Nombre de crédits ECTS
-- Description complète
+### Seed Data
+- `seedDatabase.mjs` - Initialiser la base de données avec données de base
+- `seedAcademicData.cjs` - Créer départements et cours globaux
+- `seedStudents.cjs` - Ajouter des étudiants de test
+- `seedGrades.mjs` - Ajouter des notes de test
+- `quickSeedGrades.mjs` - Seed rapide de notes
 
-## 🚀 Utilisation
+### Migration & Fix
+- `fixStudentData.mjs` - Corriger les données étudiants
+- `addAcademicYearToStudents.mjs` - Ajouter année académique aux étudiants
+- `addAcademicYearToStudentsAdmin.mjs` - Ajouter année académique (version admin)
 
-### Prérequis
+### Workflow Complet
+- `createCompleteTestWorkflow.mjs` - Créer environnement de test complet
+- `createTestParentMultiChildren.mjs` - Créer parent avec plusieurs enfants
+
+## Utilisation
+
 ```bash
-npm install firebase dotenv
+node scripts/nom-du-script.mjs
 ```
 
-### Exécution
-```bash
-node scripts/seedAcademicData.js
-```
-
-**Note** : Les données sont GLOBALES (partagées par toutes les universités), donc pas besoin de spécifier d'ID d'université.
-
-## 📝 Exemple de résultat
-
-```
-🎓 Seed des données académiques GLOBALES (partagées par toutes les universités)
-
-📚 Création des départements...
-  ✅ Mathématiques (MATH)
-  ✅ Informatique (INFO)
-  ✅ Physique (PHYS)
-  ...
-
-✅ 30 départements créés
-
-📖 Création des modèles de cours...
-
-  Mathématiques:
-    ✅ Algèbre Linéaire (MATH101)
-    ✅ Analyse I (MATH102)
-    ✅ Probabilités (MATH301)
-    ...
-
-  Informatique:
-    ✅ Algorithmique (INFO101)
-    ✅ Programmation I (INFO102)
-    ✅ Intelligence Artificielle (INFO401)
-    ...
-
-✅ 85 modèles de cours créés
-
-🎉 Seed terminé avec succès!
-
-📊 Résumé:
-  - 30 départements GLOBAUX
-  - 85 modèles de cours GLOBAUX
-  - Accessibles par TOUTES les universités
-```
-
-## 🎯 Utilisation dans l'interface
-
-Après le seed, les admins peuvent :
-
-1. **Voir les départements et cours** : `/admin/academic-data`
-2. **Créer un cours réel** à partir d'un modèle dans `/admin/courses/create`
-3. **Ajouter/modifier/supprimer** des départements et modèles
-
-## ⚠️ Notes
-
-- Le script utilise les credentials `.env.local`
-- Les données existantes ne sont PAS écrasées (ajout uniquement)
-- Pour réinitialiser : supprimer manuellement dans Firebase Console
-- Le script utilise l'ID `system-seed` comme créateur
-
-## 🔒 Sécurité
-
-Le script nécessite :
-- Accès admin à Firebase
-- Variables d'environnement correctement configurées
-- Exécution côté serveur uniquement (jamais depuis le frontend)
-
-## 📦 Structure créée dans Firebase
-
-```
-departments/  (GLOBAL - partagé par toutes les universités)
-  <deptId1>/
-    id: "..."
-    name: "Mathématiques"
-    code: "MATH"
-    description: "..."
-    createdAt: timestamp
-    createdBy: "system-seed"
-  <deptId2>/
-    ...
-
-courseTemplates/  (GLOBAL - partagé par toutes les universités)
-  <templateId1>/
-    id: "..."
-    name: "Algèbre Linéaire"
-    code: "MATH101"
-    department: "Mathématiques"
-    credits: 6
-    description: "..."
-    createdAt: timestamp
-    createdBy: "system-seed"
-  <templateId2>/
-    ...
-```
+**⚠️ Attention:** Ces scripts modifient la base de données. Utiliser uniquement en environnement de développement ou test.
