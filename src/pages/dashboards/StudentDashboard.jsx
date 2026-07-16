@@ -7,6 +7,7 @@ import { calculateOverallAverage, getMention, getAverageColor, exportToCSV } fro
 import { calculateYearAverage } from '../../utils/promotionHelpers';
 import { generateBulletinPDF } from '../../utils/bulletinPDFGenerator';
 import LiveAverageDisplay from '../../components/LiveAverageDisplay';
+import ThemeToggle from '../../components/ThemeToggle';
 import {
   TrendingUp,
   BookOpen,
@@ -264,9 +265,9 @@ const StudentDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-violet-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-violet-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Navbar */}
-      <nav className="bg-white/80 backdrop-blur-lg border-b border-purple-100 sticky top-0 z-50">
+      <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-purple-100 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -279,11 +280,12 @@ const StudentDashboard = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {studentData?.firstName} {studentData?.lastName}
                 </p>
-                <p className="text-xs text-gray-500">Student</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Student</p>
               </div>
               {studentData?.photoURL ? (
                 <img
@@ -298,7 +300,7 @@ const StudentDashboard = () => {
               )}
               <button
                 onClick={handleLogout}
-                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               >
                 <LogOut className="w-5 h-5" />
               </button>
