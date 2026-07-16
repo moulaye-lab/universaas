@@ -257,18 +257,24 @@ export async function createLoan(universityId, loanData, createdBy) {
     throw new Error(`Limite de ${settings.maxLoansPerStudent} prêts atteinte`);
   }
 
-  // 3. Calculer la date de retour
+  // 3. Vérifier que l'étudiant n'a pas déjà emprunté ce livre
+  const alreadyBorrowed = studentLoans.some(loan => loan.bookId === loanData.bookId);
+  if (alreadyBorrowed) {
+    throw new Error('Cet étudiant a déjà un emprunt du même livre en cours. Il doit d\'abord le retourner.');
+  }
+
+  // 4. Calculer la date de retour
   const loanDate = Date.now();
   const dueDate = new Date(loanDate);
   dueDate.setDate(dueDate.getDate() + settings.loanDuration);
 
-  // 4. Créer le prêt
+  // 5. Créer le prêt
   const loanRef = push(ref(database, `universities/${universityId}/library/loans`));
   await set(loanRef, {
     ...loanData,
     loanDate,
     dueDate: dueDate.getTime(),
-    returnDate: null,
+    // returnDate: omis volontairement (sera ajouté au retour)
     status: 'active',
     renewalCount: 0,
     fineAmount: 0,
@@ -277,7 +283,7 @@ export async function createLoan(universityId, loanData, createdBy) {
     createdAt: Date.now()
   });
 
-  // 5. Décrémenter availableCopies
+  // 6. Décrémenter availableCopies
   await update(ref(database, `universities/${universityId}/library/books/${loanData.bookId}`), {
     availableCopies: book.availableCopies - 1
   });

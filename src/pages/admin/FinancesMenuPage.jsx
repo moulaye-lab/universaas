@@ -12,11 +12,11 @@ export default function FinancesMenuPage() {
 
   const financeModules = [
     {
-      title: 'Comptabilité',
+      title: 'Dashboard Comptable',
       icon: TrendingUp,
-      path: '/dashboard/comptable',
+      path: '/admin/accounting',
       gradient: 'from-green-500 to-emerald-600',
-      description: 'Journal de trésorerie, recettes et dépenses'
+      description: 'Vue d\'ensemble financière et KPIs'
     },
     {
       title: 'Paiements Étudiants',
@@ -28,14 +28,14 @@ export default function FinancesMenuPage() {
     {
       title: 'Recettes',
       icon: DollarSign,
-      path: '/admin/revenues',
+      path: '/admin/accounting/revenues',
       gradient: 'from-green-500 to-teal-600',
       description: 'Enregistrer les recettes de l\'université'
     },
     {
       title: 'Dépenses',
       icon: FileText,
-      path: '/admin/expenses',
+      path: '/admin/accounting/expenses',
       gradient: 'from-red-500 to-orange-600',
       description: 'Gérer les dépenses et factures'
     }
