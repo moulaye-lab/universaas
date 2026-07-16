@@ -127,3 +127,4 @@ clean-*.mjs
 deploy-rules.sh
 TODO-*.md
 .vercel
+scripts/service-account.json
