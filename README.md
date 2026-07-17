@@ -134,9 +134,13 @@ Ce projet de fin d'études m'a permis de consolider des compétences techniques 
 
 | Rôle | Email | Mot de passe |
 |------|-------|--------------|
+| **🔥 Super Admin (SaaS Owner)** | superadmin@universaas.com | SuperAdmin2026! |
 | **Admin Université** | newadmin@sorbonne.fr | Admin123456 |
 | **Enseignant** | teacher.test@sorbonne.fr | Prof123456 |
 | **Étudiant** | etudiant@sorbonne.fr | Student123456 |
+
+> **⚠️ IMPORTANT pour le Super Admin :**  
+> Lors de la **première connexion**, cliquer sur le bouton **"Synchroniser"** en haut du dashboard pour migrer les universités existantes dans `system_admin/tenants_management/`. Cela permet d'afficher correctement les stats et la liste des universités.
 
 ### Pipeline de Déploiement
 1. **Push sur GitHub** (`preproduction` branch)
