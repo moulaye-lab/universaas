@@ -3,9 +3,16 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({
+    jsxRuntime: 'automatic',
+    babel: {
+      plugins: []
+    }
+  })],
   publicDir: 'public',
   build: {
+    minify: 'esbuild',
+    target: 'es2015',
     rollupOptions: {
       output: {
         manualChunks: (id) => {
