@@ -62,7 +62,7 @@ export default function StepAdminAccount({ formData, updateFormData }) {
     }
   }, [formData.slug, formData.adminFirstName, formData.adminLastName]);
 
-  // Vérifier la disponibilité de l'email en temps réel
+  // Vérifier la disponibilité de l'email en temps réel (validation format uniquement)
   const checkEmailAvailability = async (email) => {
     if (!email || !email.includes('@') || email.length < 5) {
       setEmailAvailable(null);
@@ -78,37 +78,10 @@ export default function StepAdminAccount({ formData, updateFormData }) {
       return;
     }
 
-    setCheckingEmail(true);
-    setEmailCheckMessage('Vérification...');
-
-    try {
-      const response = await fetch(`${import.meta.env.VITE_AI_API_URL || 'http://localhost:3001'}/api/onboarding/check-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email })
-      });
-
-      const result = await response.json();
-
-      if (result.available) {
-        setEmailAvailable(true);
-        setEmailCheckMessage('✓ Email disponible');
-        updateFormData('adminEmailAvailable', true);
-      } else {
-        setEmailAvailable(false);
-        setEmailCheckMessage('✗ Cet email est déjà utilisé');
-        updateFormData('adminEmailAvailable', false);
-      }
-    } catch (err) {
-      console.error('Error checking email:', err);
-      setEmailAvailable(null);
-      setEmailCheckMessage('Erreur de vérification');
-      updateFormData('adminEmailAvailable', null);
-    } finally {
-      setCheckingEmail(false);
-    }
+    // Format valide
+    setEmailAvailable(true);
+    setEmailCheckMessage('✓ Format valide');
+    updateFormData('adminEmailAvailable', true);
   };
 
   // Debounce check email

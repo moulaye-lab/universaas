@@ -13,6 +13,8 @@ import StepUniversityInfo from '../../components/signup/StepUniversityInfo';
 import StepSlugConfig from '../../components/signup/StepSlugConfig';
 import StepAdminAccount from '../../components/signup/StepAdminAccount';
 import StepConfiguration from '../../components/signup/StepConfiguration';
+import { database } from '../../config/firebase';
+import { ref, set, get } from 'firebase/database';
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -127,26 +129,93 @@ export default function SignupPage() {
     setError('');
 
     try {
-      // Appel API backend pour créer l'université
-      const response = await fetch(`${import.meta.env.VITE_AI_API_URL || 'http://localhost:3001'}/api/onboarding/create-university`, {
+      // 1. Créer le compte admin dans Firebase Auth via REST API
+      const signUpEndpoint = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${import.meta.env.VITE_FIREBASE_API_KEY}`;
+
+      const authResponse = await fetch(signUpEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.adminEmail,
+          password: formData.adminPassword,
+          returnSecureToken: true
+        })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la création');
+      if (!authResponse.ok) {
+        const authError = await authResponse.json();
+        if (authError.error?.message === 'EMAIL_EXISTS') {
+          throw new Error('Cet email est déjà utilisé');
+        }
+        throw new Error(authError.error?.message || 'Erreur de création du compte');
       }
 
-      const result = await response.json();
+      const { localId: adminUid, idToken } = await authResponse.json();
+
+      // 2. Créer l'université dans Firebase
+      const universityId = `univ_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      const universityData = {
+        info: {
+          name: formData.universityName,
+          slug: formData.slug,
+          type: formData.type,
+          country: formData.country,
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          phone: formData.phone,
+          academicYearStart: formData.academicYearStart || 'septembre',
+          gradeScale: formData.gradeScale || '20',
+          currency: formData.currency || 'EUR',
+          createdAt: Date.now(),
+          createdBy: adminUid,
+          status: 'active'
+        },
+        subscription: {
+          plan: 'trial',
+          startDate: Date.now(),
+          status: 'active'
+        }
+      };
+
+      await set(ref(database, `universities/${universityId}`), universityData);
+
+      // 3. Créer le profil admin dans /users
+      const adminProfile = {
+        email: formData.adminEmail,
+        displayName: `${formData.adminFirstName} ${formData.adminLastName}`,
+        firstName: formData.adminFirstName,
+        lastName: formData.adminLastName,
+        role: 'admin',
+        universityId: universityId,
+        createdAt: Date.now(),
+        profileId: adminUid,
+        loginMethod: 'email'
+      };
+
+      await set(ref(database, `users/${adminUid}`), adminProfile);
+
+      // 4. Ajouter dans system_admin/tenants_management pour le Super Admin
+      const tenantData = {
+        universityId: universityId,
+        name: formData.universityName,
+        slug: formData.slug,
+        adminEmail: formData.adminEmail,
+        adminUid: adminUid,
+        plan: 'trial',
+        status: 'active',
+        createdAt: Date.now(),
+        country: formData.country,
+        type: formData.type
+      };
+
+      await set(ref(database, `system_admin/tenants_management/${universityId}`), tenantData);
 
       // Rediriger vers page de succès
       navigate('/signup/success', {
         state: {
-          universityId: result.universityId,
+          universityId: universityId,
           adminEmail: formData.adminEmail
         }
       });
@@ -154,7 +223,6 @@ export default function SignupPage() {
     } catch (err) {
       console.error('Signup error:', err);
       setError(err.message || 'Une erreur est survenue. Veuillez réessayer.');
-      // Revenir à l'étape 3 (compte admin) si erreur d'email
       if (err.message?.includes('email') || err.message?.includes('EMAIL_EXISTS')) {
         setCurrentStep(3);
       }

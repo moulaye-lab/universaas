@@ -42,31 +42,7 @@ export default function StepSlugConfig({ formData, updateFormData }) {
     setCheckMessage('Vérification de la disponibilité...');
 
     try {
-      // Option 1: Essayer via le backend API
-      try {
-        const response = await fetch(`${import.meta.env.VITE_AI_API_URL || 'http://localhost:3001'}/api/onboarding/check-slug`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ slug })
-        });
-
-        const result = await response.json();
-
-        if (result.available) {
-          updateFormData('slugAvailable', true);
-          setCheckMessage('✓ Ce slug est disponible!');
-        } else {
-          updateFormData('slugAvailable', false);
-          setCheckMessage('✗ Ce slug est déjà utilisé');
-        }
-        return;
-      } catch (apiError) {
-        console.warn('Backend API non disponible, utilisation Firebase directement:', apiError);
-      }
-
-      // Option 2: Fallback - vérifier dans Firebase directement (sans index)
+      // Vérifier dans Firebase directement
       const universitiesRef = ref(database, 'universities');
       const snapshot = await get(universitiesRef);
 
