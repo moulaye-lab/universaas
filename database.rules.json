@@ -27,7 +27,7 @@
           ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
         },
         "role": {
-          ".validate": "newData.isString() && newData.val().matches(/^(super_admin_plateforme|admin_universite|comptable|teacher|student|parent)$/) && ((auth.uid !== $uid && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')) || (auth.uid === $uid && newData.val() === data.val()) || !data.exists()) && (newData.val() !== 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
+          ".validate": "newData.isString() && newData.val().matches(/^(super_admin_plateforme|admin_universite|comptable|teacher|student|parent)$/) && ((!data.exists()) || (auth.uid !== $uid && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')) || (auth.uid === $uid && newData.val() === data.val())) && (newData.val() !== 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')"
         },
         "universityId": {
           ".validate": "(newData.isString() && newData.val().length > 0 && ((auth.uid !== $uid && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')) || (auth.uid === $uid && newData.val() === data.val()) || !data.exists())) || !newData.exists()"
