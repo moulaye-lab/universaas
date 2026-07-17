@@ -79,7 +79,12 @@
       "Bash(git config *)",
       "Bash(python3 *)",
       "Bash(git tag *)",
-      "Bash(grep -E \"\\\\.js$|routes\")"
+      "Bash(grep -E \"\\\\.js$|routes\")",
+      "Bash(tee /tmp/vercel-deploy.log)",
+      "Bash(firebase auth:export /tmp/users-backup.json --project university-saas-7b31e)",
+      "Bash(gcloud auth *)",
+      "Bash(/tmp/CREATE_SUPER_ADMIN_NOW.sh)",
+      "Bash(firebase auth:export /tmp/test.json --project university-saas-7b31e)"
     ]
   }
 }

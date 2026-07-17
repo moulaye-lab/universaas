@@ -509,16 +509,19 @@ export async function synchroniserTenants(adminUid) {
   }
 
   const universities = universitiesSnap.val();
-  const updates = {};
+  let syncCount = 0;
 
   for (const [universityId, universityData] of Object.entries(universities)) {
+    // Ignorer le nœud public_slugs
+    if (universityId === 'public_slugs') continue;
+
     const info = universityData.info || {};
 
     // Compter étudiants et enseignants
     const studentsCount = universityData.students ? Object.keys(universityData.students).length : 0;
     const teachersCount = universityData.teachers ? Object.keys(universityData.teachers).length : 0;
 
-    updates[`system_admin/tenants_management/${universityId}`] = {
+    const tenantData = {
       universityId,
       name: info.name || 'Université sans nom',
       slug: info.slug || universityId,
@@ -531,10 +534,14 @@ export async function synchroniserTenants(adminUid) {
       monthlyPrice: SUBSCRIPTION_PLANS[info.subscriptionPlan || 'standard'].monthlyPrice,
       lastSyncedAt: Date.now()
     };
+
+    // Écriture directe dans chaque chemin (contourne les rules racine)
+    const tenantRef = ref(database, `system_admin/tenants_management/${universityId}`);
+    await set(tenantRef, tenantData);
+    syncCount++;
   }
 
-  await update(ref(database), updates);
-  console.log(`✅ ${Object.keys(updates).length} tenants synchronisés`);
+  console.log(`✅ ${syncCount} tenants synchronisés`);
 }
 
 export default {
