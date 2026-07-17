@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "firebase-admin": "^14.2.0",
+    "csv-parser": "^3.2.1",
+    "multiparty": "^4.3.0"
+  }
+}

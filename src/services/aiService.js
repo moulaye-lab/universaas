@@ -4,7 +4,11 @@
 
 import { auth } from '../config/firebase';
 
-const API_URL = import.meta.env.VITE_AI_API_URL || 'http://localhost:3001';
+// En production Vercel, utiliser les routes serverless /api/*
+// En local, fallback vers localhost:3001 si backend Express est démarré
+const API_URL = import.meta.env.VITE_APP_ENV === 'production'
+  ? '' // Routes relatives /api/* sur Vercel
+  : (import.meta.env.VITE_AI_API_URL || 'http://localhost:3001');
 
 /**
  * Génère une réponse IA via le backend sécurisé
