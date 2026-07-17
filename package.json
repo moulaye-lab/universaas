@@ -32,12 +32,14 @@
     "@vitejs/plugin-react": "^6.0.3",
     "autoprefixer": "^10.5.2",
     "csv-parser": "^3.2.1",
+    "esbuild": "^0.28.1",
     "eslint": "^10.6.0",
     "firebase-admin": "^14.2.0",
     "multiparty": "^4.3.0",
     "oxlint": "^1.71.0",
     "postcss": "^8.5.16",
     "tailwindcss": "^3.4.19",
+    "terser": "^5.49.0",
     "typescript": "^7.0.2",
     "vite": "^8.1.1"
   }
