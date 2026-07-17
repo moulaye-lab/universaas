@@ -10,6 +10,13 @@ import { ref, get, onValue } from 'firebase/database';
 import { database } from '../config/firebase';
 import CreateUniversityModal from '../components/CreateUniversityModal';
 import {
+  changerStatutTenant,
+  mettreAJourPlanAbonnement,
+  obtenirStatistiquesGlobales,
+  obtenirListeTenants,
+  synchroniserTenants
+} from '../services/superAdminService';
+import {
   GraduationCap,
   Users,
   Building2,
@@ -31,7 +38,9 @@ import {
   Sparkles,
   ArrowUpRight,
   ArrowDownRight,
-  Activity
+  Activity,
+  Ban,
+  RefreshCw
 } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
@@ -71,48 +80,23 @@ export default function SuperAdminDashboard() {
         return;
       }
 
-      // Charger les stats de la plateforme
-      // console.log('Loading platform stats...');
-      const platformRef = ref(database, 'platform/analytics');
-      const platformSnap = await get(platformRef);
+      // Charger les stats RÉELLES depuis system_admin
+      const globalStats = await obtenirStatistiquesGlobales(userProfile.uid);
 
-      if (platformSnap.exists()) {
-        // console.log('Platform stats found:', platformSnap.val());
-        setStats(platformSnap.val());
-      } else {
-        // console.log('No platform stats, using defaults');
-        setStats({
-          totalUniversities: 0,
-          activeUniversities: 0,
-          totalStudents: 0,
-          totalTeachers: 0,
-          monthlyRevenue: 0,
-          yearlyRevenue: 0,
-          growthRate: 0,
-        });
-      }
+      setStats({
+        totalUniversities: globalStats.totalUniversities,
+        activeUniversities: globalStats.activeUniversities,
+        totalStudents: globalStats.totalStudents,
+        totalTeachers: globalStats.totalTeachers,
+        monthlyRevenue: globalStats.finance.monthlyRecurringRevenue,
+        yearlyRevenue: globalStats.finance.yearlyRecurringRevenue,
+        growthRate: 15.2, // TODO: Calculer le taux de croissance réel
+      });
 
-      // Charger les universités
-      // console.log('Loading universities...');
-      const universitiesRef = ref(database, 'universities');
-      const universitiesSnap = await get(universitiesRef);
-
-      if (universitiesSnap.exists()) {
-        const universitiesData = universitiesSnap.val();
-        // console.log('Universities found:', Object.keys(universitiesData).length);
-        const universitiesList = Object.keys(universitiesData).map(id => ({
-          id,
-          ...universitiesData[id].info,
-        }));
-
-        // Trier par date de création (plus récent en premier)
-        universitiesList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-        setUniversities(universitiesList);
-      } else {
-        // console.log('No universities found');
-        setUniversities([]);
-      }
+      // Charger les universités DEPUIS system_admin/tenants_management
+      const universitiesList = await obtenirListeTenants(userProfile.uid);
+      universitiesList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setUniversities(universitiesList);
 
       setLoading(false);
 
@@ -132,6 +116,99 @@ export default function SuperAdminDashboard() {
     setSuccessMessage(`Université "${data.universityName}" créée avec succès ! Email admin: ${data.adminEmail}`);
     setTimeout(() => setSuccessMessage(''), 8000);
     loadDashboardData(); // Recharger la liste
+  };
+
+  const handleSuspendTenant = async (tenantId) => {
+    const reason = prompt('Raison de la suspension (obligatoire) :');
+    if (!reason || reason.trim() === '') {
+      alert('La raison de suspension est obligatoire');
+      return;
+    }
+
+    if (!confirm(`Êtes-vous sûr de vouloir suspendre cette université ?\nRaison : ${reason}`)) {
+      return;
+    }
+
+    try {
+      await changerStatutTenant({
+        tenantId,
+        status: 'suspended',
+        reason: reason.trim(),
+        adminUid: userProfile.uid
+      });
+      setSuccessMessage('Université suspendue avec succès');
+      setTimeout(() => setSuccessMessage(''), 5000);
+      loadDashboardData();
+    } catch (error) {
+      console.error(error);
+      alert('Erreur : ' + error.message);
+    }
+  };
+
+  const handleActivateTenant = async (tenantId) => {
+    if (!confirm('Êtes-vous sûr de vouloir réactiver cette université ?')) {
+      return;
+    }
+
+    try {
+      await changerStatutTenant({
+        tenantId,
+        status: 'active',
+        adminUid: userProfile.uid
+      });
+      setSuccessMessage('Université réactivée avec succès');
+      setTimeout(() => setSuccessMessage(''), 5000);
+      loadDashboardData();
+    } catch (error) {
+      console.error(error);
+      alert('Erreur : ' + error.message);
+    }
+  };
+
+  const handleChangePlan = async (tenantId, currentPlan) => {
+    const newPlan = prompt(`Plan actuel : ${currentPlan}\nNouveau plan (basic, standard, premium, enterprise) :`);
+
+    if (!newPlan) return;
+
+    const validPlans = ['basic', 'standard', 'premium', 'enterprise'];
+    if (!validPlans.includes(newPlan.toLowerCase())) {
+      alert('Plan invalide. Choisissez parmi : basic, standard, premium, enterprise');
+      return;
+    }
+
+    if (!confirm(`Changer le plan de ${currentPlan} vers ${newPlan} ?`)) {
+      return;
+    }
+
+    try {
+      await mettreAJourPlanAbonnement({
+        tenantId,
+        newPlan: newPlan.toLowerCase(),
+        adminUid: userProfile.uid
+      });
+      setSuccessMessage('Plan mis à jour avec succès');
+      setTimeout(() => setSuccessMessage(''), 5000);
+      loadDashboardData();
+    } catch (error) {
+      console.error(error);
+      alert('Erreur : ' + error.message);
+    }
+  };
+
+  const handleSyncTenants = async () => {
+    if (!confirm('Synchroniser toutes les universités dans system_admin ? Cette opération peut prendre quelques secondes.')) {
+      return;
+    }
+
+    try {
+      await synchroniserTenants(userProfile.uid);
+      setSuccessMessage('Synchronisation terminée avec succès');
+      setTimeout(() => setSuccessMessage(''), 5000);
+      loadDashboardData();
+    } catch (error) {
+      console.error(error);
+      alert('Erreur : ' + error.message);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -167,7 +244,7 @@ export default function SuperAdminDashboard() {
 
   const filteredUniversities = universities.filter(uni => {
     const matchesSearch = uni.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || uni.subscriptionStatus === filterStatus;
+    const matchesFilter = filterStatus === 'all' || uni.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
@@ -329,13 +406,22 @@ export default function SuperAdminDashboard() {
               <h3 className="text-2xl font-black text-gray-900 mb-1">Universités clientes</h3>
               <p className="text-gray-600">Gérez vos clients et abonnements</p>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg flex items-center gap-2"
-            >
-              <Sparkles className="h-5 w-5" />
-              Nouvelle université
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSyncTenants}
+                className="bg-white border-2 border-indigo-300 text-indigo-600 px-4 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-all flex items-center gap-2"
+              >
+                <RefreshCw className="h-5 w-5" />
+                Synchroniser
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg flex items-center gap-2"
+              >
+                <Sparkles className="h-5 w-5" />
+                Nouvelle université
+              </button>
+            </div>
           </div>
 
           {/* Filters */}
@@ -402,10 +488,10 @@ export default function SuperAdminDashboard() {
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        {getPlanBadge(uni.subscriptionPlan || 'standard')}
+                        {getPlanBadge(uni.plan || 'standard')}
                       </td>
                       <td className="py-4 px-4">
-                        {getStatusBadge(uni.subscriptionStatus || 'active')}
+                        {getStatusBadge(uni.status || 'active')}
                       </td>
                       <td className="py-4 px-4">
                         <p className="font-bold text-gray-900">{uni.currentStudents || 0}</p>
@@ -417,12 +503,35 @@ export default function SuperAdminDashboard() {
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center justify-end gap-2">
-                          <button className="p-2 hover:bg-indigo-50 rounded-lg transition-colors text-indigo-600">
-                            <Eye className="h-5 w-5" />
-                          </button>
-                          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600">
+                          {/* Bouton Suspendre/Activer */}
+                          {uni.status === 'active' ? (
+                            <button
+                              onClick={() => handleSuspendTenant(uni.universityId)}
+                              className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-600"
+                              title="Suspendre l'accès"
+                            >
+                              <Ban className="h-5 w-5" />
+                            </button>
+                          ) : uni.status === 'suspended' ? (
+                            <button
+                              onClick={() => handleActivateTenant(uni.universityId)}
+                              className="p-2 hover:bg-green-50 rounded-lg transition-colors text-green-600"
+                              title="Réactiver l'accès"
+                            >
+                              <CheckCircle className="h-5 w-5" />
+                            </button>
+                          ) : null}
+
+                          {/* Bouton Changer Plan */}
+                          <button
+                            onClick={() => handleChangePlan(uni.universityId, uni.plan)}
+                            className="p-2 hover:bg-indigo-50 rounded-lg transition-colors text-indigo-600"
+                            title="Modifier le plan"
+                          >
                             <Settings className="h-5 w-5" />
                           </button>
+
+                          {/* Menu Plus d'options */}
                           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600">
                             <MoreVertical className="h-5 w-5" />
                           </button>

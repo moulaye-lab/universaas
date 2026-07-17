@@ -1028,6 +1028,74 @@
           ".validate": false
         }
       }
+    },
+
+    "system_admin": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
+
+      "tenants_management": {
+        "$tenantId": {
+          "universityId": { ".validate": "newData.isString() && newData.val().length > 0" },
+          "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+          "slug": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+          "status": { ".validate": "newData.isString() && newData.val().matches(/^(active|trial|suspended|cancelled)$/)" },
+          "plan": { ".validate": "newData.isString() && newData.val().matches(/^(basic|standard|premium|enterprise)$/)" },
+          "createdAt": { ".validate": "newData.isNumber() && newData.val() > 0" },
+          "suspendedAt": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
+          "suspensionReason": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500 || !newData.exists()" },
+          "currentStudents": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "currentTeachers": { ".validate": "newData.isNumber() && newData.val() >= 0 || !newData.exists()" },
+          "maxStudents": { ".validate": "newData.isNumber() && newData.val() > 0" },
+          "monthlyPrice": { ".validate": "newData.isNumber() && newData.val() >= 0 || newData.val() === null" },
+          "lastPaymentDate": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
+          "nextBillingDate": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
+          "trialEndsAt": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
+          "updatedAt": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
+          "updatedBy": { ".validate": "newData.isString() && newData.val().length > 0 || !newData.exists()" },
+          "planChangedAt": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
+          "lastSyncedAt": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "ia_analytics": {
+        "$universityId": {
+          "totalTokensUsed": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "tokensThisMonth": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "lastUsedAt": { ".validate": "newData.isNumber() && newData.val() > 0" },
+          "estimatedCost": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "requestCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "averageTokensPerRequest": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "$other": { ".validate": false }
+        }
+      },
+
+      "global_finance": {
+        "payments": {
+          "$paymentId": {
+            "universityId": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "universityName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+            "amount": { ".validate": "newData.isNumber() && newData.val() > 0" },
+            "plan": { ".validate": "newData.isString() && newData.val().matches(/^(basic|standard|premium|enterprise)$/)" },
+            "billingPeriod": { ".validate": "newData.isString() && newData.val().matches(/^(monthly|yearly)$/)" },
+            "status": { ".validate": "newData.isString() && newData.val().matches(/^(pending|paid|failed|refunded)$/)" },
+            "date": { ".validate": "newData.isNumber() && newData.val() > 0" },
+            "paymentMethod": { ".validate": "newData.isString() && newData.val().length > 0 || !newData.exists()" },
+            "transactionId": { ".validate": "newData.isString() && newData.val().length > 0 || !newData.exists()" },
+            "invoiceUrl": { ".validate": "newData.isString() && newData.val().matches(/^https?:\\/\\/.+/) || !newData.exists()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "statistics": {
+          "totalRevenue": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "monthlyRecurringRevenue": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "yearlyRecurringRevenue": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "averageRevenuePerUniversity": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "lastUpdated": { ".validate": "newData.isNumber() && newData.val() > 0" },
+          "$other": { ".validate": false }
+        }
+      }
     }
   }
 }

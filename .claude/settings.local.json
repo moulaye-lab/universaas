@@ -74,7 +74,9 @@
       "Bash(/tmp/create-png-icons.sh)",
       "Bash(sudo npm *)",
       "Bash(vercel whoami *)",
-      "Bash(vercel *)"
+      "Bash(vercel *)",
+      "Bash(git rm *)",
+      "Bash(git config *)"
     ]
   }
 }
