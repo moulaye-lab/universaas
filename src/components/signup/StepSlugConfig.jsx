@@ -72,8 +72,9 @@ export default function StepSlugConfig({ formData, updateFormData }) {
 
       if (snapshot.exists()) {
         const universities = snapshot.val();
+        // Vérifier dans info/slug ou dans tenants_management/slug
         const slugExists = Object.values(universities).some(
-          univ => univ.slug === slug
+          univ => (univ.info && univ.info.slug === slug) || univ.slug === slug
         );
 
         if (slugExists) {
