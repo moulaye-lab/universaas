@@ -82,7 +82,12 @@ export default function AcademicYearConfigPage() {
   };
 
   const handleCloseSemester = async (semesterNumber) => {
+    console.log('🔵 handleCloseSemester appelé avec semestre:', semesterNumber);
+    console.log('🔵 Status actuel:', status);
+    console.log('🔵 UserProfile:', userProfile);
+
     const semester = semesterNumber === 1 ? status.semester1 : status.semester2;
+    console.log('🔵 Semester data:', semester);
 
     // Vérifier que la date de fin est passée
     const endDate = new Date(semester.endDate.split('/').reverse().join('-')); // "31/01/2026" -> "2026-01-31"
@@ -90,21 +95,28 @@ export default function AcademicYearConfigPage() {
     now.setHours(0, 0, 0, 0); // Ignorer l'heure
     endDate.setHours(0, 0, 0, 0);
 
+    console.log('🔵 Date fin semestre:', endDate);
+    console.log('🔵 Date actuelle:', now);
+    console.log('🔵 Date passée?', endDate <= now);
+
     if (endDate > now) {
       alert(`❌ Impossible de clôturer le Semestre ${semesterNumber}\n\nLa date de fin (${semester.endDate}) n'est pas encore atteinte.\n\nDate actuelle: ${now.toLocaleDateString('fr-FR')}`);
       return;
     }
 
     if (!confirm(`Clôturer le Semestre ${semesterNumber} ?\n\nLes notes ne pourront plus être modifiées après cette action.`)) {
+      console.log('🔵 Utilisateur a annulé la confirmation');
       return;
     }
 
+    console.log('🔵 Appel closeSemester...');
     try {
       await closeSemester(userProfile.universityId, semesterNumber, userProfile.uid);
+      console.log('🔵 closeSemester réussi');
       alert(`✅ Semestre ${semesterNumber} clôturé avec succès !`);
       loadStatus();
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('❌ Erreur closeSemester:', error);
       alert('Erreur: ' + error.message);
     }
   };
@@ -125,8 +137,11 @@ export default function AcademicYearConfigPage() {
 
   const handleConfigureYear = async (e) => {
     e.preventDefault();
+    console.log('🟢 handleConfigureYear appelé');
+    console.log('🟢 Form data:', configForm);
 
     if (!confirm('Modifier les dates de l\'année académique ?\n\nAttention: Cette action affecte toute l\'université.')) {
+      console.log('🟢 Utilisateur a annulé');
       return;
     }
 
@@ -141,12 +156,14 @@ export default function AcademicYearConfigPage() {
         semester2EndDate: new Date(configForm.s2End).getTime()
       };
 
+      console.log('🟢 Config envoyée:', config);
       await configureAcademicYear(userProfile.universityId, config, userProfile.uid);
+      console.log('🟢 Configuration réussie');
       alert('✅ Dates configurées avec succès');
       setShowConfigModal(false);
       loadStatus();
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('❌ Erreur configuration:', error);
       alert('Erreur: ' + error.message);
     }
   };
