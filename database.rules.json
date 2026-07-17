@@ -6,7 +6,7 @@
     "users": {
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && data.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val()))",
-        ".write": "auth != null && (auth.uid === $uid && (!data.exists() || data.child('role').val() === newData.child('role').val()) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && (newData.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val() || data.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val())))",
+        ".write": "auth != null && ((auth.uid === $uid && !data.exists()) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && (newData.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val() || data.child('universityId').val() === root.child('users').child(auth.uid).child('universityId').val())))",
 
         "email": {
           ".validate": "(newData.isString() && newData.val().matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/)) || !newData.exists()"
