@@ -14,7 +14,7 @@ import StepSlugConfig from '../../components/signup/StepSlugConfig';
 import StepAdminAccount from '../../components/signup/StepAdminAccount';
 import StepConfiguration from '../../components/signup/StepConfiguration';
 import { database } from '../../config/firebase';
-import { ref, set, get } from 'firebase/database';
+import { ref, get } from 'firebase/database';
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -152,8 +152,9 @@ export default function SignupPage() {
 
       const { localId: adminUid, idToken } = await authResponse.json();
 
-      // 2. Créer l'université dans Firebase
+      // 2. Créer l'université dans Firebase via REST API
       const universityId = `univ_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const dbUrl = import.meta.env.VITE_FIREBASE_DATABASE_URL;
 
       const universityData = {
         info: {
@@ -179,7 +180,16 @@ export default function SignupPage() {
         }
       };
 
-      await set(ref(database, `universities/${universityId}`), universityData);
+      await fetch(`${dbUrl}/universities/${universityId}.json?auth=${idToken}`, {
+        method: 'PUT',
+        body: JSON.stringify(universityData)
+      });
+
+      // 2b. Enregistrer le slug dans le nœud public (pour vérification future)
+      await fetch(`${dbUrl}/universities/public_slugs/${universityId}.json?auth=${idToken}`, {
+        method: 'PUT',
+        body: JSON.stringify({ slug: formData.slug })
+      });
 
       // 3. Créer le profil admin dans /users
       const adminProfile = {
@@ -194,7 +204,10 @@ export default function SignupPage() {
         loginMethod: 'email'
       };
 
-      await set(ref(database, `users/${adminUid}`), adminProfile);
+      await fetch(`${dbUrl}/users/${adminUid}.json?auth=${idToken}`, {
+        method: 'PUT',
+        body: JSON.stringify(adminProfile)
+      });
 
       // 4. Ajouter dans system_admin/tenants_management pour le Super Admin
       const tenantData = {
@@ -210,7 +223,10 @@ export default function SignupPage() {
         type: formData.type
       };
 
-      await set(ref(database, `system_admin/tenants_management/${universityId}`), tenantData);
+      await fetch(`${dbUrl}/system_admin/tenants_management/${universityId}.json?auth=${idToken}`, {
+        method: 'PUT',
+        body: JSON.stringify(tenantData)
+      });
 
       // Rediriger vers page de succès
       navigate('/signup/success', {

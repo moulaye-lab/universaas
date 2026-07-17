@@ -58,6 +58,16 @@
     "universities": {
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
 
+      "public_slugs": {
+        ".read": true,
+        "$universityId": {
+          ".write": "auth != null && !data.exists()",
+          "slug": {
+            ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 30"
+          }
+        }
+      },
+
       "$universityId": {
         ".read": "auth != null && (root.child('users').child(auth.uid).child('universityId').val() === $universityId || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).exists())",
         ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",

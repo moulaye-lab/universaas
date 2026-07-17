@@ -42,15 +42,15 @@ export default function StepSlugConfig({ formData, updateFormData }) {
     setCheckMessage('Vérification de la disponibilité...');
 
     try {
-      // Vérifier dans Firebase directement
-      const universitiesRef = ref(database, 'universities');
-      const snapshot = await get(universitiesRef);
+      // Vérifier dans le nœud public_slugs (accessible sans auth)
+      const slugsRef = ref(database, 'universities/public_slugs');
+      const snapshot = await get(slugsRef);
 
       if (snapshot.exists()) {
-        const universities = snapshot.val();
-        // Vérifier dans info/slug ou dans tenants_management/slug
-        const slugExists = Object.values(universities).some(
-          univ => (univ.info && univ.info.slug === slug) || univ.slug === slug
+        const slugs = snapshot.val();
+        // Vérifier si le slug existe déjà
+        const slugExists = Object.values(slugs).some(
+          entry => entry.slug === slug
         );
 
         if (slugExists) {
@@ -61,7 +61,7 @@ export default function StepSlugConfig({ formData, updateFormData }) {
           setCheckMessage('✓ Ce slug est disponible!');
         }
       } else {
-        // Aucune université n'existe encore
+        // Aucun slug n'existe encore
         updateFormData('slugAvailable', true);
         setCheckMessage('✓ Ce slug est disponible!');
       }
