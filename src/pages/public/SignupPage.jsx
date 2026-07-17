@@ -197,17 +197,23 @@ export default function SignupPage() {
         displayName: `${formData.adminFirstName} ${formData.adminLastName}`,
         firstName: formData.adminFirstName,
         lastName: formData.adminLastName,
-        role: 'admin',
+        role: 'admin_universite',
         universityId: universityId,
         createdAt: Date.now(),
         profileId: adminUid,
         loginMethod: 'email'
       };
 
-      await fetch(`${dbUrl}/users/${adminUid}.json?auth=${idToken}`, {
+      const userProfileResponse = await fetch(`${dbUrl}/users/${adminUid}.json?auth=${idToken}`, {
         method: 'PUT',
         body: JSON.stringify(adminProfile)
       });
+
+      if (!userProfileResponse.ok) {
+        const errorData = await userProfileResponse.json();
+        console.error('Erreur création profil utilisateur:', errorData);
+        throw new Error('Échec de création du profil utilisateur');
+      }
 
       // 4. Ajouter dans system_admin/tenants_management pour le Super Admin
       const tenantData = {
