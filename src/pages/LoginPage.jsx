@@ -256,7 +256,7 @@ export default function LoginPage() {
 
           {/* Sign Up Link */}
           <button
-            onClick={() => navigate('/onboarding')}
+            onClick={() => navigate('/signup')}
             className="w-full bg-white border-2 border-indigo-200 text-indigo-600 py-4 rounded-xl font-bold text-lg hover:bg-indigo-50 hover:border-indigo-300 hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2"
           >
             <Sparkles className="h-5 w-5" />
