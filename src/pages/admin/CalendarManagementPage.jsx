@@ -198,8 +198,10 @@ export default function CalendarManagementPage() {
 
   // Drag & Drop handlers
   const handleDragStart = (e, event) => {
+    console.log('🎯 Drag Start:', event.title);
     setDraggedEvent(event);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', event.id); // Nécessaire pour Firefox
   };
 
   const handleDragOver = (e) => {
@@ -209,12 +211,17 @@ export default function CalendarManagementPage() {
 
   const handleDrop = async (e, targetDate) => {
     e.preventDefault();
-    if (!draggedEvent || !targetDate) return;
+    console.log('📍 Drop on:', targetDate, 'Event:', draggedEvent?.title);
+
+    if (!draggedEvent || !targetDate) {
+      console.warn('⚠️ Drop annulé: draggedEvent ou targetDate manquant');
+      return;
+    }
 
     try {
-      const daysDiff = Math.floor((targetDate - new Date(draggedEvent.startDate)) / (1000 * 60 * 60 * 24));
-
       const newStartDate = new Date(targetDate);
+      newStartDate.setHours(0, 0, 0, 0);
+
       let newEndDate = null;
 
       if (draggedEvent.endDate) {
@@ -225,16 +232,23 @@ export default function CalendarManagementPage() {
         newEndDate.setDate(newEndDate.getDate() + originalDuration);
       }
 
+      console.log('🔄 Updating event:', {
+        id: draggedEvent.id,
+        newStartDate: newStartDate.toISOString(),
+        newEndDate: newEndDate?.toISOString()
+      });
+
       await updateEvent(userProfile.universityId, draggedEvent.id, {
         startDate: newStartDate.toISOString(),
         endDate: newEndDate ? newEndDate.toISOString() : null
       });
 
+      console.log('✅ Event déplacé avec succès');
       setDraggedEvent(null);
       loadEvents();
     } catch (error) {
-      console.error('Erreur déplacement:', error);
-      alert('Erreur lors du déplacement');
+      console.error('❌ Erreur déplacement:', error);
+      alert('Erreur lors du déplacement: ' + error.message);
     }
   };
 
@@ -428,21 +442,29 @@ export default function CalendarManagementPage() {
                       </div>
                       <div className="space-y-0.5">
                         {dayEvents.slice(0, 2).map(event => (
-                          <button
+                          <div
                             key={event.id}
-                            draggable
+                            draggable={true}
                             onDragStart={(e) => handleDragStart(e, event)}
                             onDragEnd={() => setDraggedEvent(null)}
                             onClick={(e) => {
                               e.stopPropagation();
                               openEditModal(event);
                             }}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                openEditModal(event);
+                              }
+                            }}
                             className="w-full text-left px-1.5 py-0.5 rounded text-xs font-medium text-white truncate hover:opacity-80 transition cursor-move"
                             style={{ backgroundColor: EVENT_TYPE_COLORS[event.type] }}
                             title={`${event.title} - Glisser pour déplacer ou cliquer pour éditer`}
                           >
                             {event.title}
-                          </button>
+                          </div>
                         ))}
                         {dayEvents.length > 2 && (
                           <p className="text-xs text-gray-500 px-1">+{dayEvents.length - 2}</p>
