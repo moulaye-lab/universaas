@@ -126,8 +126,8 @@ export default function CreateClassPage() {
         classNumber: formData.classNumber,
         capacity: parseInt(formData.capacity),
         occupiedSeats: 0,
-        students: [],
-        schedule: [],
+        // students: [], // ❌ Ne pas envoyer tableau vide (Firebase le transforme en null)
+        // schedule: [], // ❌ Ne pas envoyer tableau vide (Firebase le transforme en null)
         period: {
           start: formData.periodStart,
           end: formData.periodEnd
