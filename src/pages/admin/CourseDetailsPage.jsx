@@ -14,6 +14,7 @@ import { ref, get, update } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminLayout from '../../components/AdminLayout';
+import { Edit } from 'lucide-react';
 
 export default function CourseDetailsPage() {
   const navigate = useNavigate();
@@ -34,6 +35,8 @@ export default function CourseDetailsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     const loadCourse = async () => {
@@ -330,12 +333,24 @@ export default function CourseDetailsPage() {
                 {course.code} • {course.credits} ECTS
               </p>
             </div>
-            <button
-              onClick={() => navigate('/admin/courses')}
-              className="px-6 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold shadow"
-            >
-              ← Retour
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setEditForm(course);
+                  setShowEditModal(true);
+                }}
+                className="px-6 py-3 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition font-semibold shadow flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                Modifier
+              </button>
+              <button
+                onClick={() => navigate('/admin/courses')}
+                className="px-6 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold shadow"
+              >
+                ← Retour
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -706,6 +721,163 @@ export default function CourseDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Modal Édition Cours */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Modifier le Cours</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nom du cours *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name || ''}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Code *
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.code || ''}
+                    onChange={(e) => setEditForm({ ...editForm, code: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Crédits ECTS *
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.credits || ''}
+                    onChange={(e) => setEditForm({ ...editForm, credits: parseInt(e.target.value) })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Niveau
+                  </label>
+                  <select
+                    value={editForm.level || ''}
+                    onChange={(e) => setEditForm({ ...editForm, level: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="L1">L1</option>
+                    <option value="L2">L2</option>
+                    <option value="L3">L3</option>
+                    <option value="M1">M1</option>
+                    <option value="M2">M2</option>
+                    <option value="D1">D1</option>
+                    <option value="D2">D2</option>
+                    <option value="D3">D3</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Semestre
+                  </label>
+                  <select
+                    value={editForm.semester || ''}
+                    onChange={(e) => setEditForm({ ...editForm, semester: parseInt(e.target.value) })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="1">Semestre 1</option>
+                    <option value="2">Semestre 2</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Département
+                </label>
+                <input
+                  type="text"
+                  value={editForm.department || ''}
+                  onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description || ''}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={async () => {
+                  if (!editForm.name || !editForm.code || !editForm.credits) {
+                    alert('Veuillez remplir tous les champs obligatoires');
+                    return;
+                  }
+
+                  try {
+                    setSaving(true);
+                    const courseRef = ref(database, `universities/${userProfile.universityId}/courses/${courseId}`);
+                    await update(courseRef, {
+                      name: editForm.name,
+                      code: editForm.code,
+                      credits: editForm.credits,
+                      level: editForm.level || '',
+                      semester: editForm.semester || '',
+                      department: editForm.department || '',
+                      description: editForm.description || '',
+                      updatedAt: Date.now()
+                    });
+
+                    setCourse(editForm);
+                    setShowEditModal(false);
+                    setSuccess('Cours modifié avec succès');
+                    setTimeout(() => setSuccess(''), 3000);
+                  } catch (err) {
+                    console.error('Error updating course:', err);
+                    alert('Erreur lors de la modification: ' + err.message);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                className="flex-1 px-6 py-3 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition font-semibold disabled:opacity-50"
+              >
+                {saving ? 'Enregistrement...' : 'Enregistrer'}
+              </button>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition font-semibold"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }
