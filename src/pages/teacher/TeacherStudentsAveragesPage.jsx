@@ -59,7 +59,7 @@ export default function TeacherStudentsAveragesPage() {
       let teacherCourses = [];
       if (coursesSnap.exists()) {
         teacherCourses = Object.entries(coursesSnap.val())
-          .filter(([id, course]) => course.teacherId === userProfile.uid)
+          .filter(([id, course]) => course.teacherId === userProfile.profileId)
           .map(([id, course]) => ({ id, ...course }));
       }
       setCourses(teacherCourses);

@@ -162,7 +162,17 @@ export default function FreePaymentPage() {
       const paymentSnap = await get(paymentRef);
 
       if (paymentSnap.exists()) {
-        setStudentPaymentPlan(paymentSnap.val());
+        const plan = paymentSnap.val();
+        setStudentPaymentPlan(plan);
+
+        // Vérifier si le solde est à 0
+        const totalAmount = plan.totalAmount || 0;
+        const paidAmount = plan.paidAmount || 0;
+        const remainingBalance = totalAmount - paidAmount;
+
+        if (remainingBalance <= 0) {
+          setError('✅ Cet étudiant a déjà payé l\'intégralité de ses frais de scolarité. Aucun paiement supplémentaire n\'est nécessaire.');
+        }
       } else {
         setStudentPaymentPlan(null);
         setError('Cet étudiant n\'a pas de plan de paiement. Veuillez d\'abord créer un plan de paiement.');
@@ -191,6 +201,21 @@ export default function FreePaymentPage() {
     const amount = parseFloat(paymentData.amount);
     if (isNaN(amount) || amount <= 0) {
       setError('Veuillez entrer un montant valide');
+      return;
+    }
+
+    // Vérifier si le solde est à 0
+    const totalAmount = studentPaymentPlan.totalAmount || 0;
+    const paidAmount = studentPaymentPlan.paidAmount || 0;
+    const remainingBalance = totalAmount - paidAmount;
+
+    if (remainingBalance <= 0) {
+      setError('✅ Cet étudiant a déjà payé l\'intégralité de ses frais. Aucun paiement supplémentaire n\'est possible.');
+      return;
+    }
+
+    if (amount > remainingBalance) {
+      setError(`Le montant saisi (${formatAmount(amount)}) dépasse le solde restant (${formatAmount(remainingBalance)})`);
       return;
     }
 
@@ -262,7 +287,7 @@ export default function FreePaymentPage() {
         studentName: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
         studentMatricule: selectedStudent.matricule,
         createdAt: now,
-        createdBy: userProfile.uid,
+        createdBy: userProfile.profileId,
         createdByName: userProfile.displayName,
         createdByRole: userProfile.role
       });

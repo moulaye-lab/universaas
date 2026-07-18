@@ -154,14 +154,14 @@ export default function LibraryResourcesPage() {
         ...formData,
         fileUrl,
         tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
-        teacherId: userProfile.uid,
+        teacherId: userProfile.profileId,
         teacherName: userProfile.displayName
       };
 
       if (editingResource) {
         await updateResource(userProfile.universityId, editingResource.id, resourceData);
       } else {
-        await createResource(userProfile.universityId, resourceData, userProfile.uid);
+        await createResource(userProfile.universityId, resourceData, userProfile.profileId);
       }
 
       setShowModal(false);

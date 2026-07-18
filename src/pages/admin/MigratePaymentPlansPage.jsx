@@ -235,7 +235,7 @@ export default function MigratePaymentPlansPage() {
           academicYear: currentAcademicYear,
           status: existingPaidAmount >= totalAmount ? 'completed' : 'active',
           migratedAt: Date.now(),
-          migratedBy: userProfile.uid
+          migratedBy: userProfile.profileId
         });
 
         results.push({

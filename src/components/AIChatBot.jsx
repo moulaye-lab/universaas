@@ -82,7 +82,7 @@ export default function AIChatBot() {
     try {
       const conversationRef = ref(
         database,
-        `universities/${userProfile.universityId}/aiConversations/${userProfile.uid}`
+        `universities/${userProfile.universityId}/aiConversations/${userProfile.profileId}`
       );
       const conversationQuery = query(conversationRef, orderByChild('timestamp'), limitToLast(50));
 
@@ -176,7 +176,7 @@ export default function AIChatBot() {
 
     const conversationRef = ref(
       database,
-      `universities/${userProfile.universityId}/aiConversations/${userProfile.uid}`
+      `universities/${userProfile.universityId}/aiConversations/${userProfile.profileId}`
     );
     const newMessageRef = push(conversationRef);
 
@@ -184,7 +184,7 @@ export default function AIChatBot() {
       role: message.role,
       content: message.content,
       timestamp: message.timestamp,
-      userId: userProfile.uid,
+      userId: userProfile.profileId,
       userRole: userProfile.role
     });
   };

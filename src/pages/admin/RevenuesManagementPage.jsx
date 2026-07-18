@@ -177,7 +177,7 @@ export default function RevenuesManagementPage() {
         const history = editingRevenue.history || [];
         history.push({
           modifiedAt: now,
-          modifiedBy: userProfile.uid,
+          modifiedBy: userProfile.profileId,
           modifiedByName: userProfile.displayName,
           modifiedByRole: userProfile.role,
           previousValues: {
@@ -194,7 +194,7 @@ export default function RevenuesManagementPage() {
           createdAt: editingRevenue.createdAt,
           createdBy: editingRevenue.createdBy,
           lastModifiedAt: now,
-          lastModifiedBy: userProfile.uid,
+          lastModifiedBy: userProfile.profileId,
           history
         });
       } else {
@@ -205,7 +205,7 @@ export default function RevenuesManagementPage() {
           ...revenueData,
           id: newRevenueRef.key,
           createdAt: now,
-          createdBy: userProfile.uid,
+          createdBy: userProfile.profileId,
           createdByName: userProfile.displayName,
           createdByRole: userProfile.role,
           history: []

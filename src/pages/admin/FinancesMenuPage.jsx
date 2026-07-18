@@ -5,7 +5,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, DollarSign, CreditCard, TrendingUp, FileText } from 'lucide-react';
+import { ChevronLeft, DollarSign, CreditCard, TrendingUp, FileText, GraduationCap } from 'lucide-react';
 
 export default function FinancesMenuPage() {
   const navigate = useNavigate();
@@ -17,6 +17,13 @@ export default function FinancesMenuPage() {
       path: '/admin/accounting',
       gradient: 'from-green-500 to-emerald-600',
       description: 'Vue d\'ensemble financière et KPIs'
+    },
+    {
+      title: 'Frais de Scolarité',
+      icon: GraduationCap,
+      path: '/admin/tuition-fees',
+      gradient: 'from-indigo-500 to-purple-600',
+      description: 'Configurer tarifs par filière et appliquer aux étudiants'
     },
     {
       title: 'Paiements Étudiants',

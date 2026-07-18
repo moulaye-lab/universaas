@@ -91,7 +91,7 @@ export default function LibraryLoansPage() {
     e.preventDefault();
 
     try {
-      await createLoan(userProfile.universityId, formData, userProfile.uid);
+      await createLoan(userProfile.universityId, formData, userProfile.profileId);
       setShowModal(false);
       resetForm();
       loadData();

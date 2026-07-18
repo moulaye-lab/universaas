@@ -56,7 +56,7 @@ const StudentDashboard = () => {
       }
 
       const uniId = userProfile.universityId;
-      const studentId = userProfile.profileId || userProfile.uid;
+      const studentId = userProfile.profileId || userProfile.profileId;
 
       // Loading dashboard data
 
@@ -319,11 +319,11 @@ const StudentDashboard = () => {
         </div>
 
         {/* Moyennes en Temps Réel */}
-        {userProfile?.universityId && (studentData?.id || userProfile.uid) && (
+        {userProfile?.universityId && (studentData?.id || userProfile.profileId) && (
           <div className="mb-8 animate-slide-up" data-tour="grades-section">
             <LiveAverageDisplay
               universityId={userProfile.universityId}
-              studentId={studentData?.id || userProfile.uid}
+              studentId={studentData?.id || userProfile.profileId}
               showDetails={false}
             />
           </div>

@@ -111,7 +111,7 @@ export default function AcademicYearConfigPage() {
 
     console.log('🔵 Appel closeSemester...');
     try {
-      await closeSemester(userProfile.universityId, semesterNumber, userProfile.uid);
+      await closeSemester(userProfile.universityId, semesterNumber, userProfile.profileId);
       console.log('🔵 closeSemester réussi');
       alert(`✅ Semestre ${semesterNumber} clôturé avec succès !`);
       loadStatus();
@@ -126,7 +126,7 @@ export default function AcademicYearConfigPage() {
     if (!reason) return;
 
     try {
-      await reopenSemester(userProfile.universityId, semesterNumber, userProfile.uid, reason);
+      await reopenSemester(userProfile.universityId, semesterNumber, userProfile.profileId, reason);
       alert(`🔓 Semestre ${semesterNumber} réouvert`);
       loadStatus();
     } catch (error) {
@@ -157,7 +157,7 @@ export default function AcademicYearConfigPage() {
       };
 
       console.log('🟢 Config envoyée:', config);
-      await configureAcademicYear(userProfile.universityId, config, userProfile.uid);
+      await configureAcademicYear(userProfile.universityId, config, userProfile.profileId);
       console.log('🟢 Configuration réussie');
       alert('✅ Dates configurées avec succès');
       setShowConfigModal(false);

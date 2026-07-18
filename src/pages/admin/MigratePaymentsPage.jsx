@@ -126,7 +126,7 @@ export default function MigratePaymentsPage() {
             createdAt: plan.createdAt || Date.now(),
             createdBy: plan.createdBy || 'migration-script',
             migratedAt: Date.now(),
-            migratedBy: userProfile.uid
+            migratedBy: userProfile.profileId
           };
 
           // Sauvegarder

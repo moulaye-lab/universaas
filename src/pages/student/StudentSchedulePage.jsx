@@ -55,7 +55,7 @@ export default function StudentSchedulePage() {
     }
 
     try {
-      const studentId = userProfile.profileId || userProfile.uid;
+      const studentId = userProfile.profileId || userProfile.profileId;
 
       // Charger les infos de l'étudiant pour obtenir classId
       const studentRef = ref(database, `universities/${userProfile.universityId}/students/${studentId}`);

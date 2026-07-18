@@ -203,6 +203,11 @@ export default function CreateStudentPage() {
         }
       }
 
+      // Validation: Vérifier que academicYear est défini
+      if (!formData.academicYear) {
+        throw new Error('L\'année académique est obligatoire');
+      }
+
       // NOUVEAU : Vérifier que l'email n'existe pas déjà dans Firebase Auth
       const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
       const checkEmailResponse = await fetch(
@@ -414,7 +419,7 @@ export default function CreateStudentPage() {
       );
 
       if (createAnother) {
-        // Reset formulaire (garder niveau et filière pour faciliter la saisie)
+        // Reset formulaire (garder niveau, filière et année académique pour faciliter la saisie)
         setFormData({
           firstName: '',
           lastName: '',
@@ -427,6 +432,7 @@ export default function CreateStudentPage() {
           matricule: '',
           password: '12345678',
           classId: formData.classId,
+          academicYear: formData.academicYear, // ✅ Conserver l'année académique
         });
         setSuccess('');
         setError('');

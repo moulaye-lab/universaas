@@ -81,7 +81,7 @@ export default function SuperAdminDashboard() {
       }
 
       // Charger les stats RÉELLES depuis system_admin
-      const globalStats = await obtenirStatistiquesGlobales(userProfile.uid);
+      const globalStats = await obtenirStatistiquesGlobales(userProfile.profileId);
 
       setStats({
         totalUniversities: globalStats.totalUniversities,
@@ -94,7 +94,7 @@ export default function SuperAdminDashboard() {
       });
 
       // Charger les universités DEPUIS system_admin/tenants_management
-      const universitiesList = await obtenirListeTenants(userProfile.uid);
+      const universitiesList = await obtenirListeTenants(userProfile.profileId);
       universitiesList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       setUniversities(universitiesList);
 
@@ -134,7 +134,7 @@ export default function SuperAdminDashboard() {
         tenantId,
         status: 'suspended',
         reason: reason.trim(),
-        adminUid: userProfile.uid
+        adminUid: userProfile.profileId
       });
       setSuccessMessage('Université suspendue avec succès');
       setTimeout(() => setSuccessMessage(''), 5000);
@@ -154,7 +154,7 @@ export default function SuperAdminDashboard() {
       await changerStatutTenant({
         tenantId,
         status: 'active',
-        adminUid: userProfile.uid
+        adminUid: userProfile.profileId
       });
       setSuccessMessage('Université réactivée avec succès');
       setTimeout(() => setSuccessMessage(''), 5000);
@@ -184,7 +184,7 @@ export default function SuperAdminDashboard() {
       await mettreAJourPlanAbonnement({
         tenantId,
         newPlan: newPlan.toLowerCase(),
-        adminUid: userProfile.uid
+        adminUid: userProfile.profileId
       });
       setSuccessMessage('Plan mis à jour avec succès');
       setTimeout(() => setSuccessMessage(''), 5000);
@@ -201,7 +201,7 @@ export default function SuperAdminDashboard() {
     }
 
     try {
-      await synchroniserTenants(userProfile.uid);
+      await synchroniserTenants(userProfile.profileId);
       setSuccessMessage('Synchronisation terminée avec succès');
       setTimeout(() => setSuccessMessage(''), 5000);
       loadDashboardData();

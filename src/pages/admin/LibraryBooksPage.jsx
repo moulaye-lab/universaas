@@ -70,7 +70,7 @@ export default function LibraryBooksPage() {
         await updateBook(userProfile.universityId, editingBook.id, updateData);
       } else {
         // Création: availableCopies = totalCopies
-        await createBook(userProfile.universityId, formData, userProfile.uid);
+        await createBook(userProfile.universityId, formData, userProfile.profileId);
       }
 
       setShowModal(false);

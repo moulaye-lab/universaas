@@ -213,7 +213,7 @@ export default function AcademicPromotionPage() {
       const result = await executePromotion(
         userProfile.universityId,
         decisions,
-        userProfile.uid
+        userProfile.profileId
       );
 
       alert(`✅ Promotion exécutée avec succès!\n\n${result.stats.promoted} promus\n${result.stats.redoublant} redoublants\n${result.stats.diplome} diplômés`);

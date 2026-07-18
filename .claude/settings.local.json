@@ -84,7 +84,10 @@
       "Bash(firebase auth:export /tmp/users-backup.json --project university-saas-7b31e)",
       "Bash(gcloud auth *)",
       "Bash(/tmp/CREATE_SUPER_ADMIN_NOW.sh)",
-      "Bash(firebase auth:export /tmp/test.json --project university-saas-7b31e)"
+      "Bash(firebase auth:export /tmp/test.json --project university-saas-7b31e)",
+      "Bash(grep -A 5 '\"$other\"')",
+      "Bash(find *)",
+      "Bash(git log *)"
     ]
   }
 }

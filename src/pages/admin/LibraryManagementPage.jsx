@@ -256,16 +256,16 @@ export default function LibraryManagementPage() {
         if (editingItem) {
           await updateBook(userProfile.universityId, editingItem.id, data);
         } else {
-          await createBook(userProfile.universityId, data, userProfile.uid);
+          await createBook(userProfile.universityId, data, userProfile.profileId);
         }
       } else {
-        data.teacherId = userProfile.uid;
+        data.teacherId = userProfile.profileId;
         data.teacherName = userProfile.displayName;
 
         if (editingItem) {
           await updateResource(userProfile.universityId, editingItem.id, data);
         } else {
-          await createResource(userProfile.universityId, data, userProfile.uid);
+          await createResource(userProfile.universityId, data, userProfile.profileId);
         }
       }
 
@@ -317,7 +317,7 @@ export default function LibraryManagementPage() {
     e.preventDefault();
 
     try {
-      await createLoan(userProfile.universityId, loanFormData, userProfile.uid);
+      await createLoan(userProfile.universityId, loanFormData, userProfile.profileId);
       setShowLoanModal(false);
       setLoanFormData({ bookId: '', studentId: '', studentName: '' });
       loadData();

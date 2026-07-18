@@ -213,7 +213,7 @@ export default function ExpensesManagementPage() {
         const history = editingExpense.history || [];
         history.push({
           modifiedAt: now,
-          modifiedBy: userProfile.uid,
+          modifiedBy: userProfile.profileId,
           modifiedByName: userProfile.displayName,
           modifiedByRole: userProfile.role,
           previousValues: {
@@ -231,7 +231,7 @@ export default function ExpensesManagementPage() {
           createdAt: editingExpense.createdAt,
           createdBy: editingExpense.createdBy,
           lastModifiedAt: now,
-          lastModifiedBy: userProfile.uid,
+          lastModifiedBy: userProfile.profileId,
           history
         });
       } else {
@@ -242,7 +242,7 @@ export default function ExpensesManagementPage() {
           ...expenseData,
           id: newExpenseRef.key,
           createdAt: now,
-          createdBy: userProfile.uid,
+          createdBy: userProfile.profileId,
           createdByName: userProfile.displayName,
           createdByRole: userProfile.role,
           history: []

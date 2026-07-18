@@ -85,7 +85,7 @@ export default function TuitionFeesManagementPage() {
             special: data.special || {},
             currency: data.currency || symbol || 'EUR',
             createdAt: data.createdAt || Date.now(),
-            createdBy: data.createdBy || userProfile.uid
+            createdBy: data.createdBy || userProfile.profileId
           };
 
           // Créer la matrice filière x niveau
@@ -109,7 +109,7 @@ export default function TuitionFeesManagementPage() {
           special: {},
           currency: symbol || 'EUR',
           createdAt: Date.now(),
-          createdBy: userProfile.uid
+          createdBy: userProfile.profileId
         };
 
         // Initialiser toutes les filières avec des valeurs par défaut
@@ -144,7 +144,7 @@ export default function TuitionFeesManagementPage() {
       await set(feesRef, {
         ...tuitionFees,
         updatedAt: Date.now(),
-        updatedBy: userProfile.uid
+        updatedBy: userProfile.profileId
       });
 
       alert('✅ Tarifs enregistrés avec succès !');
@@ -321,6 +321,13 @@ export default function TuitionFeesManagementPage() {
           const existingPlan = paymentSnap.exists() ? paymentSnap.val() : {};
           const existingPaidAmount = existingPlan.paidAmount || 0;
 
+          // Skip si l'étudiant a déjà tout payé
+          if (existingPaidAmount >= totalAmount) {
+            console.log(`✅ ${student.firstName} ${student.lastName} a déjà payé l'intégralité (${existingPaidAmount}/${totalAmount})`);
+            updated++;
+            continue;
+          }
+
           // Construire l'objet de mise à jour
           const updateData = {
             studentId: student.id,
@@ -331,7 +338,7 @@ export default function TuitionFeesManagementPage() {
             academicYear,
             status: existingPaidAmount >= totalAmount ? 'completed' : 'active',
             updatedAt: Date.now(),
-            updatedBy: userProfile.uid
+            updatedBy: userProfile.profileId
           };
 
           // Si createdAt n'existe pas, l'ajouter
@@ -341,7 +348,7 @@ export default function TuitionFeesManagementPage() {
 
           // Si createdBy n'existe pas, l'ajouter
           if (!existingPlan.createdBy) {
-            updateData.createdBy = userProfile.uid;
+            updateData.createdBy = userProfile.profileId;
           }
 
           // Utiliser set() pour garantir tous les champs

@@ -263,11 +263,11 @@ export default function MyGradesPage() {
         )}
 
         {/* Moyennes en Temps Réel */}
-        {userProfile?.universityId && (userProfile.profileId || userProfile.uid) && (
+        {userProfile?.universityId && (userProfile.profileId || userProfile.profileId) && (
           <div className="mb-8">
             <LiveAverageDisplay
               universityId={userProfile.universityId}
-              studentId={userProfile.profileId || userProfile.uid}
+              studentId={userProfile.profileId || userProfile.profileId}
               showDetails={true}
             />
           </div>
