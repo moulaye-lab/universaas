@@ -33,7 +33,7 @@ import {
 
 export default function ExpensesManagementPage() {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [expenses, setExpenses] = useState([]);
@@ -231,7 +231,7 @@ export default function ExpensesManagementPage() {
           createdAt: editingExpense.createdAt,
           createdBy: editingExpense.createdBy,
           lastModifiedAt: now,
-          lastModifiedBy: userProfile.profileId,
+          lastModifiedBy: currentUser.uid,
           history
         });
       } else {
@@ -242,8 +242,8 @@ export default function ExpensesManagementPage() {
           ...expenseData,
           id: newExpenseRef.key,
           createdAt: now,
-          createdBy: userProfile.profileId,
-          createdByName: userProfile.displayName,
+          createdBy: currentUser.uid,
+          createdByName: userProfile.displayName || `${userProfile.firstName} ${userProfile.lastName}`,
           createdByRole: userProfile.role,
           history: []
         });

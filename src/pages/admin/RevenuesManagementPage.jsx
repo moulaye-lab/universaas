@@ -31,7 +31,7 @@ import {
 
 export default function RevenuesManagementPage() {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [revenues, setRevenues] = useState([]);
@@ -194,7 +194,7 @@ export default function RevenuesManagementPage() {
           createdAt: editingRevenue.createdAt,
           createdBy: editingRevenue.createdBy,
           lastModifiedAt: now,
-          lastModifiedBy: userProfile.profileId,
+          lastModifiedBy: currentUser.uid,
           history
         });
       } else {
@@ -205,8 +205,8 @@ export default function RevenuesManagementPage() {
           ...revenueData,
           id: newRevenueRef.key,
           createdAt: now,
-          createdBy: userProfile.profileId,
-          createdByName: userProfile.displayName,
+          createdBy: currentUser.uid,
+          createdByName: userProfile.displayName || `${userProfile.firstName} ${userProfile.lastName}`,
           createdByRole: userProfile.role,
           history: []
         });
