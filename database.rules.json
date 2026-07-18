@@ -599,7 +599,7 @@
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
             ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },
@@ -725,7 +725,7 @@
             "isReply": { ".validate": "newData.isBoolean() || !newData.exists()" },
             "batchId": { ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()" },
             "isBatch": { ".validate": "newData.isBoolean() || !newData.exists()" },
-            "$other": { ".validate": false }
+            "$other": { ".validate": true }
           }
         },
 
@@ -748,7 +748,7 @@
             "createdAt": { ".validate": "newData.isNumber()" },
             "sentAt": { ".validate": "newData.isNumber() || !newData.exists()" },
             "status": { ".validate": "newData.isString() && newData.val().matches(/^(sending|sent|failed)$/)" },
-            "$other": { ".validate": false }
+            "$other": { ".validate": true }
           }
         },
 
@@ -1174,7 +1174,7 @@
           "updatedBy": { ".validate": "newData.isString() && newData.val().length > 0 || !newData.exists()" },
           "planChangedAt": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
           "lastSyncedAt": { ".validate": "newData.isNumber() && newData.val() > 0 || !newData.exists()" },
-          "$other": { ".validate": false }
+          "$other": { ".validate": true }
         }
       },
 
@@ -1186,7 +1186,7 @@
           "estimatedCost": { ".validate": "newData.isNumber() && newData.val() >= 0" },
           "requestCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
           "averageTokensPerRequest": { ".validate": "newData.isNumber() && newData.val() >= 0" },
-          "$other": { ".validate": false }
+          "$other": { ".validate": true }
         }
       },
 
@@ -1203,7 +1203,7 @@
             "paymentMethod": { ".validate": "newData.isString() && newData.val().length > 0 || !newData.exists()" },
             "transactionId": { ".validate": "newData.isString() && newData.val().length > 0 || !newData.exists()" },
             "invoiceUrl": { ".validate": "newData.isString() && newData.val().matches(/^https?:\\/\\/.+/) || !newData.exists()" },
-            "$other": { ".validate": false }
+            "$other": { ".validate": true }
           }
         },
         "statistics": {
@@ -1212,7 +1212,7 @@
           "yearlyRecurringRevenue": { ".validate": "newData.isNumber() && newData.val() >= 0" },
           "averageRevenuePerUniversity": { ".validate": "newData.isNumber() && newData.val() >= 0" },
           "lastUpdated": { ".validate": "newData.isNumber() && newData.val() > 0" },
-          "$other": { ".validate": false }
+          "$other": { ".validate": true }
         }
       }
     }
