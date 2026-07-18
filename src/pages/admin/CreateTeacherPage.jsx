@@ -118,12 +118,11 @@ export default function CreateTeacherPage() {
 
       // 2. Créer le profil utilisateur
       try {
-        await set(ref(database, `users/${teacherUid}`), {
+        const userProfileData = {
           email: formData.email,
           displayName: `${formData.firstName} ${formData.lastName}`,
           firstName: formData.firstName,
           lastName: formData.lastName,
-          phoneNumber: formData.phoneNumber || null,
           role: 'teacher',
           universityId: userProfile.universityId,
           profileId: teacherUid,
@@ -132,7 +131,14 @@ export default function CreateTeacherPage() {
           temporaryPassword: formData.password,
           createdAt: Date.now(),
           createdBy: currentUser.uid,
-        });
+        };
+
+        // Ajouter phoneNumber seulement si non vide (éviter null qui échoue la validation)
+        if (formData.phoneNumber && formData.phoneNumber.trim()) {
+          userProfileData.phoneNumber = formData.phoneNumber.trim();
+        }
+
+        await set(ref(database, `users/${teacherUid}`), userProfileData);
 
         // 3. Créer le profil enseignant dans l'université
         const teacherData = {
