@@ -155,6 +155,15 @@ export default function RevenuesManagementPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log('🔍 Auth state:', { currentUser: currentUser?.uid, userProfile: userProfile?.role });
+
+    // Vérifier currentUser disponible
+    if (!currentUser?.uid) {
+      console.error('❌ currentUser.uid is undefined!');
+      alert('Erreur: Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
     if (!formData.description || !formData.amount || !formData.source) {
       alert('Veuillez remplir tous les champs obligatoires');
       return;
