@@ -225,35 +225,12 @@ export default function MyGradesPage() {
               {filteredGrades.length} note{filteredGrades.length > 1 ? 's' : ''} enregistrée{filteredGrades.length > 1 ? 's' : ''}
             </p>
           </div>
-          <div className="flex gap-3">
-            {grades.length > 0 && (
-              <>
-                {isPeriodClosed ? (
-                  <button
-                    onClick={handleExportPDF}
-                    className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-semibold shadow"
-                  >
-                    <Download className="w-5 h-5" />
-                    Télécharger bulletin PDF
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-500 rounded-xl font-semibold shadow cursor-not-allowed" title="Bulletin disponible après clôture du semestre">
-                    <Download className="w-5 h-5" />
-                    <div>
-                      <p className="text-sm">Bulletin disponible après</p>
-                      <p className="text-xs">clôture du semestre</p>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-            <button
-              onClick={() => navigate('/dashboard/student')}
-              className="px-6 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold shadow"
-            >
-              ← Retour
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/dashboard/student')}
+            className="px-6 py-3 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold shadow"
+          >
+            ← Retour
+          </button>
         </div>
 
         {error && (

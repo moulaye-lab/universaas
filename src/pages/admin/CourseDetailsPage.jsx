@@ -28,8 +28,8 @@ export default function CourseDetailsPage() {
   const [showBulkEnrollModal, setShowBulkEnrollModal] = useState(false);
   const [bulkFilters, setBulkFilters] = useState({
     level: 'all',
-    department: 'all',
-    semester: 'all'
+    fieldOfStudy: 'all',
+    status: 'active'
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -198,12 +198,12 @@ export default function CourseDetailsPage() {
       filtered = filtered.filter(s => s.level === bulkFilters.level);
     }
 
-    if (bulkFilters.department !== 'all') {
-      filtered = filtered.filter(s => s.department === bulkFilters.department);
+    if (bulkFilters.fieldOfStudy !== 'all') {
+      filtered = filtered.filter(s => s.fieldOfStudy === bulkFilters.fieldOfStudy);
     }
 
-    if (bulkFilters.semester !== 'all') {
-      filtered = filtered.filter(s => s.semester === bulkFilters.semester);
+    if (bulkFilters.status !== 'all') {
+      filtered = filtered.filter(s => s.status === bulkFilters.status);
     }
 
     return filtered;
@@ -281,8 +281,7 @@ export default function CourseDetailsPage() {
   );
 
   const uniqueLevels = [...new Set(allStudents.map(s => s.level).filter(Boolean))];
-  const uniqueDepartments = [...new Set(allStudents.map(s => s.department).filter(Boolean))];
-  const uniqueSemesters = [...new Set(allStudents.map(s => s.semester).filter(Boolean))];
+  const uniqueFieldsOfStudy = [...new Set(allStudents.map(s => s.fieldOfStudy).filter(Boolean))];
 
   if (loading) {
     return (
@@ -450,25 +449,27 @@ export default function CourseDetailsPage() {
                   {course.capacity && ` / ${course.capacity} places`}
                 </p>
               </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowBulkEnrollModal(true)}
-                  className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-semibold shadow-lg flex items-center gap-2"
-                  disabled={saving || (course.capacity && enrolledStudents.length >= course.capacity)}
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Inscrire en masse
-                </button>
-                <button
-                  onClick={() => setShowStudentModal(true)}
-                  className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition font-semibold shadow-lg"
-                  disabled={saving || (course.capacity && enrolledStudents.length >= course.capacity)}
-                >
-                  ➕ Inscrire manuellement
-                </button>
-              </div>
+              {(userProfile?.role === 'admin_universite' || userProfile?.role === 'super_admin_plateforme') && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowBulkEnrollModal(true)}
+                    className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition font-semibold shadow-lg flex items-center gap-2"
+                    disabled={saving || (course.capacity && enrolledStudents.length >= course.capacity)}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Inscrire en masse
+                  </button>
+                  <button
+                    onClick={() => setShowStudentModal(true)}
+                    className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition font-semibold shadow-lg"
+                    disabled={saving || (course.capacity && enrolledStudents.length >= course.capacity)}
+                  >
+                    ➕ Inscrire manuellement
+                  </button>
+                </div>
+              )}
             </div>
 
             {enrolledStudents.length === 0 ? (
@@ -493,13 +494,15 @@ export default function CourseDetailsPage() {
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleUnenrollStudent(student.id)}
-                      className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-semibold text-sm"
-                      disabled={saving}
-                    >
-                      Désinscrire
-                    </button>
+                    {(userProfile?.role === 'admin_universite' || userProfile?.role === 'super_admin_plateforme') && (
+                      <button
+                        onClick={() => handleUnenrollStudent(student.id)}
+                        className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition font-semibold text-sm"
+                        disabled={saving}
+                      >
+                        Désinscrire
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -569,7 +572,7 @@ export default function CourseDetailsPage() {
                   <button
                     onClick={() => {
                       setShowBulkEnrollModal(false);
-                      setBulkFilters({ level: 'all', department: 'all', semester: 'all' });
+                      setBulkFilters({ level: 'all', fieldOfStudy: 'all', status: 'active' });
                     }}
                     className="text-gray-500 hover:text-gray-700 text-2xl"
                   >
@@ -600,37 +603,36 @@ export default function CourseDetailsPage() {
                       </select>
                     </div>
 
-                    {/* Filtre Département */}
+                    {/* Filtre Filière d'études */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Département
+                        Filière d'études
                       </label>
                       <select
-                        value={bulkFilters.department}
-                        onChange={(e) => setBulkFilters({ ...bulkFilters, department: e.target.value })}
+                        value={bulkFilters.fieldOfStudy}
+                        onChange={(e) => setBulkFilters({ ...bulkFilters, fieldOfStudy: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                       >
-                        <option value="all">Tous les départements</option>
-                        {uniqueDepartments.map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
+                        <option value="all">Toutes les filières</option>
+                        {uniqueFieldsOfStudy.map(field => (
+                          <option key={field} value={field}>{field}</option>
                         ))}
                       </select>
                     </div>
 
-                    {/* Filtre Semestre */}
+                    {/* Filtre Statut */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Semestre
+                        Statut
                       </label>
                       <select
-                        value={bulkFilters.semester}
-                        onChange={(e) => setBulkFilters({ ...bulkFilters, semester: e.target.value })}
+                        value={bulkFilters.status}
+                        onChange={(e) => setBulkFilters({ ...bulkFilters, status: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                       >
-                        <option value="all">Tous les semestres</option>
-                        {uniqueSemesters.map(sem => (
-                          <option key={sem} value={sem}>Semestre {sem}</option>
-                        ))}
+                        <option value="active">Actifs</option>
+                        <option value="all">Tous</option>
+                        <option value="inactive">Inactifs</option>
                       </select>
                     </div>
                   </div>
@@ -676,7 +678,7 @@ export default function CourseDetailsPage() {
                               {student.firstName} {student.lastName}
                             </h4>
                             <p className="text-xs text-gray-600">
-                              {student.studentNumber} • {student.level || 'N/A'} • {student.department || 'N/A'}
+                              {student.studentNumber} • {student.level || 'N/A'} • {student.fieldOfStudy || 'N/A'}
                             </p>
                           </div>
                         </div>
@@ -690,7 +692,7 @@ export default function CourseDetailsPage() {
                   <button
                     onClick={() => {
                       setShowBulkEnrollModal(false);
-                      setBulkFilters({ level: 'all', department: 'all', semester: 'all' });
+                      setBulkFilters({ level: 'all', fieldOfStudy: 'all', status: 'active' });
                     }}
                     className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-semibold"
                   >

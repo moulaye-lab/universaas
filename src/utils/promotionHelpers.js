@@ -31,8 +31,23 @@ export function calculateYearAverage(student, allGrades) {
   };
 
   studentGrades.forEach(grade => {
-    const semester = grade.semester || 1;
+    let semester = grade.semester || 1;
+
+    // Normaliser le semestre (peut être string "1", "2" ou number)
+    if (typeof semester === 'string') {
+      semester = parseInt(semester, 10);
+    }
+
+    // S'assurer que le semestre est 1 ou 2
+    if (semester !== 1 && semester !== 2) {
+      semester = 1;
+    }
+
     const courseId = grade.courseId;
+
+    if (!gradesBySemester[semester]) {
+      gradesBySemester[semester] = {};
+    }
 
     if (!gradesBySemester[semester][courseId]) {
       gradesBySemester[semester][courseId] = {

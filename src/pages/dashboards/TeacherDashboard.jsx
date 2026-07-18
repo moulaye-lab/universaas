@@ -454,98 +454,101 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Actions Rapides */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
-          <button
-            onClick={() => navigate('/teacher/grades/input')}
-            className="glass p-6 rounded-2xl hover-lift group"
-            data-tour="grades-input"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl">
-                <ClipboardCheck className="h-6 w-6 text-white" />
+        <div className="mb-8">
+          <h3 className="text-xl font-black text-gray-900 mb-4">Actions Rapides</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <button
+              onClick={() => navigate('/teacher/grades/input')}
+              className="glass p-5 rounded-2xl hover-lift group text-left"
+              data-tour="grades-input"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl flex-shrink-0">
+                  <ClipboardCheck className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Saisir des Notes</p>
+                  <p className="text-xs text-gray-600">Enregistrer une évaluation</p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="font-bold text-gray-900">Saisir des Notes</p>
-                <p className="text-sm text-gray-600">Enregistrer une évaluation</p>
-              </div>
-            </div>
-          </button>
+            </button>
 
-          <button
-            onClick={() => navigate('/teacher/students-averages')}
-            className="glass p-6 rounded-2xl hover-lift group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-3 rounded-xl">
-                <TrendingUp className="h-6 w-6 text-white" />
+            <button
+              onClick={() => navigate('/teacher/students-averages')}
+              className="glass p-5 rounded-2xl hover-lift group text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-3 rounded-xl flex-shrink-0">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Moyennes Étudiants</p>
+                  <p className="text-xs text-gray-600">Suivi en temps réel</p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="font-bold text-gray-900">Moyennes Étudiants</p>
-                <p className="text-sm text-gray-600">Suivi en temps réel</p>
-              </div>
-            </div>
-          </button>
+            </button>
 
-          <button
-            onClick={() => navigate('/teacher/attendance')}
-            className="glass p-6 rounded-2xl hover-lift group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-xl">
-                <UserCheck className="h-6 w-6 text-white" />
+            <button
+              onClick={() => navigate('/teacher/attendance')}
+              className="glass p-5 rounded-2xl hover-lift group text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-xl flex-shrink-0">
+                  <UserCheck className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Prendre les Présences</p>
+                  <p className="text-xs text-gray-600">Enregistrer les absences</p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="font-bold text-gray-900">Prendre les Présences</p>
-                <p className="text-sm text-gray-600">Enregistrer les absences</p>
-              </div>
-            </div>
-          </button>
+            </button>
 
-          <button
-            onClick={() => navigate('/teacher/grades/history')}
-            className="glass p-6 rounded-2xl hover-lift group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-orange-500 to-red-600 p-3 rounded-xl">
-                <BarChart2 className="h-6 w-6 text-white" />
+            <button
+              onClick={() => navigate('/teacher/grades/history')}
+              className="glass p-5 rounded-2xl hover-lift group text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 p-3 rounded-xl flex-shrink-0">
+                  <BarChart2 className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Historique des Notes</p>
+                  <p className="text-xs text-gray-600">Consulter et modifier</p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="font-bold text-gray-900">Historique des Notes</p>
-                <p className="text-sm text-gray-600">Consulter et modifier</p>
-              </div>
-            </div>
-          </button>
+            </button>
 
-          <button
-            onClick={() => navigate('/admin/library/resources')}
-            className="glass p-6 rounded-2xl hover-lift group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl">
-                <FileText className="h-6 w-6 text-white" />
+            <button
+              onClick={() => navigate('/admin/library/resources')}
+              className="glass p-5 rounded-2xl hover-lift group text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl flex-shrink-0">
+                  <FileText className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Mes Ressources</p>
+                  <p className="text-xs text-gray-600">Gérer mes supports</p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="font-bold text-gray-900">Mes Ressources</p>
-                <p className="text-sm text-gray-600">Gérer mes supports</p>
-              </div>
-            </div>
-          </button>
+            </button>
 
-          <button
-            onClick={() => navigate('/teacher/schedule')}
-            className="glass p-6 rounded-2xl hover-lift group"
-            data-tour="schedule"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 rounded-xl">
-                <Calendar className="h-6 w-6 text-white" />
+            <button
+              onClick={() => navigate('/teacher/schedule')}
+              className="glass p-5 rounded-2xl hover-lift group text-left"
+              data-tour="schedule"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 rounded-xl flex-shrink-0">
+                  <Calendar className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">Mon Emploi du Temps</p>
+                  <p className="text-xs text-gray-600">Voir mes séances</p>
+                </div>
               </div>
-              <div className="text-left">
-                <p className="font-bold text-gray-900">Mon Emploi du Temps</p>
-                <p className="text-sm text-gray-600">Voir mes séances</p>
-              </div>
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* Mes Cours Section */}

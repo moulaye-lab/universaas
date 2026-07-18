@@ -80,37 +80,24 @@ export default function GradesInputPage() {
       try {
         const univId = userProfile.universityId;
 
-        // CORRECTION : Trouver toutes les classes qui ont ce cours dans leur emploi du temps
-        const classesRef = ref(database, `universities/${univId}/classes`);
-        const classesSnap = await get(classesRef);
+        // Charger les IDs des étudiants inscrits depuis le cours
+        const courseRef = ref(database, `universities/${univId}/courses/${selectedCourse}`);
+        const courseSnap = await get(courseRef);
 
-        const enrolledStudentIds = new Set(); // Utiliser Set pour éviter doublons
-
-        if (classesSnap.exists()) {
-          const allClasses = classesSnap.val();
-
-          // Pour chaque classe, vérifier si elle a ce cours
-          Object.entries(allClasses).forEach(([classId, classData]) => {
-            if (classData.schedule && Array.isArray(classData.schedule)) {
-              // Vérifier si le cours est dans l'emploi du temps
-              const hasCourse = classData.schedule.some(
-                scheduleItem => scheduleItem.courseId === selectedCourse
-              );
-
-              if (hasCourse && classData.students) {
-                // Ajouter tous les étudiants de cette classe
-                classData.students.forEach(studentId => enrolledStudentIds.add(studentId));
-              }
-            }
-          });
-        }
-
-        if (enrolledStudentIds.size === 0) {
+        if (!courseSnap.exists()) {
           setStudents([]);
           return;
         }
 
-        // 2. Charger les détails des étudiants inscrits
+        const courseData = courseSnap.val();
+        const enrolledIds = courseData.enrolledStudents || [];
+
+        if (enrolledIds.length === 0) {
+          setStudents([]);
+          return;
+        }
+
+        // Charger les détails des étudiants inscrits
         const studentsRef = ref(database, `universities/${univId}/students`);
         const studentsSnap = await get(studentsRef);
 
@@ -118,7 +105,7 @@ export default function GradesInputPage() {
         if (studentsSnap.exists()) {
           const allStudents = studentsSnap.val();
 
-          enrolledStudentIds.forEach(studentId => {
+          enrolledIds.forEach(studentId => {
             if (allStudents[studentId]) {
               const studentData = allStudents[studentId];
               enrolledStudents.push({
@@ -129,7 +116,7 @@ export default function GradesInputPage() {
           });
         }
 
-        // 3. Trier par nom (avec vérification si lastName existe)
+        // Trier par nom
         enrolledStudents.sort((a, b) => {
           const lastNameA = a.lastName || '';
           const lastNameB = b.lastName || '';

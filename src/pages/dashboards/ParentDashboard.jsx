@@ -109,69 +109,28 @@ const ParentDashboard = () => {
         const student = { id: childId, ...studentSnap.val() };
         setStudentData(student);
 
-        const gradesRef = ref(database, `universities/${uniId}/grades/${childId}`);
+        // Charger toutes les notes de l'université et filtrer par studentId
+        const gradesRef = ref(database, `universities/${uniId}/grades`);
         const gradesSnap = await get(gradesRef);
 
         let gradesData = [];
         if (gradesSnap.exists()) {
-          const data = gradesSnap.val();
+          const allGrades = gradesSnap.val();
 
-          // Charger les noms de cours
-          const coursesRef = ref(database, `universities/${uniId}/courses`);
-          const coursesSnap = await get(coursesRef);
-          const coursesData = coursesSnap.exists() ? coursesSnap.val() : {};
-
-          // Convertir chaque note individuelle en ligne
-          Object.keys(data).forEach(courseId => {
-            const courseGrades = data[courseId];
-            const courseName = coursesData[courseId]?.name || courseId;
-            const courseCoefficient = courseGrades.courseCoefficient || coursesData[courseId]?.coefficient || 1;
-
-            // Ajouter chaque devoir
-            if (courseGrades.assignments) {
-              courseGrades.assignments.forEach(assignment => {
-                gradesData.push({
-                  courseId,
-                  courseName,
-                  grade: assignment.grade,
-                  coefficient: courseCoefficient,
-                  type: 'Devoir',
-                  date: assignment.date,
-                  maxGrade: assignment.maxGrade || 20,
-                });
-              });
-            }
-
-            // Ajouter chaque examen
-            if (courseGrades.exams) {
-              courseGrades.exams.forEach(exam => {
-                gradesData.push({
-                  courseId,
-                  courseName,
-                  grade: exam.grade,
-                  coefficient: courseCoefficient,
-                  type: 'Examen',
-                  date: exam.date,
-                  maxGrade: exam.maxGrade || 20,
-                });
-              });
-            }
-
-            // Ajouter chaque projet
-            if (courseGrades.projects) {
-              courseGrades.projects.forEach(project => {
-                gradesData.push({
-                  courseId,
-                  courseName,
-                  grade: project.grade,
-                  coefficient: courseCoefficient,
-                  type: 'Projet',
-                  date: project.date,
-                  maxGrade: project.maxGrade || 20,
-                });
-              });
-            }
-          });
+          // Filtrer les notes de cet étudiant
+          gradesData = Object.entries(allGrades)
+            .map(([id, grade]) => ({ id, ...grade }))
+            .filter(grade => grade.studentId === childId)
+            .map(grade => ({
+              courseId: grade.courseId,
+              courseName: grade.courseName,
+              grade: grade.grade,
+              coefficient: grade.coefficient || 1,
+              type: grade.gradeType || 'exam',
+              date: grade.date,
+              maxGrade: grade.maxGrade || 20,
+              title: grade.title || 'Évaluation'
+            }));
 
           // Trier par date
           gradesData.sort((a, b) => (b.date || 0) - (a.date || 0));

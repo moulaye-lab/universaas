@@ -27,7 +27,7 @@ import {
 
 export default function LibraryResourcesPage() {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
 
   const [resources, setResources] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -65,19 +65,38 @@ export default function LibraryResourcesPage() {
     try {
       setLoading(true);
 
-      // Charger ressources
-      const resourcesList = await getAllResources(userProfile.universityId);
-      setResources(resourcesList);
-
       // Charger cours
       const coursesRef = ref(database, `universities/${userProfile.universityId}/courses`);
       const coursesSnap = await get(coursesRef);
+
+      let coursesList = [];
       if (coursesSnap.exists()) {
-        const coursesList = Object.entries(coursesSnap.val()).map(([id, data]) => ({
+        coursesList = Object.entries(coursesSnap.val()).map(([id, data]) => ({
           id,
           ...data
         }));
+
+        // Si teacher, filtrer uniquement SES cours
+        if (userProfile.role === 'teacher' && currentUser?.uid) {
+          coursesList = coursesList.filter(c => c.teacherId === currentUser.uid);
+        }
+
         setCourses(coursesList);
+      }
+
+      // Charger ressources
+      const resourcesList = await getAllResources(userProfile.universityId);
+
+      // Si teacher, filtrer ressources créées par lui OU liées à ses cours
+      if (userProfile.role === 'teacher' && currentUser?.uid) {
+        const teacherCourseIds = coursesList.map(c => c.id);
+        const filteredResources = resourcesList.filter(r =>
+          r.createdBy === currentUser.uid || // Ressources créées par le prof
+          (r.courseId && teacherCourseIds.includes(r.courseId)) // Ou ressources de ses cours
+        );
+        setResources(filteredResources);
+      } else {
+        setResources(resourcesList);
       }
 
       setLoading(false);
@@ -350,7 +369,7 @@ export default function LibraryResourcesPage() {
               >
                 <option value="all">Tous les cours</option>
                 {courses.map(course => (
-                  <option key={course.id} value={course.id}>{course.name}</option>
+                  <option key={course.id} value={course.id}>{course.courseName}</option>
                 ))}
               </select>
             </div>
@@ -512,7 +531,7 @@ export default function LibraryResourcesPage() {
                       setFormData({
                         ...formData,
                         courseId: e.target.value,
-                        courseName: course?.name || '',
+                        courseName: course?.courseName || '',
                         level: course?.level || ''
                       });
                     }}
@@ -520,7 +539,7 @@ export default function LibraryResourcesPage() {
                   >
                     <option value="">Sélectionner un cours</option>
                     {courses.map(course => (
-                      <option key={course.id} value={course.id}>{course.name}</option>
+                      <option key={course.id} value={course.id}>{course.courseName}</option>
                     ))}
                   </select>
                 </div>

@@ -91,8 +91,35 @@ export default function ComposeMessagePage() {
     if (!universityId) return;
 
     try {
-      console.log('📚 Chargement utilisateurs pour universityId:', universityId);
       const usersList = [];
+
+      // Si parent, charger uniquement les profs des enfants
+      let teacherIdsForChildren = new Set();
+      if (userProfile.role === 'parent' && userProfile.childrenAccess?.[universityId]) {
+        const studentIds = Object.keys(userProfile.childrenAccess[universityId]);
+
+        // Charger tous les cours et vérifier si l'enfant y est inscrit
+        const coursesRef = ref(database, `universities/${universityId}/courses`);
+        const coursesSnap = await get(coursesRef);
+
+        if (coursesSnap.exists()) {
+          const allCourses = coursesSnap.val();
+
+          // Pour chaque cours, vérifier si un des enfants y est inscrit
+          Object.values(allCourses).forEach(course => {
+            const enrolledStudents = course.enrolledStudents || [];
+
+            // Si un de nos enfants est dans ce cours, ajouter le prof
+            const hasChild = studentIds.some(studentId =>
+              enrolledStudents.includes(studentId)
+            );
+
+            if (hasChild && course.teacherId) {
+              teacherIdsForChildren.add(course.teacherId);
+            }
+          });
+        }
+      }
 
       // Charger les enseignants
       const teachersRef = ref(database, `universities/${universityId}/teachers`);
@@ -102,18 +129,33 @@ export default function ComposeMessagePage() {
         Object.keys(teachersData).forEach(uid => {
           const teacher = teachersData[uid];
           if (uid !== currentUser.uid) {
-            usersList.push({
-              uid,
-              displayName: `${teacher.firstName} ${teacher.lastName}`,
-              email: teacher.email,
-              role: 'teacher'
-            });
+            // Si parent
+            if (userProfile.role === 'parent') {
+              // Si aucun prof trouvé (enfant sans cours), montrer tous les profs
+              const showAllTeachers = teacherIdsForChildren.size === 0;
+
+              if (showAllTeachers || teacherIdsForChildren.has(uid)) {
+                usersList.push({
+                  uid,
+                  displayName: `${teacher.firstName} ${teacher.lastName}`,
+                  email: teacher.email,
+                  role: 'teacher'
+                });
+              }
+            } else {
+              usersList.push({
+                uid,
+                displayName: `${teacher.firstName} ${teacher.lastName}`,
+                email: teacher.email,
+                role: 'teacher'
+              });
+            }
           }
         });
       }
 
-      // Charger les étudiants (SEULEMENT si l'utilisateur actuel n'est PAS un étudiant)
-      if (userProfile.role !== 'student') {
+      // Charger les étudiants (SEULEMENT si l'utilisateur actuel n'est PAS un étudiant NI un parent)
+      if (userProfile.role !== 'student' && userProfile.role !== 'parent') {
         const studentsRef = ref(database, `universities/${universityId}/students`);
         const studentsSnap = await get(studentsRef);
         if (studentsSnap.exists()) {
@@ -132,8 +174,8 @@ export default function ComposeMessagePage() {
         }
       }
 
-      // Charger les parents (SEULEMENT si l'utilisateur actuel n'est PAS un étudiant)
-      if (userProfile.role !== 'student') {
+      // Charger les parents (SEULEMENT si l'utilisateur actuel n'est PAS un étudiant NI un parent)
+      if (userProfile.role !== 'student' && userProfile.role !== 'parent') {
         const parentsRef = ref(database, `universities/${universityId}/parents`);
         const parentsSnap = await get(parentsRef);
         if (parentsSnap.exists()) {
@@ -152,22 +194,24 @@ export default function ComposeMessagePage() {
         }
       }
 
-      // Charger les comptables
-      const comptablesRef = ref(database, `universities/${universityId}/comptables`);
-      const comptablesSnap = await get(comptablesRef);
-      if (comptablesSnap.exists()) {
-        const comptablesData = comptablesSnap.val();
-        Object.keys(comptablesData).forEach(uid => {
-          const comptable = comptablesData[uid];
-          if (uid !== currentUser.uid) {
-            usersList.push({
-              uid,
-              displayName: `${comptable.firstName} ${comptable.lastName}`,
-              email: comptable.email,
-              role: 'comptable'
-            });
-          }
-        });
+      // Charger les comptables (PAS pour les parents)
+      if (userProfile.role !== 'parent') {
+        const comptablesRef = ref(database, `universities/${universityId}/comptables`);
+        const comptablesSnap = await get(comptablesRef);
+        if (comptablesSnap.exists()) {
+          const comptablesData = comptablesSnap.val();
+          Object.keys(comptablesData).forEach(uid => {
+            const comptable = comptablesData[uid];
+            if (uid !== currentUser.uid) {
+              usersList.push({
+                uid,
+                displayName: `${comptable.firstName} ${comptable.lastName}`,
+                email: comptable.email,
+                role: 'comptable'
+              });
+            }
+          });
+        }
       }
 
       // Pour les admins, on doit récupérer depuis l'université
@@ -503,10 +547,10 @@ export default function ComposeMessagePage() {
                   >
                     <option value="all">Tous les rôles</option>
                     <option value="admin_universite">Administrateurs</option>
-                    <option value="comptable">Comptables</option>
+                    {userProfile.role !== 'parent' && <option value="comptable">Comptables</option>}
                     <option value="teacher">Enseignants</option>
-                    {userProfile.role !== 'student' && <option value="student">Étudiants</option>}
-                    {userProfile.role !== 'student' && <option value="parent">Parents</option>}
+                    {userProfile.role !== 'student' && userProfile.role !== 'parent' && <option value="student">Étudiants</option>}
+                    {userProfile.role !== 'student' && userProfile.role !== 'parent' && <option value="parent">Parents</option>}
                   </select>
                 </div>
               </div>

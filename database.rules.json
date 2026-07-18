@@ -528,7 +528,7 @@
               ".validate": "(newData.isNumber() && newData.val() > 0 && newData.val() <= 1000) || !newData.exists()"
             },
             "enrolledStudents": {
-              ".validate": "(newData.isNumber() && newData.val() >= 0) || !newData.exists()"
+              ".validate": "newData.hasChildren() || !newData.exists()"
             },
             "schedule": {
               ".validate": "newData.hasChildren() || !newData.exists()"
@@ -585,7 +585,7 @@
               ".validate": "newData.isNumber()"
             },
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },
@@ -765,7 +765,7 @@
         "library": {
           "resources": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher') && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
             ".indexOn": ["courseId", "teacherId", "type", "category", "level"],
             "$resourceId": {
               "$other": {
@@ -798,11 +798,11 @@
 
           "progress": {
             "$studentId": {
-              ".read": "auth != null && (auth.uid === $studentId || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher')",
-              ".write": "auth != null && auth.uid === $studentId && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+              ".read": "auth != null && (auth.uid === $studentId || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).exists())",
+              ".write": "auth != null && (auth.uid === $studentId || root.child('users').child(auth.uid).child('childrenAccess').child($universityId).child($studentId).exists()) && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
               "$resourceId": {
                 "$other": {
-                  ".validate": false
+                  ".validate": true
                 }
               }
             }

@@ -14,7 +14,8 @@ import {
   Calendar,
   ClipboardList,
   GraduationCap,
-  School
+  School,
+  UserPlus
 } from 'lucide-react';
 
 export default function AcademicMenuPage() {
@@ -34,6 +35,13 @@ export default function AcademicMenuPage() {
       path: '/admin/teachers',
       gradient: 'from-purple-500 to-pink-600',
       description: 'Gérer les enseignants et leurs affectations'
+    },
+    {
+      title: 'Parents',
+      icon: UserPlus,
+      path: '/admin/parents',
+      gradient: 'from-green-500 to-emerald-600',
+      description: 'Gérer les parents et liens avec étudiants'
     },
     {
       title: 'Classes',

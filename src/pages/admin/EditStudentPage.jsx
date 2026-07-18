@@ -20,6 +20,7 @@ export default function EditStudentPage() {
 
   const [student, setStudent] = useState(null);
   const [availableClasses, setAvailableClasses] = useState([]);
+  const [parentInfo, setParentInfo] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -73,6 +74,24 @@ export default function EditStudentPage() {
             .map(([id, data]) => ({ id, ...data }))
             .filter(cls => cls.status === 'active');
           setAvailableClasses(classesData);
+        }
+
+        // Charger le parent si existant (chercher dans tous les parents)
+        const parentsRef = ref(database, `universities/${userProfile.universityId}/parents`);
+        const parentsSnap = await get(parentsRef);
+
+        if (parentsSnap.exists()) {
+          const allParents = parentsSnap.val();
+          // Trouver le parent qui a cet étudiant dans childrenAccess
+          const parentEntry = Object.entries(allParents).find(([parentId, parentData]) => {
+            const children = parentData.childrenAccess?.[userProfile.universityId] || {};
+            return Object.keys(children).includes(studentId);
+          });
+
+          if (parentEntry) {
+            const [parentId, parentData] = parentEntry;
+            setParentInfo({ id: parentId, ...parentData });
+          }
         }
 
       } catch (err) {
@@ -406,6 +425,24 @@ export default function EditStudentPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Parent lié */}
+              {parentInfo && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">👨‍👩‍👧 Parent Lié</h3>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">Nom:</span> {parentInfo.firstName} {parentInfo.lastName}
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">Email:</span> {parentInfo.email}
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">Téléphone:</span> {parentInfo.phone || 'Non renseigné'}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl">

@@ -29,7 +29,7 @@ import LiveAverageDisplay from '../../components/LiveAverageDisplay';
 
 export default function TeacherStudentsAveragesPage() {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
@@ -41,90 +41,105 @@ export default function TeacherStudentsAveragesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [teacherStudents, setTeacherStudents] = useState([]);
 
   useEffect(() => {
-    loadData();
-  }, [userProfile]);
+    if (!userProfile?.universityId || !currentUser?.uid) return;
 
-  const loadData = async () => {
-    if (!userProfile?.universityId) return;
+    let unsubscribe = null;
 
-    try {
-      setLoading(true);
+    const loadData = async () => {
+      try {
+        setLoading(true);
 
-      // 1. Charger les cours de l'enseignant
-      const coursesRef = ref(database, `universities/${userProfile.universityId}/courses`);
-      const coursesSnap = await get(coursesRef);
+        // 1. Charger les cours de l'enseignant
+        const coursesRef = ref(database, `universities/${userProfile.universityId}/courses`);
+        const coursesSnap = await get(coursesRef);
 
-      let teacherCourses = [];
-      if (coursesSnap.exists()) {
-        teacherCourses = Object.entries(coursesSnap.val())
-          .filter(([id, course]) => course.teacherId === userProfile.profileId)
-          .map(([id, course]) => ({ id, ...course }));
-      }
-      setCourses(teacherCourses);
+        let teacherCourses = [];
+        if (coursesSnap.exists()) {
+          teacherCourses = Object.entries(coursesSnap.val())
+            .filter(([id, course]) => course.teacherId === currentUser.uid)
+            .map(([id, course]) => ({ id, ...course }));
+        }
+        setCourses(teacherCourses);
 
-      // 2. Extraire les classes où l'enseignant enseigne
-      const teacherClassIds = [...new Set(teacherCourses.map(c => c.classId))];
-
-      // 3. Charger les classes
-      const classesRef = ref(database, `universities/${userProfile.universityId}/classes`);
-      const classesSnap = await get(classesRef);
-
-      let teacherClasses = [];
-      if (classesSnap.exists()) {
-        teacherClasses = Object.entries(classesSnap.val())
-          .filter(([id]) => teacherClassIds.includes(id))
-          .map(([id, cls]) => ({ id, ...cls }));
-      }
-      setClasses(teacherClasses);
-
-      // 4. Charger les étudiants de ces classes
-      const studentsRef = ref(database, `universities/${userProfile.universityId}/students`);
-      const studentsSnap = await get(studentsRef);
-
-      let teacherStudents = [];
-      if (studentsSnap.exists()) {
-        teacherStudents = Object.entries(studentsSnap.val())
-          .filter(([id, student]) =>
-            teacherClassIds.includes(student.classId) &&
-            student.status !== 'inactive' &&
-            student.status !== 'graduated'
-          )
-          .map(([id, student]) => ({ id, ...student }));
-      }
-
-      // 5. Écouter les notes en temps réel
-      const gradesRef = ref(database, `universities/${userProfile.universityId}/grades`);
-      const unsubscribe = onValue(gradesRef, (snapshot) => {
-        const grades = snapshot.exists() ? Object.values(snapshot.val()) : [];
-        setAllGrades(grades);
-
-        // Calculer moyennes pour chaque étudiant
-        const studentsWithAverages = teacherStudents.map(student => {
-          const { semester1Avg, semester2Avg, yearAvg } = calculateYearAverage(student, grades);
-          return {
-            ...student,
-            semester1Avg,
-            semester2Avg,
-            yearAvg
-          };
+        // 2. Extraire tous les étudiants inscrits aux cours de l'enseignant
+        const teacherStudentIds = new Set();
+        teacherCourses.forEach(course => {
+          const enrolledIds = course.enrolledStudents || [];
+          enrolledIds.forEach(id => teacherStudentIds.add(id));
         });
 
-        // Trier par moyenne décroissante
-        studentsWithAverages.sort((a, b) => (b.yearAvg || 0) - (a.yearAvg || 0));
-        setStudents(studentsWithAverages);
+        // 3. Charger les étudiants
+        const studentsRef = ref(database, `universities/${userProfile.universityId}/students`);
+        const studentsSnap = await get(studentsRef);
+
+        let loadedStudents = [];
+        if (studentsSnap.exists()) {
+          const allStudents = studentsSnap.val();
+          teacherStudentIds.forEach(studentId => {
+            if (allStudents[studentId]) {
+              const student = allStudents[studentId];
+              if (student.status !== 'inactive' && student.status !== 'graduated') {
+                loadedStudents.push({ id: studentId, ...student });
+              }
+            }
+          });
+        }
+        setTeacherStudents(loadedStudents);
+
+        // 4. Extraire les classes uniques des étudiants
+        const uniqueClassIds = [...new Set(loadedStudents.map(s => s.classId).filter(Boolean))];
+
+        const classesRef = ref(database, `universities/${userProfile.universityId}/classes`);
+        const classesSnap = await get(classesRef);
+
+        let teacherClasses = [];
+        if (classesSnap.exists()) {
+          teacherClasses = Object.entries(classesSnap.val())
+            .filter(([id]) => uniqueClassIds.includes(id))
+            .map(([id, cls]) => ({ id, ...cls }));
+        }
+        setClasses(teacherClasses);
+
+        // 5. Écouter les notes en temps réel
+        const gradesRef = ref(database, `universities/${userProfile.universityId}/grades`);
+        unsubscribe = onValue(gradesRef, (snapshot) => {
+          const grades = snapshot.exists() ? Object.values(snapshot.val()) : [];
+          setAllGrades(grades);
+
+          // Calculer moyennes pour chaque étudiant
+          const studentsWithAverages = loadedStudents.map(student => {
+            const { semester1Avg, semester2Avg, yearAvg } = calculateYearAverage(student, grades);
+            return {
+              ...student,
+              semester1Avg,
+              semester2Avg,
+              yearAvg
+            };
+          });
+
+          // Trier par moyenne décroissante
+          studentsWithAverages.sort((a, b) => (b.yearAvg || 0) - (a.yearAvg || 0));
+          setStudents(studentsWithAverages);
+          setLoading(false);
+        });
+
+      } catch (error) {
+        console.error('Erreur chargement:', error);
         setLoading(false);
-      });
+      }
+    };
 
-      return () => unsubscribe();
+    loadData();
 
-    } catch (error) {
-      console.error('Erreur chargement:', error);
-      alert('Erreur: ' + error.message);
-      setLoading(false);
-    }
-  };
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [userProfile, currentUser]);
 
   // Filtrage
   const filteredStudents = students.filter(student => {
