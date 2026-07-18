@@ -679,7 +679,7 @@
               ".validate": "newData.isNumber()"
             },
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },
