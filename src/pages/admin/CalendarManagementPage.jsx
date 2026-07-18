@@ -122,7 +122,7 @@ export default function CalendarManagementPage() {
       if (editingEvent) {
         await updateEvent(userProfile.universityId, editingEvent.id, eventData);
       } else {
-        await createEvent(userProfile.universityId, eventData, userProfile.uid);
+        await createEvent(userProfile.universityId, eventData, userProfile.profileId);
       }
 
       setShowModal(false);
