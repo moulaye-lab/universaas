@@ -209,7 +209,9 @@ export default function CreateUniversityModal({ isOpen, onClose, onSuccess }) {
           timezone: formData.timezone,
           createdAt: Date.now(),
           createdBy: currentUser?.uid,
+          trialStartedAt: Date.now(),
           trialEndsAt: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 jours
+          trialDays: 30,
         },
         students: {
           // Vide au départ
