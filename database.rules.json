@@ -425,17 +425,47 @@
             "domain": {
               ".validate": "newData.isString() && newData.val().length > 0"
             },
+            "classNumber": {
+              ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+            },
             "capacity": {
               ".validate": "newData.isNumber() && newData.val() > 0"
             },
             "occupiedSeats": {
               ".validate": "newData.isNumber() && newData.val() >= 0"
             },
+            "students": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
+            "schedule": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
+            "period": {
+              ".validate": "newData.hasChildren() || !newData.exists()",
+              "start": {
+                ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+              },
+              "end": {
+                ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+              }
+            },
+            "academicYear": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "description": {
+              ".validate": "(newData.isString() && newData.val().length >= 0 && newData.val().length <= 500) || !newData.exists()"
+            },
             "status": {
               ".validate": "(newData.isString() && newData.val().matches(/^(active|inactive)$/)) || !newData.exists()"
             },
+            "createdAt": {
+              ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+            },
+            "createdBy": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },
@@ -1031,11 +1061,11 @@
     },
 
     "departments": {
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')",
       ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
 
       "$deptId": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
+        ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')",
         ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
         "$other": {
           ".validate": false
@@ -1044,11 +1074,11 @@
     },
 
     "courseTemplates": {
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')",
       ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
 
       "$templateId": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme'",
+        ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')",
         ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
         "$other": {
           ".validate": false
