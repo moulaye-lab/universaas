@@ -341,11 +341,26 @@
             "department": {
               ".validate": "newData.isString() && newData.val().length > 0"
             },
+            "phoneNumber": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "specialization": {
+              ".validate": "(newData.isString() && newData.val().length > 0 && newData.val().length <= 200) || !newData.exists()"
+            },
+            "assignedCourses": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
             "status": {
               ".validate": "(newData.isString() && newData.val().matches(/^(active|inactive|suspended)$/)) || !newData.exists()"
             },
+            "createdAt": {
+              ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+            },
+            "createdBy": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },

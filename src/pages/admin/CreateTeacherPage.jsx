@@ -135,19 +135,28 @@ export default function CreateTeacherPage() {
         });
 
         // 3. Créer le profil enseignant dans l'université
-        await set(ref(database, `universities/${userProfile.universityId}/teachers/${teacherUid}`), {
+        const teacherData = {
           uid: teacherUid,
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
-          phoneNumber: formData.phoneNumber || null,
           department: formData.department,
-          specialization: formData.specialization || null,
-          assignedCourses: formData.assignedCourses,
           status: 'active',
           createdAt: Date.now(),
           createdBy: currentUser.uid,
-        });
+        };
+
+        // Ajouter champs optionnels seulement si non vides
+        if (formData.phoneNumber && formData.phoneNumber.trim()) {
+          teacherData.phoneNumber = formData.phoneNumber.trim();
+        }
+        if (formData.specialization && formData.specialization.trim()) {
+          teacherData.specialization = formData.specialization.trim();
+        }
+        // Ne pas envoyer assignedCourses si tableau vide (Firebase convertit [] en null)
+        // Sera ajouté plus tard lors de l'affectation des cours
+
+        await set(ref(database, `universities/${userProfile.universityId}/teachers/${teacherUid}`), teacherData);
 
         // 4. Log d'audit
         await set(ref(database, `universities/${userProfile.universityId}/audit/${Date.now()}`), {
