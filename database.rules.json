@@ -968,8 +968,8 @@
           },
 
           "cashJournal": {
-            ".read": "auth != null",
-            ".write": "auth != null",
+            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
+            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
             ".indexOn": ["date", "type", "processedBy"],
             "$entryId": {
               "type": {
@@ -1008,8 +1008,8 @@
           },
 
           "revenues": {
-            ".read": "auth != null",
-            ".write": "auth != null",
+            ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
+            ".write": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || (root.child('users').child(auth.uid).child('role').val() === 'comptable' && root.child('users').child(auth.uid).child('universityId').val() === $universityId))",
             ".indexOn": ["date", "category", "academicYear"],
             "$revenueId": {
               "amount": {
