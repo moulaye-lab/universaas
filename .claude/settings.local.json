@@ -84,7 +84,25 @@
       "Bash(firebase auth:export /tmp/users-backup.json --project university-saas-7b31e)",
       "Bash(gcloud auth *)",
       "Bash(/tmp/CREATE_SUPER_ADMIN_NOW.sh)",
-      "Bash(firebase auth:export /tmp/test.json --project university-saas-7b31e)"
+      "Bash(firebase auth:export /tmp/test.json --project university-saas-7b31e)",
+      "Bash(git merge *)",
+      "Bash(git stash *)",
+      "Bash(npx vercel *)",
+      "Bash(grep -v '^\\\\s+\"\\\\$')",
+      "Bash(awk '/\"\\\\$universityId\": \\\\{/,/^      \\\\}$/ {if \\(/^      \\\\}$/\\) {print NR\": \"$0; exit}}' database.rules.json)",
+      "Bash(awk NR>=1100 && NR<=1120 *)",
+      "Bash(grep -n '\"$other\": {' database.rules.json)",
+      "Bash(grep -n '\"\\\\$other\":' database.rules.json)",
+      "Bash(grep -B5 '\"\\\\$other\":.*false' database.rules.json)",
+      "Bash(grep -E '\\(^\\\\s+\"[a-z]+\":|\"\\\\$other\"\\)')",
+      "Bash(grep -B10 '\"\\\\$other\":.*false' database.rules.json)",
+      "Bash(firebase login:list *)",
+      "Bash(firebase auth:export /tmp/auth-export.json --project university-saas-7b31e)",
+      "Bash(firebase database:update *)",
+      "Bash(firebase database:set *)",
+      "Bash(firebase database:rules:get --project university-saas-7b31e)",
+      "Bash(firebase use *)",
+      "Bash(grep *)"
     ]
   }
 }
