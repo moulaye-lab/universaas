@@ -769,7 +769,7 @@
             ".indexOn": ["courseId", "teacherId", "type", "category", "level"],
             "$resourceId": {
               "$other": {
-                ".validate": false
+                ".validate": true
               }
             }
           },
@@ -780,7 +780,7 @@
             ".indexOn": ["isbn", "category", "author"],
             "$bookId": {
               "$other": {
-                ".validate": false
+                ".validate": true
               }
             }
           },
@@ -791,7 +791,7 @@
             ".indexOn": ["studentId", "bookId", "status", "dueDate"],
             "$loanId": {
               "$other": {
-                ".validate": false
+                ".validate": true
               }
             }
           },
