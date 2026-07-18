@@ -78,6 +78,14 @@ export default function CreateClassPage() {
     setLoading(true);
 
     try {
+      // 🔍 DEBUG - Afficher les infos utilisateur
+      console.log('🔍 DEBUG AUTH:');
+      console.log('currentUser.uid:', currentUser?.uid);
+      console.log('currentUser.email:', currentUser?.email);
+      console.log('userProfile:', userProfile);
+      console.log('userProfile.universityId:', userProfile?.universityId);
+      console.log('userProfile.role:', userProfile?.role);
+
       // Validation
       if (!formData.level) {
         throw new Error('Le niveau est requis');
