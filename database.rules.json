@@ -644,8 +644,23 @@
           "$auditId": {
             ".read": "auth != null && ((root.child('users').child(auth.uid).child('role').val() === 'admin_universite' && root.child('users').child(auth.uid).child('universityId').val() === $universityId) || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme')",
             ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'super_admin_plateforme' || root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'comptable') && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+            "action": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "userId": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "targetUserId": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "details": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
+            "timestamp": {
+              ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+            },
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },
