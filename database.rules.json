@@ -512,11 +512,38 @@
             "level": {
               ".validate": "(newData.isString() && newData.val().matches(/^(L1|L2|L3|M1|M2|D1|D2|D3)$/)) || !newData.exists()"
             },
+            "department": {
+              ".validate": "(newData.isString() && newData.val().length > 0 && newData.val().length <= 100) || !newData.exists()"
+            },
+            "description": {
+              ".validate": "(newData.isString() && newData.val().length >= 0 && newData.val().length <= 1000) || !newData.exists()"
+            },
+            "teacherId": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "teacherName": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
+            "maxStudents": {
+              ".validate": "(newData.isNumber() && newData.val() > 0 && newData.val() <= 1000) || !newData.exists()"
+            },
+            "enrolledStudents": {
+              ".validate": "(newData.isNumber() && newData.val() >= 0) || !newData.exists()"
+            },
+            "schedule": {
+              ".validate": "newData.hasChildren() || !newData.exists()"
+            },
             "status": {
               ".validate": "(newData.isString() && newData.val().matches(/^(active|inactive|archived)$/)) || !newData.exists()"
             },
+            "createdAt": {
+              ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+            },
+            "createdBy": {
+              ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
+            },
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },
@@ -865,6 +892,9 @@
                 "installmentNumber": {
                   ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
                 },
+                "totalInstallments": {
+                  ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+                },
                 "paidAt": {
                   ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
                 },
@@ -878,12 +908,15 @@
                   ".validate": "(newData.isString() && newData.val().length > 0) || !newData.exists()"
                 },
                 "$other": {
-                  ".validate": false
+                  ".validate": true
                 }
               }
             },
+            "description": {
+              ".validate": "(newData.isString() && newData.val().length >= 0 && newData.val().length <= 1000) || !newData.exists()"
+            },
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },

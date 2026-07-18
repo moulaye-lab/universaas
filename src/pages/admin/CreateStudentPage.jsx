@@ -258,31 +258,34 @@ export default function CreateStudentPage() {
 
       try {
         // 2. Créer le profil utilisateur
-        await set(ref(database, `users/${studentUid}`), {
-        email: formData.email,
-        displayName: `${formData.firstName} ${formData.lastName}`,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNumber: formData.phoneNumber || null,
-        role: 'student',
-        universityId: userProfile.universityId,
-        profileId: studentUid,
-        loginMethod: 'email',
-        mustChangePassword: true,
-        temporaryPassword: formData.password,
-        createdAt: Date.now(),
-        createdBy: currentUser.uid,
-      });
+        const userProfileData = {
+          email: formData.email,
+          displayName: `${formData.firstName} ${formData.lastName}`,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          role: 'student',
+          universityId: userProfile.universityId,
+          profileId: studentUid,
+          loginMethod: 'email',
+          mustChangePassword: true,
+          temporaryPassword: formData.password,
+          createdAt: Date.now(),
+          createdBy: currentUser.uid,
+        };
+
+        // Ajouter phoneNumber seulement si non vide
+        if (formData.phoneNumber && formData.phoneNumber.trim()) {
+          userProfileData.phoneNumber = formData.phoneNumber.trim();
+        }
+
+        await set(ref(database, `users/${studentUid}`), userProfileData);
 
         // 3. Créer le profil étudiant dans l'université
-        await set(ref(database, `universities/${userProfile.universityId}/students/${studentUid}`), {
+        const studentData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
-          phoneNumber: formData.phoneNumber || null,
           matricule: formData.matricule,
-          dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).getTime() : null,
-          gender: formData.gender || null,
           level: formData.level,
           fieldOfStudy: formData.fieldOfStudy,
           classId: formData.classId,
@@ -292,7 +295,20 @@ export default function CreateStudentPage() {
           absences: 0,
           createdAt: Date.now(),
           createdBy: currentUser.uid,
-        });
+        };
+
+        // Ajouter champs optionnels seulement si non vides (éviter null qui échoue validation)
+        if (formData.phoneNumber && formData.phoneNumber.trim()) {
+          studentData.phone = formData.phoneNumber.trim(); // Note: "phone" dans students rules, pas "phoneNumber"
+        }
+        if (formData.dateOfBirth) {
+          studentData.dateOfBirth = new Date(formData.dateOfBirth).getTime();
+        }
+        if (formData.gender) {
+          studentData.gender = formData.gender;
+        }
+
+        await set(ref(database, `universities/${userProfile.universityId}/students/${studentUid}`), studentData);
 
         // 3b. Ajouter l'étudiant à la classe (TRANSACTION ATOMIQUE)
         await runTransaction(classRef, (currentClass) => {
