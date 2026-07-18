@@ -1002,7 +1002,7 @@
                 ".validate": "newData.isString() && newData.val().matches(/^(en_attente|validee|payee|annulee)$/)"
               },
               "$other": {
-                ".validate": false
+                ".validate": true
               }
             }
           },
