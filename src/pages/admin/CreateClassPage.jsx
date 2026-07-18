@@ -131,7 +131,7 @@ export default function CreateClassPage() {
         name: className,
         level: formData.level,
         domain: formData.domain,
-        classNumber: formData.classNumber,
+        classNumber: parseInt(formData.classNumber),  // 🔧 FIX: Convert to number
         capacity: parseInt(formData.capacity),
         occupiedSeats: 0,
         // students: [], // ❌ Ne pas envoyer tableau vide (Firebase le transforme en null)
