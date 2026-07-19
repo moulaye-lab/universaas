@@ -312,7 +312,7 @@
               }
             },
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },
