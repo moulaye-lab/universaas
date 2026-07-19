@@ -55,6 +55,11 @@ const ParentDashboard = () => {
 
         // Parcourir toutes les universités
         for (const [universityId, studentsObj] of Object.entries(userProfile.childrenAccess)) {
+          // Charger le nom de l'université
+          const uniRef = ref(database, `universities/${universityId}/info`);
+          const uniSnap = await get(uniRef);
+          const universityName = uniSnap.exists() ? uniSnap.val().name : universityId;
+
           // Parcourir tous les étudiants de cette université
           for (const studentId of Object.keys(studentsObj)) {
             // Charger les infos de l'étudiant
@@ -67,6 +72,7 @@ const ParentDashboard = () => {
                 childId: studentId,
                 childName: `${studentData.firstName} ${studentData.lastName}`,
                 universityId: universityId,
+                universityName: universityName,
                 relationship: 'parent', // Valeur par défaut
                 studentData: studentData
               });
@@ -296,7 +302,7 @@ const ParentDashboard = () => {
             >
               {children.map(child => (
                 <option key={child.childId} value={child.childId}>
-                  {child.childName} - {child.universityId.replace('univ-', '').replace('-', ' ')}
+                  {child.childName} - {child.universityName}
                 </option>
               ))}
             </select>
