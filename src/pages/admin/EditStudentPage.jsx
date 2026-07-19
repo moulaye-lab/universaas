@@ -82,16 +82,26 @@ export default function EditStudentPage() {
 
         if (parentsSnap.exists()) {
           const allParents = parentsSnap.val();
+          console.log('🔍 Searching for parent of student:', studentId);
+          console.log('🔍 Total parents:', Object.keys(allParents).length);
+
           // Trouver le parent qui a cet étudiant dans childrenAccess
           const parentEntry = Object.entries(allParents).find(([parentId, parentData]) => {
             const children = parentData.childrenAccess?.[userProfile.universityId] || {};
-            return Object.keys(children).includes(studentId);
+            const hasStudent = Object.keys(children).includes(studentId);
+            console.log('🔍 Checking parent:', parentData.email, 'hasStudent:', hasStudent);
+            return hasStudent;
           });
 
           if (parentEntry) {
             const [parentId, parentData] = parentEntry;
+            console.log('✅ Parent found:', parentData.email);
             setParentInfo({ id: parentId, ...parentData });
+          } else {
+            console.log('❌ No parent found for this student');
           }
+        } else {
+          console.log('❌ No parents in database');
         }
 
       } catch (err) {
