@@ -228,7 +228,10 @@ export default function AuditLogsPage() {
             <div className="glass rounded-xl p-4">
               <p className="text-sm text-gray-600 mb-1">Moyenne / jour</p>
               <p className="text-2xl font-bold text-green-600">
-                {Math.round(stats.total / Object.keys(stats.byDay).length)}
+                {Object.keys(stats.byDay).length > 0
+                  ? Math.round(stats.total / Object.keys(stats.byDay).length)
+                  : 0
+                }
               </p>
             </div>
           </div>
