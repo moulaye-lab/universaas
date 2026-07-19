@@ -180,6 +180,8 @@ export default function RevenuesManagementPage() {
         universityId: userProfile.universityId
       };
 
+      let savedRevenueId;
+
       if (editingRevenue) {
         // Modification - ajouter traçabilité
         const revenueRef = ref(database, `universities/${userProfile.universityId}/accounting/revenues/${editingRevenue.id}`);
@@ -207,6 +209,8 @@ export default function RevenuesManagementPage() {
           lastModifiedBy: currentUser.uid,
           history
         });
+
+        savedRevenueId = editingRevenue.id;
       } else {
         // Création
         const revenuesRef = ref(database, `universities/${userProfile.universityId}/accounting/revenues`);
@@ -220,6 +224,8 @@ export default function RevenuesManagementPage() {
           createdByRole: userProfile.role,
           history: []
         });
+
+        savedRevenueId = newRevenueRef.key;
       }
 
       // Audit log
@@ -229,7 +235,7 @@ export default function RevenuesManagementPage() {
         universityId: userProfile.universityId,
         userId: currentUser.uid,
         userName: userProfile.displayName || `${userProfile.firstName} ${userProfile.lastName}`,
-        targetId: editingRevenue?.id || newRevenueRef.key,
+        targetId: savedRevenueId,
         targetName: formData.description,
         details: {
           amount: formData.amount,

@@ -214,6 +214,8 @@ export default function ExpensesManagementPage() {
 
       console.log('💾 Expense data to save:', expenseData);
 
+      let savedExpenseId;
+
       if (editingExpense) {
         // Modification - ajouter traçabilité
         const expenseRef = ref(database, `universities/${userProfile.universityId}/accounting/expenses/${editingExpense.id}`);
@@ -243,6 +245,8 @@ export default function ExpensesManagementPage() {
           lastModifiedBy: currentUser.uid,
           history
         });
+
+        savedExpenseId = editingExpense.id;
       } else {
         // Création
         const expensesRef = ref(database, `universities/${userProfile.universityId}/accounting/expenses`);
@@ -256,6 +260,8 @@ export default function ExpensesManagementPage() {
           createdByRole: userProfile.role,
           history: []
         });
+
+        savedExpenseId = newExpenseRef.key;
       }
 
       console.log('✅ Expense saved successfully');
@@ -267,7 +273,7 @@ export default function ExpensesManagementPage() {
         universityId: userProfile.universityId,
         userId: currentUser.uid,
         userName: userProfile.displayName || `${userProfile.firstName} ${userProfile.lastName}`,
-        targetId: editingExpense?.id || newExpenseRef.key,
+        targetId: savedExpenseId,
         targetName: formData.description,
         details: {
           amount: formData.amount,
