@@ -13,6 +13,7 @@
     "create-parent-multi": "node scripts/createTestParentMultiChildren.mjs"
   },
   "dependencies": {
+    "agora-rtc-sdk-ng": "^4.24.6",
     "dompurify": "^3.4.11",
     "dotenv": "^17.4.2",
     "firebase": "^12.15.0",
