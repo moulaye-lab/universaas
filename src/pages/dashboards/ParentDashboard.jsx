@@ -40,6 +40,7 @@ const ParentDashboard = () => {
     absences: 0,
     overduePayments: 0
   });
+  const [isPeriodClosed, setIsPeriodClosed] = useState(false);
 
   // Charger les enfants depuis childrenAccess
   useEffect(() => {
@@ -101,6 +102,15 @@ const ParentDashboard = () => {
     try {
       const uniId = selectedChild.universityId;
       const childId = selectedChildId;
+
+      // Vérifier statut période académique
+      const periodsRef = ref(database, `universities/${uniId}/academic_periods`);
+      const periodsSnap = await get(periodsRef);
+      if (periodsSnap.exists()) {
+        const periods = Object.values(periodsSnap.val());
+        const currentPeriod = periods.find(p => p.status === 'en_cours' || p.status === 'cloture');
+        setIsPeriodClosed(currentPeriod?.status === 'cloture');
+      }
 
       const studentRef = ref(database, `universities/${uniId}/students/${childId}`);
       const studentSnap = await get(studentRef);
@@ -405,7 +415,7 @@ const ParentDashboard = () => {
                   <Award className="w-7 h-7 text-green-600" />
                   Notes de {selectedChild.childName}
                 </h2>
-                {grades.length > 0 && (
+                {grades.length > 0 && isPeriodClosed && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
@@ -440,6 +450,11 @@ const ParentDashboard = () => {
                       <Download className="w-4 h-4" />
                       Export CSV
                     </button>
+                  </div>
+                )}
+                {grades.length > 0 && !isPeriodClosed && (
+                  <div className="text-sm text-gray-500 italic">
+                    📅 Bulletin disponible après clôture du semestre
                   </div>
                 )}
               </div>
