@@ -153,6 +153,13 @@ export default function RoomsManagementPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Vérifier currentUser disponible
+    if (!currentUser?.uid) {
+      setError('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
     setError('');
     setSuccess('');
 

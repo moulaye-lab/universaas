@@ -104,6 +104,13 @@ export default function ManageAcademicDataPage() {
 
   const handleDeptSubmit = async (e) => {
     e.preventDefault();
+
+    // Vérifier currentUser disponible
+    if (!currentUser?.uid) {
+      setError('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
     setError('');
     setSuccess('');
 
@@ -206,6 +213,13 @@ export default function ManageAcademicDataPage() {
 
   const handleCourseTemplateSubmit = async (e) => {
     e.preventDefault();
+
+    // Vérifier currentUser disponible
+    if (!currentUser?.uid) {
+      setError('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
     setError('');
     setSuccess('');
 

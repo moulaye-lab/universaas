@@ -161,6 +161,12 @@ export default function LibraryResourcesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Vérifier currentUser disponible
+    if (!currentUser?.uid) {
+      alert('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
     try {
       let fileUrl = formData.fileUrl;
 

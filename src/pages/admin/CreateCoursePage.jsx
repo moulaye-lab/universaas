@@ -352,6 +352,13 @@ export default function CreateCoursePage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Vérifier currentUser disponible
+    if (!currentUser?.uid) {
+      setError('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
     setLoading(true);
 
     try {

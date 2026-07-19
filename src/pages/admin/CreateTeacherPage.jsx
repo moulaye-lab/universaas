@@ -67,6 +67,13 @@ export default function CreateTeacherPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Vérifier currentUser disponible
+    if (!currentUser?.uid) {
+      setError('Session expirée. Veuillez vous reconnecter.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');

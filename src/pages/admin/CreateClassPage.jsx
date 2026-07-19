@@ -86,6 +86,14 @@ export default function CreateClassPage() {
       console.log('userProfile.universityId:', userProfile?.universityId);
       console.log('userProfile.role:', userProfile?.role);
 
+      // Vérifier currentUser disponible
+      if (!currentUser?.uid) {
+        console.error('❌ currentUser.uid is undefined!');
+        alert('Erreur: Session expirée. Veuillez vous reconnecter.');
+        setLoading(false);
+        return;
+      }
+
       // Validation
       if (!formData.level) {
         throw new Error('Le niveau est requis');
