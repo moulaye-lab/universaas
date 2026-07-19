@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm run build && cd api && npm install",
   "rewrites": [
     {
       "source": "/api/(.*)",
