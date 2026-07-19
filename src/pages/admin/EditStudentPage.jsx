@@ -86,12 +86,19 @@ export default function EditStudentPage() {
           console.log('🔍 Searching for parent of student:', studentId);
           console.log('🔍 Total parents:', Object.keys(allParents).length);
 
-          // Trouver le parent qui a cet étudiant dans childrenAccess
+          // Trouver le parent qui a cet étudiant dans childrenAccess (chercher dans TOUTES les universités)
           const parentEntry = Object.entries(allParents).find(([parentId, parentData]) => {
-            const children = parentData.childrenAccess?.[userProfile.universityId] || {};
-            const hasStudent = Object.keys(children).includes(studentId);
-            console.log('🔍 Checking parent:', parentData.email, 'hasStudent:', hasStudent);
-            return hasStudent;
+            if (!parentData.childrenAccess) return false;
+
+            // Parcourir TOUTES les universités du childrenAccess
+            for (const uniId of Object.keys(parentData.childrenAccess)) {
+              const children = parentData.childrenAccess[uniId] || {};
+              if (Object.keys(children).includes(studentId)) {
+                console.log('✅ Found parent:', parentData.email, 'in university:', uniId);
+                return true;
+              }
+            }
+            return false;
           });
 
           if (parentEntry) {
