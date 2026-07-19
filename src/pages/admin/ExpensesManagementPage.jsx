@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, set, push, remove } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import auditLogger, { AUDIT_ACTIONS, SEVERITY_LEVELS } from '../../utils/auditLogger';
 import {
   ChevronLeft,
   TrendingDown,
@@ -258,6 +259,24 @@ export default function ExpensesManagementPage() {
       }
 
       console.log('✅ Expense saved successfully');
+
+      // Audit log
+      await auditLogger.log({
+        action: editingExpense ? AUDIT_ACTIONS.UPDATE_EXPENSE : AUDIT_ACTIONS.CREATE_EXPENSE,
+        severity: SEVERITY_LEVELS.HIGH,
+        universityId: userProfile.universityId,
+        userId: currentUser.uid,
+        userName: userProfile.displayName || `${userProfile.firstName} ${userProfile.lastName}`,
+        targetId: editingExpense?.id || newExpenseRef.key,
+        targetName: formData.description,
+        details: {
+          amount: formData.amount,
+          category: formData.category,
+          status: formData.status,
+          recipient: formData.recipient,
+          isUpdate: !!editingExpense
+        }
+      });
 
       // Reset modal et formulaire
       setShowModal(false);

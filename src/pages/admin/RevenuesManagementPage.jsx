@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { ref, get, set, push, remove } from 'firebase/database';
 import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import auditLogger, { AUDIT_ACTIONS, SEVERITY_LEVELS } from '../../utils/auditLogger';
 import {
   ChevronLeft,
   TrendingUp,
@@ -220,6 +221,23 @@ export default function RevenuesManagementPage() {
           history: []
         });
       }
+
+      // Audit log
+      await auditLogger.log({
+        action: editingRevenue ? AUDIT_ACTIONS.UPDATE_REVENUE : AUDIT_ACTIONS.CREATE_REVENUE,
+        severity: SEVERITY_LEVELS.HIGH,
+        universityId: userProfile.universityId,
+        userId: currentUser.uid,
+        userName: userProfile.displayName || `${userProfile.firstName} ${userProfile.lastName}`,
+        targetId: editingRevenue?.id || newRevenueRef.key,
+        targetName: formData.description,
+        details: {
+          amount: formData.amount,
+          category: formData.category,
+          source: formData.source,
+          isUpdate: !!editingRevenue
+        }
+      });
 
       // Reset
       setShowModal(false);

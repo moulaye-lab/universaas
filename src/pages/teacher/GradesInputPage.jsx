@@ -15,6 +15,7 @@ import { database } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTimeout } from '../../hooks/useTimeout';
 import { notifyNewGrade } from '../../services/notificationService';
+import auditLogger, { AUDIT_ACTIONS, SEVERITY_LEVELS } from '../../utils/auditLogger';
 
 export default function GradesInputPage() {
   const navigate = useNavigate();
@@ -231,6 +232,25 @@ export default function GradesInputPage() {
       }
 
       await Promise.all(promises);
+
+      // Audit log: Création de notes en masse
+      await auditLogger.log({
+        action: AUDIT_ACTIONS.BULK_CREATE_GRADES,
+        severity: SEVERITY_LEVELS.HIGH,
+        universityId: userProfile.universityId,
+        userId: currentUser.uid,
+        userName: userProfile.displayName || `${userProfile.firstName} ${userProfile.lastName}`,
+        targetId: selectedCourse,
+        targetName: course.courseName,
+        details: {
+          title: formData.title,
+          gradeType: formData.gradeType,
+          coefficient: formData.coefficient,
+          maxGrade: formData.maxGrade,
+          studentsCount: enteredGrades.length,
+          date: formData.date
+        }
+      });
 
       // Envoyer notifications aux étudiants
       const notificationPromises = [];
