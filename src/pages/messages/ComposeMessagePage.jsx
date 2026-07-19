@@ -545,12 +545,23 @@ export default function ComposeMessagePage() {
                     onChange={(e) => setRoleFilter(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border-2 border-indigo-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                   >
-                    <option value="all">Tous les rôles</option>
-                    <option value="admin_universite">Administrateurs</option>
-                    {userProfile.role !== 'parent' && <option value="comptable">Comptables</option>}
-                    <option value="teacher">Enseignants</option>
-                    {userProfile.role !== 'student' && userProfile.role !== 'parent' && <option value="student">Étudiants</option>}
-                    {userProfile.role !== 'student' && userProfile.role !== 'parent' && <option value="parent">Parents</option>}
+                    {userProfile.role === 'teacher' ? (
+                      <>
+                        <option value="all">Tous les rôles</option>
+                        <option value="admin_universite">Administrateurs</option>
+                        <option value="student">Étudiants</option>
+                        <option value="parent">Parents</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="all">Tous les rôles</option>
+                        <option value="admin_universite">Administrateurs</option>
+                        {userProfile.role !== 'parent' && <option value="comptable">Comptables</option>}
+                        <option value="teacher">Enseignants</option>
+                        {userProfile.role !== 'student' && userProfile.role !== 'parent' && <option value="student">Étudiants</option>}
+                        {userProfile.role !== 'student' && userProfile.role !== 'parent' && <option value="parent">Parents</option>}
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
