@@ -501,7 +501,7 @@ export default function CreateCoursePage() {
         teacherId: formData.teacherId,
         teacherName: formData.teacherName,
         maxStudents: parseInt(formData.maxStudents),
-        enrolledStudents: 0,
+        enrolledStudents: [],
         schedule: {
           day: formData.schedule.day,
           startTime: formData.schedule.startTime,
