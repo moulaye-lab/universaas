@@ -21,6 +21,7 @@ export default function EditStudentPage() {
   const [student, setStudent] = useState(null);
   const [availableClasses, setAvailableClasses] = useState([]);
   const [parentInfo, setParentInfo] = useState(null);
+  const [showParentModal, setShowParentModal] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -436,23 +437,16 @@ export default function EditStudentPage() {
                 </div>
               </div>
 
-              {/* Parent lié */}
-              {parentInfo && (
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">👨‍👩‍👧 Parent Lié</h3>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-semibold">Nom:</span> {parentInfo.firstName} {parentInfo.lastName}
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      <span className="font-semibold">Email:</span> {parentInfo.email}
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      <span className="font-semibold">Téléphone:</span> {parentInfo.phone || 'Non renseigné'}
-                    </p>
-                  </div>
-                </div>
-              )}
+              {/* Bouton voir parent */}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowParentModal(true)}
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold shadow-lg"
+                >
+                  👨‍👩‍👧 Voir le parent
+                </button>
+              </div>
 
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl">
@@ -486,6 +480,75 @@ export default function EditStudentPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal Parent */}
+      {showParentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-2xl">
+              <h2 className="text-2xl font-bold">👨‍👩‍👧 Informations du Parent</h2>
+            </div>
+
+            <div className="p-6">
+              {parentInfo ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Prénom</p>
+                      <p className="text-lg font-semibold text-gray-900">{parentInfo.firstName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Nom</p>
+                      <p className="text-lg font-semibold text-gray-900">{parentInfo.lastName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Email</p>
+                      <p className="text-lg font-semibold text-indigo-600">{parentInfo.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Téléphone</p>
+                      <p className="text-lg font-semibold text-gray-900">{parentInfo.phone || 'Non renseigné'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Adresse</p>
+                      <p className="text-lg font-semibold text-gray-900">{parentInfo.address || 'Non renseignée'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Profession</p>
+                      <p className="text-lg font-semibold text-gray-900">{parentInfo.profession || 'Non renseignée'}</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mt-6">
+                    <p className="text-green-800 font-semibold">✅ Parent lié à cet étudiant</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">👤</div>
+                  <p className="text-xl font-bold text-gray-900 mb-2">Aucun parent trouvé</p>
+                  <p className="text-gray-600">Cet étudiant n'a pas encore de parent associé dans le système.</p>
+                  <button
+                    onClick={() => navigate('/admin/parents/create')}
+                    className="mt-6 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold"
+                  >
+                    Créer un compte parent
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-b-2xl flex justify-end">
+              <button
+                onClick={() => setShowParentModal(false)}
+                className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition font-semibold"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }
