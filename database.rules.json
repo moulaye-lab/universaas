@@ -753,11 +753,31 @@
         },
 
         "liveSessions": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')",
+
           "$sessionId": {
             ".read": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId",
-            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite')",
+            ".write": "auth != null && root.child('users').child(auth.uid).child('universityId').val() === $universityId && (root.child('users').child(auth.uid).child('role').val() === 'teacher' || root.child('users').child(auth.uid).child('role').val() === 'admin_universite' || root.child('users').child(auth.uid).child('role').val() === 'student')",
+
+            "participants": {
+              ".read": "auth != null",
+              ".write": "auth != null",
+              "$other": {
+                ".validate": true
+              }
+            },
+
+            "chatMessages": {
+              ".read": "auth != null",
+              ".write": "auth != null",
+              "$other": {
+                ".validate": true
+              }
+            },
+
             "$other": {
-              ".validate": false
+              ".validate": true
             }
           }
         },
