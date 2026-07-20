@@ -5,6 +5,15 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   publicDir: 'public',
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://university-saas.vercel.app',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
   build: {
     sourcemap: false,
     minify: 'esbuild',

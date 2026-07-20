@@ -87,7 +87,19 @@
       "Bash(firebase auth:export /tmp/test.json --project university-saas-7b31e)",
       "Bash(grep -A 5 '\"$other\"')",
       "Bash(find *)",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "Bash(grep -n '\"\\\\$other\".*false' database.rules.json)",
+      "Bash(grep -B 10 '\"\\\\$other\".*false' database.rules.json)",
+      "Bash(npx vercel *)",
+      "Read(//Users/itopie/Desktop/**)",
+      "Bash(git ls-tree *)",
+      "Bash(git check-ignore *)",
+      "Bash(./fix-currentUser.sh)",
+      "Bash(awk '/^        \"students\": {/,/^        }/' database.rules.json)",
+      "Bash(grep -n '\"$other\"')",
+      "Bash(wait)",
+      "Bash(pkill -f \"node.*vercel\")",
+      "Bash(lsof -ti:3001)"
     ]
   }
 }

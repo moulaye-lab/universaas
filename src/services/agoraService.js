@@ -114,12 +114,21 @@ async function getAgoraToken(channelName, uid, role) {
       })
     });
 
+    console.log('🌐 Token API response status:', response.status);
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to get token');
+      const responseText = await response.text();
+      console.error('❌ Token API error response:', responseText);
+      try {
+        const errorData = JSON.parse(responseText);
+        throw new Error(errorData.error || 'Failed to get token');
+      } catch (e) {
+        throw new Error(`API Error (${response.status}): ${responseText}`);
+      }
     }
 
     const data = await response.json();
+    console.log('✅ Token received from API');
     return data.token;
   } catch (error) {
     console.error('Error getting Agora token:', error);
