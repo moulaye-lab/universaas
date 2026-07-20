@@ -57,13 +57,19 @@ export default function StudentLiveSessionsPage() {
 
       setEnrolledCourses(studentCourseIds);
 
+      console.log('🎓 Student course IDs:', studentCourseIds);
+
       // Charger toutes les sessions
       const result = await getAllLiveSessions(userProfile.universityId);
       if (result.success) {
+        console.log('📹 All sessions:', result.sessions);
+
         // Filtrer seulement les sessions des cours de l'étudiant
         const relevantSessions = result.sessions.filter(
           s => studentCourseIds.includes(s.courseId) && s.status !== 'ended'
         );
+
+        console.log('✅ Filtered sessions for student:', relevantSessions);
         setSessions(relevantSessions);
       }
     } catch (error) {
