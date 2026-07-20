@@ -101,7 +101,7 @@ export default function TeacherLiveSessionsPage() {
     const result = await createLiveSession({
       universityId: userProfile.universityId,
       courseId: formData.courseId,
-      courseName: selectedCourse.name,
+      courseName: selectedCourse.courseName || selectedCourse.name,
       teacherId: userProfile.profileId,
       teacherName: `${userProfile.firstName} ${userProfile.lastName}`,
       sessionName: formData.sessionName,
@@ -305,7 +305,7 @@ export default function TeacherLiveSessionsPage() {
                   <option value="">Sélectionner un cours</option>
                   {courses.map((course) => (
                     <option key={course.id} value={course.id}>
-                      {course.name}
+                      {course.courseName || course.name}
                     </option>
                   ))}
                 </select>
