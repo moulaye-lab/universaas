@@ -3,8 +3,9 @@
  * Évite les réinitialisations multiples en environnement serverless
  */
 
-import pkg from 'firebase-admin';
-const admin = pkg.default || pkg;
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const admin = require('firebase-admin');
 
 let firebaseApp;
 
