@@ -549,20 +549,6 @@ export default function TeacherDashboard() {
               </div>
             </button>
 
-            <button
-              onClick={() => navigate('/teacher/live-sessions')}
-              className="glass p-5 rounded-2xl hover-lift group text-left animate-pulse"
-            >
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-red-500 to-pink-600 p-3 rounded-xl flex-shrink-0">
-                  <Video className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 text-sm">Cours en Direct</p>
-                  <p className="text-xs text-gray-600">Sessions live 🔴</p>
-                </div>
-              </div>
-            </button>
           </div>
         </div>
 

@@ -461,21 +461,6 @@ const StudentDashboard = () => {
           </button>
 
           <button
-            onClick={() => navigate('/student/live-sessions')}
-            className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group animate-pulse"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center">
-                <Video className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-gray-900 group-hover:text-red-600 transition-colors">Cours en Direct</p>
-                <p className="text-sm text-gray-600">Sessions live 🔴</p>
-              </div>
-            </div>
-          </button>
-
-          <button
             onClick={() => navigate('/student/calendar')}
             className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 group"
           >

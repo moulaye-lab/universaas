@@ -47,10 +47,7 @@ import GradesInputPage from './pages/teacher/GradesInputPage';
 import GradesHistoryPage from './pages/teacher/GradesHistoryPage';
 import TeacherSchedulePage from './pages/teacher/TeacherSchedulePage';
 import AttendancePage from './pages/teacher/AttendancePage';
-import TeacherLiveSessionsPage from './pages/teacher/TeacherLiveSessionsPage';
 import MyGradesPage from './pages/student/MyGradesPage';
-import StudentLiveSessionsPage from './pages/student/StudentLiveSessionsPage';
-import LiveStreamPage from './pages/LiveStreamPage';
 import GradesDashboardPage from './pages/student/GradesDashboardPage';
 import MyAbsencesPage from './pages/student/MyAbsencesPage';
 import GradesListPage from './pages/admin/GradesListPage';
@@ -636,14 +633,6 @@ function App() {
             }
           />
           <Route
-            path="/teacher/live-sessions"
-            element={
-              <ProtectedRoute allowedRoles={['teacher']}>
-                <TeacherLiveSessionsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/teacher/attendance"
             element={
               <ProtectedRoute allowedRoles={['teacher']}>
@@ -688,22 +677,6 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['student']}>
                 <MyAbsencesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/live-sessions"
-            element={
-              <ProtectedRoute allowedRoles={['student']}>
-                <StudentLiveSessionsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/live-stream/:sessionId"
-            element={
-              <ProtectedRoute allowedRoles={['teacher', 'student']}>
-                <LiveStreamPage />
               </ProtectedRoute>
             }
           />
