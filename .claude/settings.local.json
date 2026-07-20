@@ -99,7 +99,9 @@
       "Bash(grep -n '\"$other\"')",
       "Bash(wait)",
       "Bash(pkill -f \"node.*vercel\")",
-      "Bash(lsof -ti:3001)"
+      "Bash(lsof -ti:3001)",
+      "Bash(git merge *)",
+      "Bash(git stash *)"
     ]
   }
 }

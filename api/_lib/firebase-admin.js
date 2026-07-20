@@ -3,13 +3,16 @@
  * Évite les réinitialisations multiples en environnement serverless
  */
 
-import admin from 'firebase-admin';
+import pkg from 'firebase-admin';
+const admin = pkg.default || pkg;
 
 let firebaseApp;
 
 export function getFirebaseAdmin() {
   if (!firebaseApp) {
     try {
+      console.log('🔍 Debug admin:', typeof admin, admin ? Object.keys(admin).slice(0, 5) : 'undefined');
+      console.log('🔍 Debug admin.credential:', typeof admin?.credential);
       // En production Vercel, utiliser les variables d'environnement
       const privateKey = process.env.FIREBASE_PRIVATE_KEY
         ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
