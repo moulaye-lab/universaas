@@ -38,22 +38,22 @@ export default function StudentLiveSessionsPage() {
 
     setLoading(true);
     try {
-      // Charger les cours de l'étudiant
-      const enrollmentRef = ref(
+      // Charger les cours de l'étudiant depuis students/{id}/courses
+      const studentCoursesRef = ref(
         database,
-        `universities/${userProfile.universityId}/enrollments`
+        `universities/${userProfile.universityId}/students/${userProfile.profileId}/courses`
       );
-      const enrollmentSnapshot = await get(enrollmentRef);
+      const coursesSnapshot = await get(studentCoursesRef);
 
       const studentCourseIds = [];
-      if (enrollmentSnapshot.exists()) {
-        enrollmentSnapshot.forEach((childSnapshot) => {
-          const enrollment = childSnapshot.val();
-          if (enrollment.studentId === userProfile.profileId) {
-            studentCourseIds.push(enrollment.courseId);
-          }
+      if (coursesSnapshot.exists()) {
+        coursesSnapshot.forEach((childSnapshot) => {
+          studentCourseIds.push(childSnapshot.key);
         });
       }
+
+      console.log('👤 Student profileId:', userProfile.profileId);
+      console.log('📚 Courses found:', coursesSnapshot.exists() ? coursesSnapshot.size : 0);
 
       setEnrolledCourses(studentCourseIds);
 
