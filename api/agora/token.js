@@ -5,7 +5,8 @@
  * Génère des tokens Agora sécurisés pour les sessions live
  */
 
-import { RtcTokenBuilder, RtcRole } from 'agora-token';
+import pkg from 'agora-token';
+const { RtcTokenBuilder, RtcRole } = pkg;
 import { authenticateUser } from '../_lib/auth-middleware.js';
 
 // Configuration Agora depuis variables d'environnement
