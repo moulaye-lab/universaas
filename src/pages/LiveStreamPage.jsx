@@ -84,35 +84,55 @@ export default function LiveStreamPage() {
   }, [session, userProfile]);
 
   const loadSession = async () => {
-    if (!userProfile?.universityId || !sessionId) return;
+    console.log('🔍 Loading session...', {
+      sessionId,
+      universityId: userProfile?.universityId,
+      profileId: userProfile?.profileId
+    });
+
+    if (!userProfile?.universityId || !sessionId) {
+      console.error('❌ Missing data:', { userProfile, sessionId });
+      alert('Données manquantes');
+      navigate(-1);
+      return;
+    }
 
     try {
       const sessionRef = ref(database, `universities/${userProfile.universityId}/liveSessions/${sessionId}`);
       const snapshot = await get(sessionRef);
 
       if (!snapshot.exists()) {
+        console.error('❌ Session not found');
         alert('Session introuvable');
         navigate(-1);
         return;
       }
 
       const sessionData = snapshot.val();
+      console.log('✅ Session loaded:', sessionData);
       setSession(sessionData);
       setIsHost(sessionData.teacherId === userProfile.profileId);
 
       setLoading(false);
     } catch (error) {
-      console.error('Error loading session:', error);
-      alert('Erreur de chargement');
+      console.error('❌ Error loading session:', error);
+      alert('Erreur de chargement: ' + error.message);
       setLoading(false);
     }
   };
 
   const initializeStream = async () => {
+    console.log('🎥 Initializing stream...', {
+      session,
+      isHost,
+      currentUser: currentUser?.uid
+    });
+
     try {
       // Initialiser le client Agora
       const client = initAgoraClient();
       agoraClientRef.current = client;
+      console.log('✅ Agora client initialized');
 
       // Écouter les utilisateurs distants qui rejoignent
       client.on('user-published', async (user, mediaType) => {
@@ -152,6 +172,12 @@ export default function LiveStreamPage() {
 
       // Rejoindre le canal
       const role = isHost ? 'host' : 'audience';
+      console.log('🔗 Joining channel:', {
+        channelName: session.channelName,
+        userId: currentUser.uid,
+        role
+      });
+
       const joinResult = await joinChannel({
         channelName: session.channelName,
         userId: currentUser.uid,
@@ -159,10 +185,15 @@ export default function LiveStreamPage() {
         role
       });
 
+      console.log('Join result:', joinResult);
+
       if (!joinResult.success) {
+        console.error('❌ Failed to join:', joinResult.error);
         alert('❌ Erreur: ' + joinResult.error);
         return;
       }
+
+      console.log('✅ Successfully joined channel');
 
       // Publier les tracks locaux
       const publishResult = await publishLocalTracks();

@@ -26,6 +26,9 @@ let localVideoTrack = null;
  */
 export function initAgoraClient() {
   if (!agoraClient) {
+    // Désactiver les logs de débogage Agora
+    AgoraRTC.setLogLevel(4); // 4 = ERROR only (pas de warnings)
+
     agoraClient = AgoraRTC.createClient({
       mode: 'rtc', // Real-time communication
       codec: 'vp8'
@@ -84,6 +87,47 @@ export async function createLiveSession({
 }
 
 /**
+ * Obtenir un token Agora depuis le serveur
+ */
+async function getAgoraToken(channelName, uid, role) {
+  try {
+    const auth = await import('../config/firebase').then(m => m.auth);
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      throw new Error('Not authenticated');
+    }
+
+    const token = await currentUser.getIdToken();
+    const API_URL = import.meta.env.VITE_APP_ENV === 'production' ? '' : 'http://localhost:3001';
+
+    const response = await fetch(`${API_URL}/api/agora/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        channelName,
+        uid,
+        role
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get token');
+    }
+
+    const data = await response.json();
+    return data.token;
+  } catch (error) {
+    console.error('Error getting Agora token:', error);
+    throw error;
+  }
+}
+
+/**
  * Rejoindre un canal Agora
  */
 export async function joinChannel({
@@ -99,12 +143,16 @@ export async function joinChannel({
 
     const client = initAgoraClient();
 
-    // Rejoindre le canal (sans token pour le développement)
-    // En production, utiliser un token server-side
+    // Obtenir le token depuis le serveur
+    console.log('🔑 Getting Agora token from server...');
+    const token = await getAgoraToken(channelName, userId, role);
+    console.log('✅ Token received');
+
+    // Rejoindre le canal avec le token
     const uid = await client.join(
       AGORA_APP_ID,
       channelName,
-      null, // token (null pour dev, requis en prod)
+      token, // Token sécurisé généré côté serveur
       userId
     );
 
