@@ -139,6 +139,7 @@ export async function activateSubscription(universityId, planId, paymentInfo) {
     const universityRef = ref(database, `universities/${universityId}`);
     await update(universityRef, {
       subscriptionPlan: planId,
+      subscriptionStatus: 'active', // ✅ Changer de 'trialing' à 'active'
       subscription: subscriptionData
     });
 
