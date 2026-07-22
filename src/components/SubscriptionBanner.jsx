@@ -57,9 +57,9 @@ export default function SubscriptionBanner({ subscription }) {
                 <h3 className={`font-bold text-lg ${colors.text}`}>
                   {alert.title}
                 </h3>
-                {subscription.isTrialing && !subscription.isBlocked && subscription.trialDays && (
+                {subscription.isTrialing && !subscription.isBlocked && subscription.trialDays && subscription.daysRemaining > 0 && (
                   <span className={`px-2 py-0.5 bg-white/20 rounded-full text-xs font-semibold ${colors.text}`}>
-                    Jour {subscription.trialDays - subscription.daysRemaining + 1}/{subscription.trialDays}
+                    Jour {Math.min(subscription.trialDays - subscription.daysRemaining + 1, subscription.trialDays)}/{subscription.trialDays}
                   </span>
                 )}
               </div>
