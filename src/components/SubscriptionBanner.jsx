@@ -29,7 +29,7 @@ export default function SubscriptionBanner({ subscription }) {
   if (!alert) return null;
 
   const handleSubscribe = () => {
-    navigate('/admin/subscription/plans');
+    navigate('/admin/subscription');
   };
 
   // Ne pas permettre de fermer si bloqué
