@@ -86,6 +86,8 @@ import MessageDetailPage from './pages/messages/MessageDetailPage';
 import MessageBatchDetailPage from './pages/messages/MessageBatchDetailPage';
 import StudentSchedulePage from './pages/student/StudentSchedulePage';
 import SubscriptionPlansPage from './pages/admin/SubscriptionPlansPage';
+import SubscriptionManagementPage from './pages/admin/SubscriptionManagementPage';
+import SubscriptionCheckoutPage from './pages/admin/SubscriptionCheckoutPage';
 import AcademicPeriodsManagementPage from './pages/admin/AcademicPeriodsManagementPage';
 import LibraryResourcesPage from './pages/admin/LibraryResourcesPage';
 import LibraryBooksPage from './pages/admin/LibraryBooksPage';
@@ -302,6 +304,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin_universite']}>
                 <RoomsManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/subscription"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <SubscriptionManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/subscription/checkout"
+            element={
+              <ProtectedRoute allowedRoles={['admin_universite']}>
+                <SubscriptionCheckoutPage />
               </ProtectedRoute>
             }
           />
