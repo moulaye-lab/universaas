@@ -61,8 +61,14 @@ export function useSubscription(universityId) {
         // Calculer l'état actuel
         const now = Date.now();
         const isTrialing = subscriptionData.status === 'trialing';
-        const trialExpired = isTrialing && now > subscriptionData.trialEndsAt;
-        const daysRemaining = isTrialing
+
+        // Si trialEndsAt n'existe pas, le créer (14 jours après création)
+        if (!subscriptionData.trialEndsAt && subscriptionData.createdAt) {
+          subscriptionData.trialEndsAt = subscriptionData.createdAt + (subscriptionData.trialDays * 24 * 60 * 60 * 1000);
+        }
+
+        const trialExpired = isTrialing && subscriptionData.trialEndsAt && now > subscriptionData.trialEndsAt;
+        const daysRemaining = (isTrialing && subscriptionData.trialEndsAt)
           ? Math.max(0, Math.ceil((subscriptionData.trialEndsAt - now) / (1000 * 60 * 60 * 24)))
           : 0;
 
