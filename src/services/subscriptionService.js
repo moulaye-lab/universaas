@@ -60,9 +60,9 @@ export const PLANS = {
       'Support 24/7'
     ],
     limits: {
-      students: Infinity,
-      teachers: Infinity,
-      courses: Infinity
+      students: 999999,
+      teachers: 999999,
+      courses: 999999
     }
   }
 };
