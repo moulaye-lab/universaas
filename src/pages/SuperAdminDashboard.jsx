@@ -195,21 +195,6 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  const handleSyncTenants = async () => {
-    if (!confirm('Synchroniser toutes les universités dans system_admin ? Cette opération peut prendre quelques secondes.')) {
-      return;
-    }
-
-    try {
-      await synchroniserTenants(userProfile.profileId);
-      setSuccessMessage('Synchronisation terminée avec succès');
-      setTimeout(() => setSuccessMessage(''), 5000);
-      loadDashboardData();
-    } catch (error) {
-      console.error(error);
-      alert('Erreur : ' + error.message);
-    }
-  };
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -407,13 +392,6 @@ export default function SuperAdminDashboard() {
               <p className="text-gray-600">Gérez vos clients et abonnements</p>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleSyncTenants}
-                className="bg-white border-2 border-indigo-300 text-indigo-600 px-4 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-all flex items-center gap-2"
-              >
-                <RefreshCw className="h-5 w-5" />
-                Synchroniser
-              </button>
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-all shadow-lg flex items-center gap-2"

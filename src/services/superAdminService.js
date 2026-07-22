@@ -189,19 +189,30 @@ export async function obtenirListeTenants(adminUid) {
     throw new Error('ACCÈS REFUSÉ : Seul un Super Admin peut lire les données des tenants');
   }
 
-  // Charger depuis system_admin/tenants_management
-  const tenantsRef = ref(database, 'system_admin/tenants_management');
-  const snapshot = await get(tenantsRef);
+  // Charger DIRECTEMENT depuis universities/ (pas besoin de sync)
+  const universitiesRef = ref(database, 'universities');
+  const snapshot = await get(universitiesRef);
 
   if (!snapshot.exists()) {
     return [];
   }
 
-  const tenantsData = snapshot.val();
-  return Object.keys(tenantsData).map(id => ({
-    universityId: id,
-    ...tenantsData[id]
-  }));
+  const universities = [];
+  snapshot.forEach((childSnapshot) => {
+    const data = childSnapshot.val();
+    universities.push({
+      universityId: childSnapshot.key,
+      name: data.name,
+      status: data.subscriptionStatus || 'trial',
+      subscriptionPlan: data.subscriptionPlan || 'basic',
+      createdAt: data.createdAt,
+      studentCount: data.statistics?.totalStudents || 0,
+      teacherCount: data.statistics?.totalTeachers || 0,
+      courseCount: data.statistics?.totalCourses || 0
+    });
+  });
+
+  return universities;
 }
 
 // ============================================================================
